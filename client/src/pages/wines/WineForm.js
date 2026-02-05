@@ -154,7 +154,6 @@ const WineForm = () => {
 
   const wineries = wineriesData?.data?.data || [];
   const vintages = vintagesData?.data?.data || [];
-  const wine = wineData?.data?.data;
 
   const getWineTypeColor = (wineType) => {
     const colors = {
