@@ -23,7 +23,10 @@ router.post('/',
       }
 
       // Convert absolute path to relative path for URL access
-      const relativePath = req.file.path.replace(/^\.\//, '').replace(/\\/g, '/');
+      // Extract just the uploads/subdir/filename part
+      const pathParts = req.file.path.split(path.sep);
+      const uploadsIndex = pathParts.lastIndexOf('uploads');
+      const relativePath = pathParts.slice(uploadsIndex).join('/');
 
       const fileData = {
         filename: req.file.filename,
@@ -69,7 +72,10 @@ router.post('/multiple',
 
       const filesData = req.files.map(file => {
         // Convert absolute path to relative path for URL access
-        const relativePath = file.path.replace(/^\.\//, '').replace(/\\/g, '/');
+        // Extract just the uploads/subdir/filename part
+        const pathParts = file.path.split(path.sep);
+        const uploadsIndex = pathParts.lastIndexOf('uploads');
+        const relativePath = pathParts.slice(uploadsIndex).join('/');
 
         return {
           filename: file.filename,
@@ -103,7 +109,7 @@ router.post('/multiple',
 router.delete('/:filename', protect, authorize('admin', 'editor'), async (req, res) => {
   try {
     const { filename } = req.params;
-    const uploadDir = process.env.UPLOAD_PATH || './uploads';
+    const uploadDir = path.join(__dirname, '..', '..', 'uploads');
 
     // Search for file in subdirectories
     const subdirs = ['images', 'documents', 'others'];
@@ -129,32 +135,6 @@ router.delete('/:filename', protect, authorize('admin', 'editor'), async (req, r
       success: true,
       message: 'File deleted successfully'
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-});
-
-// @route   GET /api/upload/:subdir/:filename
-// @desc    Serve uploaded file
-// @access  Public
-router.get('/:subdir/:filename', (req, res) => {
-  try {
-    const { subdir, filename } = req.params;
-    const uploadDir = process.env.UPLOAD_PATH || './uploads';
-    const filePath = path.join(uploadDir, subdir, filename);
-
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({
-        success: false,
-        message: 'File not found'
-      });
-    }
-
-    res.sendFile(path.resolve(filePath));
   } catch (error) {
     res.status(500).json({
       success: false,
