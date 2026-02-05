@@ -22,10 +22,13 @@ router.post('/',
         });
       }
 
+      // Convert absolute path to relative path for URL access
+      const relativePath = req.file.path.replace(/^\.\//, '').replace(/\\/g, '/');
+
       const fileData = {
         filename: req.file.filename,
         originalName: req.file.originalname,
-        path: req.file.path,
+        path: relativePath,
         mimetype: req.file.mimetype,
         size: req.file.size,
         uploadedAt: new Date(),
@@ -64,15 +67,20 @@ router.post('/multiple',
         });
       }
 
-      const filesData = req.files.map(file => ({
-        filename: file.filename,
-        originalName: file.originalname,
-        path: file.path,
-        mimetype: file.mimetype,
-        size: file.size,
-        uploadedAt: new Date(),
-        uploadedBy: req.user.id
-      }));
+      const filesData = req.files.map(file => {
+        // Convert absolute path to relative path for URL access
+        const relativePath = file.path.replace(/^\.\//, '').replace(/\\/g, '/');
+
+        return {
+          filename: file.filename,
+          originalName: file.originalname,
+          path: relativePath,
+          mimetype: file.mimetype,
+          size: file.size,
+          uploadedAt: new Date(),
+          uploadedBy: req.user.id
+        };
+      });
 
       res.json({
         success: true,
