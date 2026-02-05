@@ -6,16 +6,30 @@ const FormData = require('form-data');
 const { protect } = require('../middleware/auth');
 const Wine = require('../models/Wine');
 
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Initialize OpenAI only if API key is available
+let openai = null;
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+  console.log('OpenAI initialized successfully');
+} else {
+  console.warn('OPENAI_API_KEY not configured - AI features will be disabled');
+}
 
 // @route   POST /api/ai/generate-wine-image
 // @desc    Generate wine bottle image using DALL-E 3
 // @access  Private
 router.post('/generate-wine-image', protect, async (req, res) => {
   try {
+    // Check if OpenAI is configured
+    if (!openai) {
+      return res.status(503).json({
+        success: false,
+        message: 'AI image generation is not configured. Please contact administrator.'
+      });
+    }
+
     const { wineId, wineName, wineType, variety, region, wineryName } = req.body;
 
     if (!wineName || !wineType) {
