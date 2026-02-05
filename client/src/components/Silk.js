@@ -1,147 +1,117 @@
-import React, { useRef, useEffect } from 'react';
+/* eslint-disable react/no-unknown-property */
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { forwardRef, useRef, useMemo, useLayoutEffect } from 'react';
+import { Color } from 'three';
 
-const Silk = ({
-  speed = 5,
-  scale = 1,
-  color = '#7B7481',
-  noiseIntensity = 1.5,
-  rotation = 0,
-}) => {
-  const canvasRef = useRef(null);
-  const frameRef = useRef(null);
+const hexToNormalizedRGB = hex => {
+  hex = hex.replace('#', '');
+  return [
+    parseInt(hex.slice(0, 2), 16) / 255,
+    parseInt(hex.slice(2, 4), 16) / 255,
+    parseInt(hex.slice(4, 6), 16) / 255
+  ];
+};
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+const vertexShader = `
+varying vec2 vUv;
+varying vec3 vPosition;
 
-    const ctx = canvas.getContext('2d');
-    let animationFrameId;
-    let time = 0;
+void main() {
+  vPosition = position;
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`;
 
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
+const fragmentShader = `
+varying vec2 vUv;
+varying vec3 vPosition;
 
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+uniform float uTime;
+uniform vec3  uColor;
+uniform float uSpeed;
+uniform float uScale;
+uniform float uRotation;
+uniform float uNoiseIntensity;
 
-    const hexToRgb = (hex) => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result
-        ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16),
-          }
-        : { r: 0, g: 0, b: 0 };
-    };
+const float e = 2.71828182845904523536;
 
-    const rgb = hexToRgb(color);
+float noise(vec2 texCoord) {
+  float G = e;
+  vec2  r = (G * sin(G * texCoord));
+  return fract(r.x * r.y * (1.0 + texCoord.x));
+}
 
-    const noise = (x, y, t) => {
-      const X = Math.floor(x) & 255;
-      const Y = Math.floor(y) & 255;
-      const T = Math.floor(t) & 255;
+vec2 rotateUvs(vec2 uv, float angle) {
+  float c = cos(angle);
+  float s = sin(angle);
+  mat2  rot = mat2(c, -s, s, c);
+  return rot * uv;
+}
 
-      x -= Math.floor(x);
-      y -= Math.floor(y);
-      t -= Math.floor(t);
+void main() {
+  float rnd        = noise(gl_FragCoord.xy);
+  vec2  uv         = rotateUvs(vUv * uScale, uRotation);
+  vec2  tex        = uv * uScale;
+  float tOffset    = uSpeed * uTime;
 
-      const u = fade(x);
-      const v = fade(y);
-      const w = fade(t);
+  tex.y += 0.03 * sin(8.0 * tex.x - tOffset);
 
-      const A = (X + Y + T) & 255;
-      const B = (X + Y + T + 1) & 255;
+  float pattern = 0.6 +
+                  0.4 * sin(5.0 * (tex.x + tex.y +
+                                   cos(3.0 * tex.x + 5.0 * tex.y) +
+                                   0.02 * tOffset) +
+                           sin(20.0 * (tex.x + tex.y - 0.1 * tOffset)));
 
-      return lerp(
-        w,
-        lerp(v, lerp(u, grad(A, x, y, t), grad(B, x - 1, y, t)), lerp(u, grad(A + 1, x, y - 1, t), grad(B + 1, x - 1, y - 1, t))),
-        lerp(v, lerp(u, grad(A, x, y, t - 1), grad(B, x - 1, y, t - 1)), lerp(u, grad(A + 1, x, y - 1, t - 1), grad(B + 1, x - 1, y - 1, t - 1)))
-      );
-    };
+  vec4 col = vec4(uColor, 1.0) * vec4(pattern) - rnd / 15.0 * uNoiseIntensity;
+  col.a = 1.0;
+  gl_FragColor = col;
+}
+`;
 
-    const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);
-    const lerp = (t, a, b) => a + t * (b - a);
-    const grad = (hash, x, y, t) => {
-      const h = hash & 15;
-      const u = h < 8 ? x : y;
-      const v = h < 4 ? y : h === 12 || h === 14 ? x : t;
-      return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
-    };
+const SilkPlane = forwardRef(function SilkPlane({ uniforms }, ref) {
+  const { viewport } = useThree();
 
-    const animate = () => {
-      time += speed * 0.001;
+  useLayoutEffect(() => {
+    if (ref.current) {
+      ref.current.scale.set(viewport.width, viewport.height, 1);
+    }
+  }, [ref, viewport]);
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const imageData = ctx.createImageData(canvas.width, canvas.height);
-      const data = imageData.data;
-
-      for (let y = 0; y < canvas.height; y += 2) {
-        for (let x = 0; x < canvas.width; x += 2) {
-          const nx = (x / canvas.width) * scale + Math.cos(rotation);
-          const ny = (y / canvas.height) * scale + Math.sin(rotation);
-
-          const n = noise(nx * 5, ny * 5, time) * noiseIntensity;
-          const brightness = (n + 1) * 0.5;
-
-          const idx = (y * canvas.width + x) * 4;
-          data[idx] = rgb.r * brightness;
-          data[idx + 1] = rgb.g * brightness;
-          data[idx + 2] = rgb.b * brightness;
-          data[idx + 3] = 255;
-
-          // Fill 2x2 block for performance
-          if (x + 1 < canvas.width) {
-            data[idx + 4] = data[idx];
-            data[idx + 5] = data[idx + 1];
-            data[idx + 6] = data[idx + 2];
-            data[idx + 7] = 255;
-          }
-          if (y + 1 < canvas.height) {
-            const idx2 = ((y + 1) * canvas.width + x) * 4;
-            data[idx2] = data[idx];
-            data[idx2 + 1] = data[idx + 1];
-            data[idx2 + 2] = data[idx + 2];
-            data[idx2 + 3] = 255;
-            if (x + 1 < canvas.width) {
-              data[idx2 + 4] = data[idx];
-              data[idx2 + 5] = data[idx + 1];
-              data[idx2 + 6] = data[idx + 2];
-              data[idx2 + 7] = 255;
-            }
-          }
-        }
-      }
-
-      ctx.putImageData(imageData, 0, 0);
-      animationFrameId = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    return () => {
-      window.removeEventListener('resize', resizeCanvas);
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [speed, scale, color, noiseIntensity, rotation]);
+  useFrame((_, delta) => {
+    ref.current.material.uniforms.uTime.value += 0.1 * delta;
+  });
 
   return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: 0,
-      }}
-    />
+    <mesh ref={ref}>
+      <planeGeometry args={[1, 1, 1, 1]} />
+      <shaderMaterial uniforms={uniforms} vertexShader={vertexShader} fragmentShader={fragmentShader} />
+    </mesh>
+  );
+});
+SilkPlane.displayName = 'SilkPlane';
+
+const Silk = ({ speed = 5, scale = 1, color = '#7B7481', noiseIntensity = 1.5, rotation = 0 }) => {
+  const meshRef = useRef();
+
+  const uniforms = useMemo(
+    () => ({
+      uSpeed: { value: speed },
+      uScale: { value: scale },
+      uNoiseIntensity: { value: noiseIntensity },
+      uColor: { value: new Color(...hexToNormalizedRGB(color)) },
+      uRotation: { value: rotation },
+      uTime: { value: 0 }
+    }),
+    [speed, scale, noiseIntensity, color, rotation]
+  );
+
+  return (
+    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
+      <Canvas dpr={[1, 2]} frameloop="always">
+        <SilkPlane ref={meshRef} uniforms={uniforms} />
+      </Canvas>
+    </div>
   );
 };
 
