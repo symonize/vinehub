@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { wineriesAPI, winesAPI, getFileUrl } from '../../utils/api';
-import { ArrowLeft, Edit, Building2 } from 'lucide-react';
+import { ArrowLeft, Edit } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import './Wineries.css';
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
-import { Download, Upload, RotateCcw, Save } from 'lucide-react';
+import { Download, Upload, RotateCcw } from 'lucide-react';
 import { toast } from 'react-toastify';
 import './StyleGuide.css';
 

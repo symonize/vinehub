@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { PageTitleProvider } from '../context/PageTitleContext';
-import { Wine, Home, Building2, GlassWater, LogOut, Palette, LayoutDashboard } from 'lucide-react';
+import { Wine, Building2, LogOut, LayoutDashboard } from 'lucide-react';
 import ContentHeader from './ContentHeader';
 import './Layout.css';
 

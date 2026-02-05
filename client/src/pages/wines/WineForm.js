@@ -4,7 +4,7 @@ import { useQuery } from 'react-query';
 import { winesAPI, wineriesAPI, vintagesAPI, aiAPI } from '../../utils/api';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
-import { Plus, Wine, Sparkles, Loader, X, Tag, Droplet, MapPin, Grape, FileText, Utensils } from 'lucide-react';
+import { Wine, Sparkles, Loader, X, Tag, Droplet, MapPin, Grape, FileText, Utensils } from 'lucide-react';
 import { usePageTitle } from '../../context/PageTitleContext';
 import './Wines.css';
 
@@ -58,7 +58,7 @@ const WineForm = () => {
   useEffect(() => {
     const wine = wineData?.data?.data;
     const wineries = wineriesData?.data?.data || [];
-    const wineryName = wine?.winery?.name || wineries.find(w => w._id === wine?.winery)?.name;
+    // const wineryName = wine?.winery?.name || wineries.find(w => w._id === wine?.winery)?.name;
 
     if (isEdit && wine) {
       setCustomTitle(wine.name);
@@ -155,7 +155,7 @@ const WineForm = () => {
   const wineries = wineriesData?.data?.data || [];
   const vintages = vintagesData?.data?.data || [];
   const wine = wineData?.data?.data;
-  const wineryName = wine?.winery?.name || wineries.find(w => w._id === wine?.winery)?.name;
+  // const wineryName = wine?.winery?.name || wineries.find(w => w._id === wine?.winery)?.name;
 
   const getWineTypeColor = (wineType) => {
     const colors = {

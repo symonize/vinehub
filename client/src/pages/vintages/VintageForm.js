@@ -25,7 +25,7 @@ const VintageForm = () => {
   });
   const [uploadingAsset, setUploadingAsset] = useState(null);
 
-  const selectedWineryId = watch('wine');
+  // const selectedWineryId = watch('wine');
 
   // Fetch wines for dropdown
   const { data: winesData } = useQuery('wines-all', () =>
