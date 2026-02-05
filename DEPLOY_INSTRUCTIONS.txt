@@ -1,0 +1,171 @@
+================================================================================
+                    WINEHUB CMS - DEPLOYMENT INSTRUCTIONS
+================================================================================
+
+YOUR MONGODB CONNECTION STRING (COMPLETE):
+mongodb+srv://simon_db_user:Zu7rQps3ASdqA5cw@winehub.qrodiu7.mongodb.net/winehub?appName=WineHub
+
+================================================================================
+                              STEP-BY-STEP GUIDE
+================================================================================
+
+STEP 1: CONFIGURE MONGODB ATLAS
+--------------------------------
+1. Go to: https://cloud.mongodb.com
+2. Log in to your account
+3. Click "Network Access" in the left sidebar
+4. Click "ADD IP ADDRESS"
+5. Click "ALLOW ACCESS FROM ANYWHERE"
+6. Click "Confirm"
+   (This allows Render's servers to connect to your database)
+
+STEP 2: PUSH TO GITHUB
+----------------------
+Run these commands in your terminal:
+
+    cd "/Users/simonmilberg/Desktop/WineHub CMS"
+    git add .
+    git commit -m "Initial commit - WineHub CMS ready for deployment"
+
+Then:
+1. Go to GitHub.com and create a new repository
+2. Name it: winehub-cms (or whatever you prefer)
+3. DO NOT initialize with README (your project already has files)
+4. Copy the repository URL
+
+Back in terminal, run:
+
+    git remote add origin YOUR_GITHUB_REPO_URL
+    git branch -M main
+    git push -u origin main
+
+STEP 3: DEPLOY ON RENDER
+-------------------------
+1. Go to: https://render.com
+2. Sign in with your GitHub account
+3. Click the "New +" button (top right)
+4. Select "Blueprint"
+5. Click "Connect Account" if needed
+6. Find and select your "winehub-cms" repository
+7. Render will detect the render.yaml file
+
+STEP 4: SET ENVIRONMENT VARIABLES
+----------------------------------
+Render will show you environment variables to configure:
+
+FOR BACKEND (winehub-cms-api):
+------------------------------
+MONGODB_URI = mongodb+srv://simon_db_user:Zu7rQps3ASdqA5cw@winehub.qrodiu7.mongodb.net/winehub?appName=WineHub
+JWT_SECRET = (click "Generate" or leave it to auto-generate)
+JWT_EXPIRE = 7d
+CLIENT_URL = (leave blank for now - will update in Step 6)
+
+FOR FRONTEND (winehub-cms-client):
+----------------------------------
+REACT_APP_API_URL = (leave blank for now - will update in Step 6)
+
+Click "Apply" to start deployment.
+
+STEP 5: WAIT FOR DEPLOYMENT
+----------------------------
+- Backend will deploy first (5-7 minutes)
+- Frontend will deploy next (3-5 minutes)
+- You'll see progress in the Render dashboard
+
+After deployment, you'll get these URLs:
+- Backend API: https://winehub-cms-api.onrender.com
+- Frontend: https://winehub-cms-client.onrender.com
+
+STEP 6: UPDATE CROSS-REFERENCES
+--------------------------------
+Now that both services are live, connect them:
+
+1. Go to your Backend service in Render
+2. Click "Environment" in the left sidebar
+3. Find CLIENT_URL and update it to:
+   https://winehub-cms-client.onrender.com
+4. Click "Save Changes" (will trigger auto-redeploy)
+
+5. Go to your Frontend service in Render
+6. Click "Environment" in the left sidebar
+7. Add new variable:
+   Key: REACT_APP_API_URL
+   Value: https://winehub-cms-api.onrender.com
+8. Click "Save Changes" (will trigger auto-redeploy)
+
+Wait 2-3 minutes for services to redeploy.
+
+STEP 7: TEST YOUR LIVE SITE!
+-----------------------------
+Visit: https://winehub-cms-client.onrender.com
+
+Try to:
+- Log in (or create an account if needed)
+- Add a wine entry
+- Upload an image
+- Navigate through the dashboard
+
+================================================================================
+                              IMPORTANT NOTES
+================================================================================
+
+FREE TIER LIMITATIONS:
+- Services sleep after 15 minutes of inactivity
+- First request after sleep takes 30-60 seconds to wake up
+- This is normal for free tier
+
+FILE UPLOADS:
+- Render's free tier has ephemeral storage
+- Uploaded files will disappear when service restarts
+- For permanent storage, you'll need to integrate Cloudinary (free tier available)
+- I can help you set this up after deployment
+
+KEEP YOUR SITE AWAKE (OPTIONAL):
+Use a free monitoring service to ping your site every 15 minutes:
+- UptimeRobot: https://uptimerobot.com
+- Cron-job.org: https://cron-job.org
+
+================================================================================
+                              TROUBLESHOOTING
+================================================================================
+
+IF YOU GET "CANNOT CONNECT TO DATABASE":
+- Double-check Network Access in MongoDB Atlas allows 0.0.0.0/0
+- Verify the connection string in Render exactly matches above
+- Check MongoDB Atlas database user exists
+
+IF YOU GET CORS ERRORS:
+- Verify CLIENT_URL in backend matches frontend URL exactly
+- Make sure both URLs include https://
+- No trailing slashes
+
+IF BUILD FAILS:
+- Check the Render logs (click on the failed service)
+- Look for specific error messages
+- Common issues: missing dependencies, Node version mismatch
+
+================================================================================
+                              YOUR DEPLOYMENT
+================================================================================
+
+MongoDB Connection String:
+mongodb+srv://simon_db_user:Zu7rQps3ASdqA5cw@winehub.qrodiu7.mongodb.net/winehub?appName=WineHub
+
+Expected URLs after deployment:
+- Frontend: https://winehub-cms-client.onrender.com
+- Backend API: https://winehub-cms-api.onrender.com
+
+================================================================================
+                              NEXT STEPS
+================================================================================
+
+After successful deployment:
+1. ✅ Test all functionality
+2. ⚙️ Set up Cloudinary for persistent file storage
+3. 🔒 Add custom domain (optional)
+4. 📊 Set up monitoring
+5. 💾 Configure database backups
+
+Need help? Check the Render logs or ask for assistance!
+
+================================================================================

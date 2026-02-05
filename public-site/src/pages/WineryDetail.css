@@ -1,0 +1,79 @@
+.winery-hero {
+  background: linear-gradient(135deg, var(--bg-light), var(--bg-white));
+  padding: 4rem 0;
+  margin-bottom: 3rem;
+}
+
+.winery-hero-content {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+}
+
+.winery-logo {
+  width: 200px;
+  height: 200px;
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.winery-logo img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.winery-info h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.winery-info .winery-region {
+  color: var(--primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.winery-about {
+  margin-bottom: 4rem;
+}
+
+.winery-about h2 {
+  margin-bottom: 1.5rem;
+}
+
+.winery-about p {
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: var(--text-dark);
+}
+
+.winery-wines {
+  margin-bottom: 4rem;
+}
+
+.winery-wines h2 {
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .winery-hero-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .winery-info h1 {
+    font-size: 2rem;
+  }
+
+  .winery-logo {
+    width: 150px;
+    height: 150px;
+  }
+}

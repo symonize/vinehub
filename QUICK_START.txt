@@ -1,0 +1,101 @@
+═══════════════════════════════════════════════════════════════
+  🍷 WINEHUB CMS - QUICK START GUIDE
+═══════════════════════════════════════════════════════════════
+
+✅ SETUP IS COMPLETE! Database has been seeded with sample data.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 IMPORTANT: Port 5000 was occupied by macOS Control Center
+   → Changed backend to PORT 5001 instead
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 TO START THE APPLICATION:
+
+   cd "/Users/simonmilberg/Desktop/WineHub CMS"
+   npm run dev
+
+   This will start:
+   • Backend API on http://localhost:5001
+   • Frontend on http://localhost:3000
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔐 LOGIN CREDENTIALS:
+
+   Email: admin@winehub.com
+   Password: admin123
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌐 ACCESS POINTS:
+
+   Frontend (Admin Panel): http://localhost:3000
+   Backend API:            http://localhost:5001
+   API Health Check:       http://localhost:5001/api/health
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚡ ALTERNATIVE START METHODS:
+
+   1. Using the start script:
+      ./start.sh
+
+   2. Manual (two terminals):
+      Terminal 1: npm run server
+      Terminal 2: npm run client
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🆘 TROUBLESHOOTING:
+
+   If you see "port in use" errors:
+
+   lsof -ti:5001 | xargs kill -9  # Kill backend
+   lsof -ti:3000 | xargs kill -9  # Kill frontend
+
+   Then run: npm run dev
+
+   If MongoDB connection fails:
+
+   brew services start mongodb-community
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 WHAT'S INCLUDED:
+
+   ✅ Complete backend API (Node.js + Express + MongoDB)
+   ✅ Authentication & authorization (JWT, roles)
+   ✅ Winery management (fully functional)
+   ✅ File upload system
+   ✅ Sample data (1 winery, 2 wines, 3 vintages)
+
+   🚧 Wine pages (stub files - follow Winery pattern)
+   🚧 Vintage pages (stub files - follow Winery pattern)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📖 MORE INFO:
+
+   START_HERE.md       - Detailed setup guide
+   SETUP.md            - Complete documentation
+   TROUBLESHOOTING.md  - Problem solving
+   README.md           - API endpoints & features
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 FIRST STEPS:
+
+   1. Run: npm run dev
+   2. Open: http://localhost:3000
+   3. Login with credentials above
+   4. Explore the dashboard and wineries
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Need help? Check TROUBLESHOOTING.md
+
+Ready to start? Run: npm run dev
+
+═══════════════════════════════════════════════════════════════
