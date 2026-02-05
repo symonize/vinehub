@@ -69,12 +69,6 @@ const Login = () => {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-
-        <div className="login-footer">
-          <p>Default credentials:</p>
-          <p><strong>Email:</strong> admin@winehub.com</p>
-          <p><strong>Password:</strong> admin123</p>
-        </div>
       </div>
     </div>
   );
