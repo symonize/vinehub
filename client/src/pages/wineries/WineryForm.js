@@ -131,17 +131,19 @@ const WineryForm = () => {
 
           <div className="form-group">
             <label className="form-label">Featured Image</label>
-            <div className="file-input-wrapper">
-              <label className="file-input-label">
-                <Upload size={20} />
-                <span>Choose Featured Image</span>
-                <input
-                  type="file"
-                  accept="image/*,.webp"
-                  onChange={(e) => handleFileUpload(e.target.files[0], 'featured')}
-                />
-              </label>
-            </div>
+            {!featuredImage && (
+              <div className="file-input-wrapper">
+                <label className="file-input-label">
+                  <Upload size={20} />
+                  <span>Choose Featured Image</span>
+                  <input
+                    type="file"
+                    accept="image/*,.webp"
+                    onChange={(e) => handleFileUpload(e.target.files[0], 'featured')}
+                  />
+                </label>
+              </div>
+            )}
             {featuredImage && (
               <div className="file-preview">
                 <img src={getFileUrl(featuredImage.path)} alt="Featured" />
@@ -161,17 +163,19 @@ const WineryForm = () => {
 
           <div className="form-group">
             <label className="form-label">Logo</label>
-            <div className="file-input-wrapper">
-              <label className="file-input-label">
-                <Upload size={20} />
-                <span>Choose Logo</span>
-                <input
-                  type="file"
-                  accept="image/*,.webp"
-                  onChange={(e) => handleFileUpload(e.target.files[0], 'logo')}
-                />
-              </label>
-            </div>
+            {!logo && (
+              <div className="file-input-wrapper">
+                <label className="file-input-label">
+                  <Upload size={20} />
+                  <span>Choose Logo</span>
+                  <input
+                    type="file"
+                    accept="image/*,.webp"
+                    onChange={(e) => handleFileUpload(e.target.files[0], 'logo')}
+                  />
+                </label>
+              </div>
+            )}
             {logo && (
               <div className="file-preview">
                 <img src={getFileUrl(logo.path)} alt="Logo" />
