@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import { ReactComponent as VinoHubLogo } from '../assets/VinoHub-logo-red.svg';
+import Silk from '../components/Silk';
 import './Login.css';
 
 const Login = () => {
@@ -30,6 +31,13 @@ const Login = () => {
 
   return (
     <div className="login-container">
+      <Silk
+        speed={5}
+        scale={1}
+        color="#722f37"
+        noiseIntensity={1.5}
+        rotation={0}
+      />
       <div className="login-box">
         <div className="login-header">
           <VinoHubLogo className="login-logo" style={{ width: '170px', height: 'auto', marginBottom: '1rem' }} />

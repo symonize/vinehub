@@ -3,8 +3,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #722f37 0%, #5a252c 100%);
+  background: #722f37;
   padding: 1rem;
+  position: relative;
+  overflow: hidden;
 }
 
 .login-box {
@@ -13,7 +15,9 @@
   padding: 3rem;
   width: 100%;
   max-width: 450px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 1;
 }
 
 .login-header {
