@@ -4,6 +4,7 @@ const { body, validationResult } = require('express-validator');
 const Winery = require('../models/Winery');
 const Wine = require('../models/Wine');
 const { protect, authorize } = require('../middleware/auth');
+const { getRandomVineyardImage, searchVineyardImages } = require('../utils/unsplash');
 
 // @route   GET /api/wineries
 // @desc    Get all wineries
@@ -204,6 +205,95 @@ router.delete('/:id', protect, authorize('admin'), async (req, res) => {
     res.json({
       success: true,
       message: 'Winery deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   POST /api/wineries/bulk-add-images
+// @desc    Bulk add featured images to wineries from Unsplash
+// @access  Private (Admin only)
+router.post('/bulk-add-images', protect, authorize('admin'), async (req, res) => {
+  try {
+    const { overwrite = false } = req.body;
+
+    // Get all wineries without featured images or all if overwrite is true
+    const query = overwrite ? {} : { 'featuredImage.path': { $exists: false } };
+    const wineries = await Winery.find(query);
+
+    if (wineries.length === 0) {
+      return res.json({
+        success: true,
+        message: 'All wineries already have featured images',
+        count: 0,
+        data: []
+      });
+    }
+
+    const updated = [];
+    const errors = [];
+
+    for (const winery of wineries) {
+      try {
+        const image = await getRandomVineyardImage('vineyard,winery,wine estate');
+
+        winery.featuredImage = {
+          filename: `${image.id}.jpg`,
+          path: image.url,
+          mimetype: 'image/jpeg',
+          size: 0,
+          uploadedAt: new Date()
+        };
+
+        await winery.save();
+        updated.push({
+          wineryId: winery._id,
+          wineryName: winery.name,
+          imageUrl: image.url,
+          photographer: image.photographer
+        });
+      } catch (error) {
+        errors.push({
+          wineryId: winery._id,
+          wineryName: winery.name,
+          error: error.message
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Successfully added images to ${updated.length} wineries`,
+      count: updated.length,
+      data: updated,
+      errors: errors.length > 0 ? errors : undefined
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/wineries/unsplash/search
+// @desc    Search Unsplash for vineyard images
+// @access  Private (Admin, Editor)
+router.get('/unsplash/search', protect, authorize('admin', 'editor'), async (req, res) => {
+  try {
+    const { query = 'vineyard', page = 1, perPage = 20 } = req.query;
+    const images = await searchVineyardImages(query, parseInt(perPage), parseInt(page));
+
+    res.json({
+      success: true,
+      count: images.length,
+      data: images
     });
   } catch (error) {
     res.status(500).json({
