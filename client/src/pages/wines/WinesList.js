@@ -11,14 +11,13 @@ const WinesList = () => {
   const { isEditor } = useAuth();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState('');
   const [type, setType] = useState('');
   const [region, setRegion] = useState('');
   const [viewMode, setViewMode] = useState('table');
 
   const { data, isLoading, refetch } = useQuery(
-    ['wines', page, search, status, type, region],
-    () => winesAPI.getAll({ page, search, status, type, region, limit: 10 }),
+    ['wines', page, search, type, region],
+    () => winesAPI.getAll({ page, search, type, region, limit: 10 }),
     { keepPreviousData: true }
   );
 
@@ -53,23 +52,7 @@ const WinesList = () => {
 
   return (
     <div className="page-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <div className="view-toggle">
-          <button
-            onClick={() => setViewMode('table')}
-            className={`btn-icon ${viewMode === 'table' ? 'active' : ''}`}
-            title="Table View"
-          >
-            <List size={20} />
-          </button>
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`btn-icon ${viewMode === 'grid' ? 'active' : ''}`}
-            title="Grid View"
-          >
-            <LayoutGrid size={20} />
-          </button>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '1.5rem' }}>
         {isEditor() && (
           <Link to="/wines/new" className="btn btn-primary">
             <Plus size={20} />
@@ -79,7 +62,7 @@ const WinesList = () => {
       </div>
 
       <div className="filters-bar">
-        <div className="search-box">
+        <div className="search-box" style={{ maxWidth: '250px' }}>
           <Search size={20} />
           <input
             type="text"
@@ -123,16 +106,22 @@ const WinesList = () => {
           <option value="Other">Other</option>
         </select>
 
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="filter-select"
-        >
-          <option value="">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-          <option value="archived">Archived</option>
-        </select>
+        <div className="view-toggle">
+          <button
+            onClick={() => setViewMode('table')}
+            className={`btn-icon ${viewMode === 'table' ? 'active' : ''}`}
+            title="Table View"
+          >
+            <List size={20} />
+          </button>
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`btn-icon ${viewMode === 'grid' ? 'active' : ''}`}
+            title="Grid View"
+          >
+            <LayoutGrid size={20} />
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -170,8 +159,17 @@ const WinesList = () => {
                       style={{ cursor: 'pointer' }}
                     >
                       <td>
-                        <div className="wine-name">
-                          <strong>{wine.name}</strong>
+                        <div className="wine-name" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div className="wine-thumbnail">
+                            {wine.bottleImage?.url ? (
+                              <img src={wine.bottleImage.url} alt={wine.name} style={{ width: '40px', height: '60px', objectFit: 'contain' }} />
+                            ) : (
+                              <div style={{ width: '40px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5', borderRadius: '4px' }}>
+                                <WineIcon size={24} style={{ color: getWineTypeColor(wine.type) }} />
+                              </div>
+                            )}
+                          </div>
+                          <strong style={{ fontFamily: 'Grenette, sans-serif' }}>{wine.name}</strong>
                         </div>
                       </td>
                       <td>
