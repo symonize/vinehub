@@ -14,7 +14,7 @@ const VintageForm = () => {
   const preselectedWine = searchParams.get('wine');
   const isEdit = !!id;
 
-  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm();
+  const { register, handleSubmit, formState: { errors }, reset } = useForm();
   const [loading, setLoading] = useState(false);
   const [assets, setAssets] = useState({
     bottleImage: null,
