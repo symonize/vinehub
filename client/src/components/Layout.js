@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { PageTitleProvider } from '../context/PageTitleContext';
-import { Wine, Building2, LogOut, LayoutDashboard } from 'lucide-react';
+import { Wine, Building2, LogOut, LayoutDashboard, Users } from 'lucide-react';
 import ContentHeader from './ContentHeader';
 import './Layout.css';
 
@@ -40,6 +40,13 @@ const Layout = () => {
           <NavLink to="/wineries" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
             <Building2 size={20} />
             <span>Wineries</span>
+          </NavLink>
+
+          <div className="nav-section-label">SETTINGS</div>
+
+          <NavLink to="/users" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+            <Users size={20} />
+            <span>Users</span>
           </NavLink>
         </nav>
 

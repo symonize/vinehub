@@ -18,6 +18,7 @@ import WineDetail from './pages/wines/WineDetail';
 import VintagesList from './pages/vintages/VintagesList';
 import VintageForm from './pages/vintages/VintageForm';
 import VintageDetail from './pages/vintages/VintageDetail';
+import UserManagement from './pages/users/UserManagement';
 import StyleGuide from './pages/StyleGuide';
 
 // Layout
@@ -97,6 +98,9 @@ function AppRoutes() {
         <Route path="vintages/new" element={<VintageForm />} />
         <Route path="vintages/:id" element={<VintageDetail />} />
         <Route path="vintages/:id/edit" element={<VintageForm />} />
+
+        {/* Users */}
+        <Route path="users" element={<UserManagement />} />
 
         {/* Style Guide */}
         <Route path="style-guide" element={<StyleGuide />} />

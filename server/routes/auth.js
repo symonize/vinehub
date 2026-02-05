@@ -197,4 +197,105 @@ router.get('/users', protect, authorize('admin'), async (req, res) => {
   }
 });
 
+// @route   PUT /api/auth/users/:id
+// @desc    Update user
+// @access  Private (Admin only)
+router.put('/users/:id', [
+  protect,
+  authorize('admin'),
+  body('email').isEmail().normalizeEmail().optional(),
+  body('firstName').trim().notEmpty().optional(),
+  body('lastName').trim().notEmpty().optional(),
+  body('role').isIn(['admin', 'editor', 'viewer']).optional(),
+  body('isActive').isBoolean().optional()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      errors: errors.array()
+    });
+  }
+
+  try {
+    const { email, firstName, lastName, role, isActive } = req.body;
+
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if email is being changed and if it already exists
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already in use'
+        });
+      }
+      user.email = email;
+    }
+
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
+    if (role) user.role = role;
+    if (typeof isActive === 'boolean') user.isActive = isActive;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   DELETE /api/auth/users/:id
+// @desc    Delete user
+// @access  Private (Admin only)
+router.delete('/users/:id', protect, authorize('admin'), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Prevent admin from deleting themselves
+    if (user._id.toString() === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot delete your own account'
+      });
+    }
+
+    await user.deleteOne();
+
+    res.json({
+      success: true,
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

@@ -43,7 +43,9 @@ export const authAPI = {
   register: (userData) => api.post('/auth/register', userData),
   getMe: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/me', data),
-  getUsers: () => api.get('/auth/users')
+  getUsers: () => api.get('/auth/users'),
+  updateUser: (id, data) => api.put(`/auth/users/${id}`, data),
+  deleteUser: (id) => api.delete(`/auth/users/${id}`)
 };
 
 // Wineries API
