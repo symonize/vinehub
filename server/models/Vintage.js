@@ -20,14 +20,14 @@ const vintageSchema = new mongoose.Schema({
       size: Number,
       uploadedAt: Date
     },
-    techSheet: {
+    labelImage: {
       filename: String,
       path: String,
       mimetype: String,
       size: Number,
       uploadedAt: Date
     },
-    shelfTalker: {
+    techSheet: {
       filename: String,
       path: String,
       mimetype: String,
@@ -41,7 +41,14 @@ const vintageSchema = new mongoose.Schema({
       size: Number,
       uploadedAt: Date
     },
-    labelImage: {
+    lifestyleImage: {
+      filename: String,
+      path: String,
+      mimetype: String,
+      size: Number,
+      uploadedAt: Date
+    },
+    shelfTalker: {
       filename: String,
       path: String,
       mimetype: String,

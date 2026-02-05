@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { Wine, Sparkles, Loader, X, Tag, Droplet, MapPin, Grape, FileText, Utensils } from 'lucide-react';
 import { usePageTitle } from '../../context/PageTitleContext';
+import AssetSheet from '../../components/AssetSheet';
 import './Wines.css';
 
 const WineForm = () => {
@@ -19,6 +20,7 @@ const WineForm = () => {
   const [awards, setAwards] = useState([]);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState(null);
+  const [selectedVintage, setSelectedVintage] = useState(null);
 
   // Watch form fields for image generation
   const watchedFields = watch(['name', 'type', 'variety', 'region', 'winery']);
@@ -36,7 +38,7 @@ const WineForm = () => {
   );
 
   // Fetch vintages if editing
-  const { data: vintagesData } = useQuery(
+  const { data: vintagesData, refetch: refetchVintages } = useQuery(
     ['vintages-by-wine', id],
     () => vintagesAPI.getAll({ wine: id }),
     { enabled: isEdit }
@@ -369,13 +371,13 @@ const WineForm = () => {
               ) : (
                 <div className="vintages-year-cards">
                   {vintages.map((vintage) => (
-                    <Link
+                    <button
                       key={vintage._id}
-                      to={`/vintages/${vintage._id}`}
+                      onClick={() => setSelectedVintage(vintage)}
                       className="vintage-year-card"
                     >
                       {vintage.year}
-                    </Link>
+                    </button>
                   ))}
                 </div>
               )}
@@ -383,6 +385,18 @@ const WineForm = () => {
           </div>
         )}
       </div>
+
+      {selectedVintage && (
+        <AssetSheet
+          vintage={selectedVintage}
+          wineName={wine?.name || ''}
+          onClose={() => setSelectedVintage(null)}
+          onUpdate={() => {
+            refetchVintages();
+            setSelectedVintage(null);
+          }}
+        />
+      )}
     </div>
   );
 };

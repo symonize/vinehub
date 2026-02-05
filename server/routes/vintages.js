@@ -249,7 +249,7 @@ router.delete('/:id', protect, authorize('admin', 'editor'), async (req, res) =>
 router.put('/:id/assets/:assetType', protect, authorize('admin', 'editor'), async (req, res) => {
   try {
     const { assetType } = req.params;
-    const allowedTypes = ['bottleImage', 'techSheet', 'shelfTalker', 'tastingCard', 'labelImage'];
+    const allowedTypes = ['bottleImage', 'labelImage', 'techSheet', 'tastingCard', 'lifestyleImage', 'shelfTalker'];
 
     if (!allowedTypes.includes(assetType)) {
       return res.status(400).json({
@@ -291,7 +291,7 @@ router.put('/:id/assets/:assetType', protect, authorize('admin', 'editor'), asyn
 router.delete('/:id/assets/:assetType', protect, authorize('admin', 'editor'), async (req, res) => {
   try {
     const { assetType } = req.params;
-    const allowedTypes = ['bottleImage', 'techSheet', 'shelfTalker', 'tastingCard', 'labelImage'];
+    const allowedTypes = ['bottleImage', 'labelImage', 'techSheet', 'tastingCard', 'lifestyleImage', 'shelfTalker'];
 
     if (!allowedTypes.includes(assetType)) {
       return res.status(400).json({
