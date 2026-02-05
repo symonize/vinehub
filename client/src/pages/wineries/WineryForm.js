@@ -137,7 +137,7 @@ const WineryForm = () => {
                 <span>Choose Featured Image</span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.webp"
                   onChange={(e) => handleFileUpload(e.target.files[0], 'featured')}
                 />
               </label>
@@ -167,7 +167,7 @@ const WineryForm = () => {
                 <span>Choose Logo</span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.webp"
                   onChange={(e) => handleFileUpload(e.target.files[0], 'logo')}
                 />
               </label>

@@ -282,7 +282,7 @@ const VintageForm = () => {
           <AssetUpload
             label="Bottle Image"
             assetType="bottleImage"
-            accept="image/*"
+            accept="image/*,.webp"
             asset={assets.bottleImage}
             uploading={uploadingAsset === 'bottleImage'}
             onUpload={handleFileUpload}
@@ -302,7 +302,7 @@ const VintageForm = () => {
           <AssetUpload
             label="Shelf Talker"
             assetType="shelfTalker"
-            accept="image/*,.pdf"
+            accept="image/*,.pdf,.webp"
             asset={assets.shelfTalker}
             uploading={uploadingAsset === 'shelfTalker'}
             onUpload={handleFileUpload}
@@ -312,7 +312,7 @@ const VintageForm = () => {
           <AssetUpload
             label="Tasting Card"
             assetType="tastingCard"
-            accept="image/*,.pdf"
+            accept="image/*,.pdf,.webp"
             asset={assets.tastingCard}
             uploading={uploadingAsset === 'tastingCard'}
             onUpload={handleFileUpload}
@@ -322,7 +322,7 @@ const VintageForm = () => {
           <AssetUpload
             label="Label Image"
             assetType="labelImage"
-            accept="image/*"
+            accept="image/*,.webp"
             asset={assets.labelImage}
             uploading={uploadingAsset === 'labelImage'}
             onUpload={handleFileUpload}

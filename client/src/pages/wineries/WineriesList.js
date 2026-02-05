@@ -178,9 +178,13 @@ const WineriesList = () => {
             <div className="items-grid">
               {wineries.map((winery) => (
                 <Link key={winery._id} to={`/wineries/${winery._id}/edit`} className="item-card">
-                  {winery.logo?.path ? (
+                  {winery.featuredImage?.path || winery.logo?.path ? (
                     <div className="item-card-image">
-                      <img src={getFileUrl(winery.logo.path)} alt={winery.name} />
+                      <img
+                        src={getFileUrl(winery.featuredImage?.path || winery.logo?.path)}
+                        alt={winery.name}
+                        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                      />
                     </div>
                   ) : (
                     <div className="item-card-icon">

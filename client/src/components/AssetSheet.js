@@ -8,11 +8,11 @@ const AssetSheet = ({ vintage, wineName, onClose, onUpdate }) => {
   const [uploading, setUploading] = useState({});
 
   const assetTypes = [
-    { key: 'bottleImage', label: 'Bottle Image', icon: Image, accept: 'image/*' },
-    { key: 'labelImage', label: 'Label', icon: Image, accept: 'image/*' },
+    { key: 'bottleImage', label: 'Bottle Image', icon: Image, accept: 'image/*,.webp' },
+    { key: 'labelImage', label: 'Label', icon: Image, accept: 'image/*,.webp' },
     { key: 'techSheet', label: 'Tech Sheet', icon: FileText, accept: '.pdf' },
-    { key: 'tastingCard', label: 'Tasting Card', icon: FileText, accept: '.pdf,image/*' },
-    { key: 'lifestyleImage', label: 'Lifestyle Image', icon: Image, accept: 'image/*' }
+    { key: 'tastingCard', label: 'Tasting Card', icon: FileText, accept: '.pdf,image/*,.webp' },
+    { key: 'lifestyleImage', label: 'Lifestyle Image', icon: Image, accept: 'image/*,.webp' }
   ];
 
   const handleFileSelect = async (assetType, event) => {
