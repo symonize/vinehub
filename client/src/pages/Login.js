@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Wine } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { ReactComponent as VinoHubLogo } from '../assets/VinoHub-logo-red.svg';
 import './Login.css';
 
 const Login = () => {
@@ -32,8 +32,7 @@ const Login = () => {
     <div className="login-container">
       <div className="login-box">
         <div className="login-header">
-          <Wine size={48} className="login-logo" />
-          <h1>WineHub CMS</h1>
+          <VinoHubLogo className="login-logo" style={{ width: '170px', height: 'auto', marginBottom: '1rem' }} />
           <p>Wine Inventory Management System</p>
         </div>
 
