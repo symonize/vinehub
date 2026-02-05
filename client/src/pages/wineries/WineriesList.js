@@ -177,52 +177,27 @@ const WineriesList = () => {
           ) : (
             <div className="items-grid">
               {wineries.map((winery) => (
-                <div key={winery._id} className="item-card">
-                  <Link to={`/wineries/${winery._id}`} className="item-card-link">
-                    {winery.logo?.path ? (
-                      <div className="item-card-image">
-                        <img src={getFileUrl(winery.logo.path)} alt={winery.name} />
-                      </div>
-                    ) : (
-                      <div className="item-card-icon">
-                        <Building2 size={40} style={{ color: 'var(--primary)' }} />
-                      </div>
-                    )}
-                    <div className="item-card-content">
-                      <h3>{winery.name}</h3>
-                      <p className="item-card-description">
-                        {winery.description?.substring(0, 100)}
-                        {winery.description?.length > 100 ? '...' : ''}
-                      </p>
-                      <p className="item-card-date">
-                        Created {new Date(winery.createdAt).toLocaleDateString()}
-                      </p>
+                <Link key={winery._id} to={`/wineries/${winery._id}/edit`} className="item-card">
+                  {winery.logo?.path ? (
+                    <div className="item-card-image">
+                      <img src={getFileUrl(winery.logo.path)} alt={winery.name} />
                     </div>
-                    <div className="item-card-footer">
-                      <span className={`badge badge-${winery.status}`}>
-                        {winery.status}
-                      </span>
-                    </div>
-                  </Link>
-                  {isEditor() && (
-                    <div className="item-card-actions">
-                      <Link
-                        to={`/wineries/${winery._id}/edit`}
-                        className="btn-icon"
-                        title="Edit"
-                      >
-                        <Edit size={16} />
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(winery._id, winery.name)}
-                        className="btn-icon btn-icon-danger"
-                        title="Delete"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                  ) : (
+                    <div className="item-card-icon">
+                      <Building2 size={40} style={{ color: 'var(--primary)' }} />
                     </div>
                   )}
-                </div>
+                  <div className="item-card-content">
+                    <h3>{winery.name}</h3>
+                    <p className="item-card-description">
+                      {winery.description?.substring(0, 100)}
+                      {winery.description?.length > 100 ? '...' : ''}
+                    </p>
+                    <p className="item-card-date">
+                      Created {new Date(winery.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </Link>
               ))}
             </div>
           )}

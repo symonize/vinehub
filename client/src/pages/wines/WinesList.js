@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { winesAPI } from '../../utils/api';
-import { Plus, Search, Edit, Trash2, Eye, Wine as WineIcon, LayoutGrid, List } from 'lucide-react';
+import { Plus, Search, Trash2, Wine as WineIcon, LayoutGrid, List } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import './Wines.css';
@@ -157,30 +157,25 @@ const WinesList = () => {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Wine</th>
+                    <th>Wine Name</th>
                     <th>Winery</th>
                     <th>Type</th>
-                    <th>Region</th>
-                    <th>Variety</th>
-                    <th>Awards</th>
-                    <th>Status</th>
-                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {wines.map((wine) => (
-                    <tr key={wine._id}>
+                    <tr
+                      key={wine._id}
+                      onClick={() => window.location.href = `/wines/${wine._id}/edit`}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <td>
                         <div className="wine-name">
                           <strong>{wine.name}</strong>
                         </div>
                       </td>
                       <td>
-                        {wine.winery?.name && (
-                          <Link to={`/wineries/${wine.winery._id}`} className="winery-link">
-                            {wine.winery.name}
-                          </Link>
-                        )}
+                        {wine.winery?.name || '-'}
                       </td>
                       <td>
                         <span
@@ -193,49 +188,6 @@ const WinesList = () => {
                         >
                           {wine.type}
                         </span>
-                      </td>
-                      <td className="region-cell">{wine.region}</td>
-                      <td className="variety-cell">{wine.variety}</td>
-                      <td>
-                        {wine.awards?.length > 0 ? (
-                          <span className="awards-count">{wine.awards.length} award{wine.awards.length !== 1 ? 's' : ''}</span>
-                        ) : (
-                          <span className="no-awards">None</span>
-                        )}
-                      </td>
-                      <td>
-                        <span className={`badge badge-${wine.status}`}>
-                          {wine.status}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <Link
-                            to={`/wines/${wine._id}`}
-                            className="btn-icon"
-                            title="View"
-                          >
-                            <Eye size={18} />
-                          </Link>
-                          {isEditor() && (
-                            <>
-                              <Link
-                                to={`/wines/${wine._id}/edit`}
-                                className="btn-icon"
-                                title="Edit"
-                              >
-                                <Edit size={18} />
-                              </Link>
-                              <button
-                                onClick={() => handleDelete(wine._id, wine.name)}
-                                className="btn-icon btn-icon-danger"
-                                title="Delete"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </>
-                          )}
-                        </div>
                       </td>
                     </tr>
                   ))}

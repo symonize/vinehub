@@ -39,7 +39,7 @@ const Layout = () => {
 
           <NavLink to="/wineries" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
             <Building2 size={20} />
-            <span>Brands</span>
+            <span>Wineries</span>
           </NavLink>
         </nav>
 
