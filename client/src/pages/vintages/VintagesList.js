@@ -5,6 +5,7 @@ import { vintagesAPI, winesAPI } from '../../utils/api';
 import { Plus, Search, Edit, Trash2, Eye, Calendar } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
+import CustomSelect from '../../components/CustomSelect';
 import './Vintages.css';
 
 const VintagesList = () => {
@@ -68,29 +69,32 @@ const VintagesList = () => {
           />
         </div>
 
-        <select
+        <CustomSelect
           value={wine}
-          onChange={(e) => setWine(e.target.value)}
+          onChange={(value) => setWine(value)}
+          options={[
+            { value: '', label: 'All Wines' },
+            ...wines.map((w) => ({
+              value: w._id,
+              label: `${w.name} (${w.winery?.name})`
+            }))
+          ]}
+          placeholder="All Wines"
           className="filter-select"
-        >
-          <option value="">All Wines</option>
-          {wines.map((w) => (
-            <option key={w._id} value={w._id}>
-              {w.name} ({w.winery?.name})
-            </option>
-          ))}
-        </select>
+        />
 
-        <select
+        <CustomSelect
           value={status}
-          onChange={(e) => setStatus(e.target.value)}
+          onChange={(value) => setStatus(value)}
+          options={[
+            { value: '', label: 'All Status' },
+            { value: 'draft', label: 'Draft' },
+            { value: 'published', label: 'Published' },
+            { value: 'archived', label: 'Archived' }
+          ]}
+          placeholder="All Status"
           className="filter-select"
-        >
-          <option value="">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-          <option value="archived">Archived</option>
-        </select>
+        />
       </div>
 
       {isLoading ? (

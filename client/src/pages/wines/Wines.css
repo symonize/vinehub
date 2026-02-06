@@ -1,3 +1,71 @@
+/* Filters Bar */
+.filters-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 250px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-box svg {
+  position: absolute;
+  left: 1rem;
+  color: var(--text-light);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.625rem 1rem 0.625rem 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(114, 47, 55, 0.1);
+}
+
+.view-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-icon {
+  padding: 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--bg-white);
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-icon.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
 .wine-type-badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;
@@ -385,6 +453,16 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .filters-bar {
+    flex-direction: column;
+  }
+
+  .search-box,
+  .custom-select.filter-select {
+    width: 100%;
+    max-width: none;
+  }
+
   .detail-grid {
     grid-template-columns: 1fr;
   }

@@ -19,6 +19,7 @@
   gap: 2rem;
   align-items: center;
   justify-content: flex-start;
+  font-family: var(--font-family-heading);
 }
 
 .nav-right {
@@ -47,9 +48,36 @@
 .nav-link {
   color: var(--text-dark);
   font-weight: 400;
-  font-size: 0.9375rem;
+  font-size: 1.125rem;
   text-decoration: none;
   transition: color 0.2s;
+}
+
+.nav-link-swap {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+}
+
+.nav-link-swap .nav-link-default,
+.nav-link-swap .nav-link-hover {
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.nav-link-swap .nav-link-hover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(100%);
+}
+
+.nav-link-swap:hover .nav-link-default {
+  transform: translateY(-100%);
+}
+
+.nav-link-swap:hover .nav-link-hover {
+  transform: translateY(0);
 }
 
 .nav-link:hover {

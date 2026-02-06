@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Search, Menu } from 'lucide-react';
 import SearchModal from './SearchModal';
 import { usePageTitle } from '../context/PageTitleContext';
 import './ContentHeader.css';
 
-const ContentHeader = () => {
+const ContentHeader = ({ onMenuClick }) => {
   const location = useLocation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { customTitle, customBreadcrumb } = usePageTitle();
@@ -106,6 +106,9 @@ const ContentHeader = () => {
     <>
       <div className="content-header">
         <div className="content-header-left">
+          <button className="mobile-menu-button" onClick={onMenuClick} aria-label="Open menu">
+            <Menu size={24} />
+          </button>
           <h1 className="content-header-title">{customTitle || getPageTitle()}</h1>
           {breadcrumbs && (
             <div className="breadcrumb">

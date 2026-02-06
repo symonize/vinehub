@@ -5,6 +5,7 @@ import { winesAPI } from '../../utils/api';
 import { Plus, Search, Trash2, Wine as WineIcon, LayoutGrid, List } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
+import CustomSelect from '../../components/CustomSelect';
 import './Wines.css';
 
 const WinesList = () => {
@@ -73,38 +74,42 @@ const WinesList = () => {
           />
         </div>
 
-        <select
+        <CustomSelect
           value={type}
-          onChange={(e) => setType(e.target.value)}
+          onChange={(value) => setType(value)}
+          options={[
+            { value: '', label: 'All Types' },
+            { value: 'red', label: 'Red' },
+            { value: 'white', label: 'White' },
+            { value: 'sparkling', label: 'Sparkling' },
+            { value: 'rosé', label: 'Rosé' },
+            { value: 'dessert', label: 'Dessert' },
+            { value: 'fortified', label: 'Fortified' }
+          ]}
+          placeholder="All Types"
           className="filter-select"
-        >
-          <option value="">All Types</option>
-          <option value="red">Red</option>
-          <option value="white">White</option>
-          <option value="sparkling">Sparkling</option>
-          <option value="rosé">Rosé</option>
-          <option value="dessert">Dessert</option>
-          <option value="fortified">Fortified</option>
-        </select>
+        />
 
-        <select
+        <CustomSelect
           value={region}
-          onChange={(e) => setRegion(e.target.value)}
+          onChange={(value) => setRegion(value)}
+          options={[
+            { value: '', label: 'All Regions' },
+            { value: 'Napa Valley', label: 'Napa Valley' },
+            { value: 'Sonoma County', label: 'Sonoma County' },
+            { value: 'Paso Robles', label: 'Paso Robles' },
+            { value: 'Santa Barbara', label: 'Santa Barbara' },
+            { value: 'Willamette Valley', label: 'Willamette Valley' },
+            { value: 'Finger Lakes', label: 'Finger Lakes' },
+            { value: 'Columbia Valley', label: 'Columbia Valley' },
+            { value: 'Walla Walla', label: 'Walla Walla' },
+            { value: 'Russian River Valley', label: 'Russian River Valley' },
+            { value: 'Alexander Valley', label: 'Alexander Valley' },
+            { value: 'Other', label: 'Other' }
+          ]}
+          placeholder="All Regions"
           className="filter-select"
-        >
-          <option value="">All Regions</option>
-          <option value="Napa Valley">Napa Valley</option>
-          <option value="Sonoma County">Sonoma County</option>
-          <option value="Paso Robles">Paso Robles</option>
-          <option value="Santa Barbara">Santa Barbara</option>
-          <option value="Willamette Valley">Willamette Valley</option>
-          <option value="Finger Lakes">Finger Lakes</option>
-          <option value="Columbia Valley">Columbia Valley</option>
-          <option value="Walla Walla">Walla Walla</option>
-          <option value="Russian River Valley">Russian River Valley</option>
-          <option value="Alexander Valley">Alexander Valley</option>
-          <option value="Other">Other</option>
-        </select>
+        />
 
         <div className="view-toggle">
           <button

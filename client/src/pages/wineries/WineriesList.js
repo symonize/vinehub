@@ -5,6 +5,7 @@ import { wineriesAPI, getFileUrl } from '../../utils/api';
 import { Plus, Search, Edit, Trash2, Eye, Building2, LayoutGrid, List } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
+import CustomSelect from '../../components/CustomSelect';
 import './Wineries.css';
 
 const WineriesList = () => {
@@ -76,16 +77,18 @@ const WineriesList = () => {
           />
         </div>
 
-        <select
+        <CustomSelect
           value={status}
-          onChange={(e) => setStatus(e.target.value)}
+          onChange={(value) => setStatus(value)}
+          options={[
+            { value: '', label: 'All Status' },
+            { value: 'draft', label: 'Draft' },
+            { value: 'published', label: 'Published' },
+            { value: 'archived', label: 'Archived' }
+          ]}
+          placeholder="All Status"
           className="filter-select"
-        >
-          <option value="">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-          <option value="archived">Archived</option>
-        </select>
+        />
       </div>
 
       {isLoading ? (

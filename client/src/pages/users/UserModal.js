@@ -1,12 +1,13 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { X, Mail, User, Lock, Shield } from 'lucide-react';
 import { authAPI } from '../../utils/api';
 import { toast } from 'react-toastify';
+import CustomSelect from '../../components/CustomSelect';
 
 const UserModal = ({ user, onClose, onSuccess }) => {
   const isEdit = !!user;
-  const { register, handleSubmit, formState: { errors }, watch } = useForm({
+  const { register, handleSubmit, formState: { errors }, watch, control } = useForm({
     defaultValues: user ? {
       firstName: user.firstName,
       lastName: user.lastName,
@@ -164,15 +165,25 @@ const UserModal = ({ user, onClose, onSuccess }) => {
                 <Shield size={16} />
                 Role
               </label>
-              <select
-                id="role"
-                className="form-control"
-                {...register('role', { required: 'Role is required' })}
-              >
-                <option value="viewer">Viewer</option>
-                <option value="editor">Editor</option>
-                <option value="admin">Admin</option>
-              </select>
+              <Controller
+                name="role"
+                control={control}
+                defaultValue="viewer"
+                rules={{ required: 'Role is required' }}
+                render={({ field }) => (
+                  <CustomSelect
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={[
+                      { value: 'viewer', label: 'Viewer' },
+                      { value: 'editor', label: 'Editor' },
+                      { value: 'admin', label: 'Admin' }
+                    ]}
+                    placeholder="Select role"
+                    error={!!errors.role}
+                  />
+                )}
+              />
               {errors.role && <span className="form-error">{errors.role.message}</span>}
               <div className="form-help-text">
                 <strong>Admin:</strong> Full access to all features<br />

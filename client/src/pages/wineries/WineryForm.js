@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { wineriesAPI, uploadAPI, getFileUrl } from '../../utils/api';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { ArrowLeft, Upload } from 'lucide-react';
+import CustomSelect from '../../components/CustomSelect';
 import './Wineries.css';
 
 const WineryForm = () => {
@@ -12,7 +13,7 @@ const WineryForm = () => {
   const navigate = useNavigate();
   const isEdit = !!id;
 
-  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm();
+  const { register, handleSubmit, formState: { errors }, reset, setValue, control } = useForm();
   const [loading, setLoading] = useState(false);
   const [featuredImage, setFeaturedImage] = useState(null);
   const [logo, setLogo] = useState(null);
@@ -114,15 +115,23 @@ const WineryForm = () => {
 
           <div className="form-group">
             <label htmlFor="status" className="form-label">Status</label>
-            <select
-              id="status"
-              className="form-control"
-              {...register('status')}
-            >
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
+            <Controller
+              name="status"
+              control={control}
+              defaultValue="draft"
+              render={({ field }) => (
+                <CustomSelect
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={[
+                    { value: 'draft', label: 'Draft' },
+                    { value: 'published', label: 'Published' },
+                    { value: 'archived', label: 'Archived' }
+                  ]}
+                  placeholder="Select status"
+                />
+              )}
+            />
           </div>
         </div>
 

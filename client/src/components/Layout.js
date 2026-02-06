@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { PageTitleProvider } from '../context/PageTitleContext';
@@ -9,42 +9,68 @@ import './Layout.css';
 const Layout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <div className="layout">
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div className="mobile-overlay" onClick={closeMobileMenu} />
+      )}
+
       {/* Sidebar */}
-      <aside className="sidebar open">
+      <aside className={`sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
           <img src="/VinoHub.svg" alt="VinoHub" className="sidebar-logo" />
           <div className="sidebar-subtitle">WineCMS</div>
         </div>
 
         <nav className="sidebar-nav">
-          <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
+            onClick={closeMobileMenu}
+          >
             <LayoutDashboard size={20} />
             <span>Dashboard</span>
           </NavLink>
 
           <div className="nav-section-label">PORTFOLIO</div>
 
-          <NavLink to="/wines" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+          <NavLink
+            to="/wines"
+            className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
+            onClick={closeMobileMenu}
+          >
             <Wine size={20} />
             <span>Wines</span>
           </NavLink>
 
-          <NavLink to="/wineries" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+          <NavLink
+            to="/wineries"
+            className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
+            onClick={closeMobileMenu}
+          >
             <Building2 size={20} />
             <span>Wineries</span>
           </NavLink>
 
           <div className="nav-section-label">SETTINGS</div>
 
-          <NavLink to="/users" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+          <NavLink
+            to="/users"
+            className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
+            onClick={closeMobileMenu}
+          >
             <Users size={20} />
             <span>Users</span>
           </NavLink>
@@ -68,15 +94,31 @@ const Layout = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="main-content sidebar-open">
+      <div className="main-content">
         {/* Page Content */}
         <main className="content">
           <PageTitleProvider>
-            <ContentHeader />
+            <ContentHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
             <Outlet />
           </PageTitleProvider>
         </main>
       </div>
+
+      {/* Mobile Dock */}
+      <nav className="mobile-dock">
+        <NavLink to="/dashboard" className={({ isActive }) => `dock-item ${isActive ? 'active' : ''}`}>
+          <LayoutDashboard size={24} strokeWidth={1.5} />
+          <span>Dashboard</span>
+        </NavLink>
+        <NavLink to="/wines" className={({ isActive }) => `dock-item ${isActive ? 'active' : ''}`}>
+          <Wine size={24} strokeWidth={1.5} />
+          <span>Wines</span>
+        </NavLink>
+        <NavLink to="/wineries" className={({ isActive }) => `dock-item ${isActive ? 'active' : ''}`}>
+          <Building2 size={24} strokeWidth={1.5} />
+          <span>Wineries</span>
+        </NavLink>
+      </nav>
     </div>
   );
 };

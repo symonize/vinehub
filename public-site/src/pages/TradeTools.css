@@ -105,6 +105,267 @@
   border-bottom: 2px solid #722f37;
 }
 
+.controls-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* View Toggle Group */
+.view-toggle-group {
+  display: flex;
+  border: 1px solid #ccc;
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: white;
+  border: none;
+  border-right: 1px solid #ccc;
+  cursor: pointer;
+  color: var(--text-light);
+  transition: all 0.15s;
+}
+
+.view-toggle-btn:last-child {
+  border-right: none;
+}
+
+.view-toggle-btn:hover {
+  color: #722f37;
+  background: rgba(114, 47, 55, 0.04);
+}
+
+.view-toggle-btn.active {
+  color: white;
+  background: #722f37;
+}
+
+/* Table View */
+.trade-table-wrapper {
+  overflow-x: auto;
+}
+
+.trade-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.trade-table thead th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-light);
+  border-bottom: 1px solid rgba(114, 47, 55, 0.2);
+  font-family: var(--font-family-base);
+}
+
+.trade-table tbody tr {
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.trade-table tbody tr:hover {
+  background: rgba(114, 47, 55, 0.03);
+}
+
+.trade-table td {
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+  color: var(--text-dark);
+}
+
+.trade-table .table-thumb {
+  width: 50px;
+  padding: 0.5rem;
+}
+
+.trade-table .table-thumb img {
+  width: 30px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.trade-table .table-thumb-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 50px;
+}
+
+.trade-table .table-name {
+  font-family: var(--font-family-heading);
+  color: #722f37;
+  font-weight: 400;
+}
+
+.table-type-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 1rem;
+  color: white;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+  font-weight: 500;
+}
+
+/* Map View */
+.trade-map-view {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.trade-map-container {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  border: 1px solid rgba(114, 47, 55, 0.1);
+}
+
+.trade-wine-regions-map {
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+}
+
+.trade-map-state-label {
+  font-size: 10px;
+  fill: rgba(114, 47, 55, 0.35);
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  font-family: var(--font-family-base);
+}
+
+@keyframes tradePulse {
+  0% { opacity: 0.4; r: inherit; }
+  50% { opacity: 0.2; }
+  100% { opacity: 0.4; }
+}
+
+.trade-marker-pulse {
+  animation: tradePulse 1.5s ease-in-out infinite;
+}
+
+.trade-map-region-marker {
+  transition: opacity 0.2s;
+}
+
+/* Map Detail Panel */
+.trade-map-detail-panel {
+  background: white;
+  border: 1px solid rgba(114, 47, 55, 0.15);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.trade-map-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(114, 47, 55, 0.1);
+  background: rgba(114, 47, 55, 0.02);
+}
+
+.trade-map-detail-header h3 {
+  font-family: var(--font-family-heading);
+  font-size: 1.125rem;
+  color: #722f37;
+  margin: 0;
+  font-weight: 400;
+}
+
+.trade-map-detail-count {
+  font-size: 0.8125rem;
+  color: var(--text-light);
+}
+
+.trade-map-detail-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-light);
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.trade-map-detail-close:hover {
+  color: #722f37;
+}
+
+.trade-map-detail-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0;
+}
+
+.trade-map-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.trade-map-detail-item:hover {
+  background: rgba(114, 47, 55, 0.03);
+}
+
+.trade-map-detail-thumb {
+  width: 32px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.trade-map-detail-thumb img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.trade-map-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.trade-map-detail-name {
+  font-family: var(--font-family-heading);
+  font-size: 0.9375rem;
+  color: #722f37;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trade-map-detail-type {
+  font-size: 0.75rem;
+  text-transform: capitalize;
+  font-weight: 500;
+}
+
 .trade-tools-layout {
   display: grid;
   grid-template-columns: 200px 1fr;
@@ -408,6 +669,31 @@
   gap: 3rem;
   padding: 2rem 0;
   align-items: start;
+}
+
+/* Generator Fade-in Stagger Animation */
+@keyframes generatorFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.generator-animate {
+  opacity: 0;
+  animation: generatorFadeIn 0.5s ease-out forwards;
+}
+
+.generator-animate-1 {
+  animation-delay: 0.05s;
+}
+
+.generator-animate-2 {
+  animation-delay: 0.15s;
 }
 
 /* Generator Controls - Left Panel */
