@@ -1,28 +1,35 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery } from 'react-query';
 import { winesAPI, wineriesAPI } from '../utils/api';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import createGlobe from 'cobe';
 import './TradeTools.css';
 
-const regionCoordinates = {
-  'Napa Valley': { x: 122, y: 295, label: 'Napa Valley' },
-  'Sonoma County': { x: 98, y: 285, label: 'Sonoma County' },
-  'Paso Robles': { x: 115, y: 395, label: 'Paso Robles' },
-  'Santa Barbara': { x: 135, y: 430, label: 'Santa Barbara' },
-  'Willamette Valley': { x: 95, y: 145, label: 'Willamette Valley' },
-  'Finger Lakes': { x: 580, y: 170, label: 'Finger Lakes' },
-  'Columbia Valley': { x: 155, y: 95, label: 'Columbia Valley' },
-  'Walla Walla': { x: 170, y: 110, label: 'Walla Walla' },
-  'Russian River Valley': { x: 85, y: 280, label: 'Russian River Valley' },
-  'Alexander Valley': { x: 105, y: 270, label: 'Alexander Valley' },
-  'Other': { x: 350, y: 320, label: 'Other' },
+// Lat/lng for wine regions
+const regionLatLng = {
+  'Napa Valley': { lat: 38.5025, lng: -122.2654 },
+  'Sonoma County': { lat: 38.4810, lng: -122.7467 },
+  'Paso Robles': { lat: 35.6266, lng: -120.6910 },
+  'Santa Barbara': { lat: 34.7136, lng: -119.9858 },
+  'Willamette Valley': { lat: 45.0790, lng: -123.0980 },
+  'Finger Lakes': { lat: 42.6681, lng: -76.7919 },
+  'Columbia Valley': { lat: 46.2400, lng: -119.7300 },
+  'Walla Walla': { lat: 46.0646, lng: -118.3430 },
+  'Russian River Valley': { lat: 38.5120, lng: -122.8960 },
+  'Alexander Valley': { lat: 38.7156, lng: -122.8477 },
+  'Other': { lat: 39.8283, lng: -98.5795 },
 };
 
 const TradeMapView = ({ items, activeTab, getWineTypeColor, onWineClick }) => {
-  const [hoveredRegion, setHoveredRegion] = useState(null);
+  const canvasRef = useRef(null);
+  const globeRef = useRef(null);
+  const pointerInteracting = useRef(null);
+  const pointerInteractionMovement = useRef(0);
   const [selectedRegion, setSelectedRegion] = useState(null);
+  const phiRef = useRef(0);
 
+  // Group items by region
   const regionGroups = {};
   items.forEach((item) => {
     const region = item.region || 'Other';
@@ -32,122 +39,140 @@ const TradeMapView = ({ items, activeTab, getWineTypeColor, onWineClick }) => {
 
   const maxCount = Math.max(...Object.values(regionGroups).map(g => g.length), 1);
 
+  // Build markers array for cobe
+  const markers = Object.entries(regionLatLng)
+    .filter(([region]) => regionGroups[region]?.length > 0)
+    .map(([region, coords]) => {
+      const count = regionGroups[region].length;
+      const size = 0.04 + (count / maxCount) * 0.12;
+      return { location: [coords.lat, coords.lng], size };
+    });
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    let phi = 1.8; // Start facing US west coast
+    let width = 0;
+
+    const onResize = () => {
+      if (canvasRef.current) {
+        width = canvasRef.current.offsetWidth;
+      }
+    };
+    window.addEventListener('resize', onResize);
+    onResize();
+
+    const globe = createGlobe(canvasRef.current, {
+      devicePixelRatio: 2,
+      width: width * 2,
+      height: width * 2,
+      phi: 1.8,
+      theta: 0.35,
+      dark: 0,
+      diffuse: 1.8,
+      mapSamples: 24000,
+      mapBrightness: 3.5,
+      baseColor: [0.98, 0.96, 0.93],      // cream (#FAF6ED)
+      markerColor: [0.447, 0.184, 0.216],  // wine (#722f37)
+      glowColor: [0.92, 0.88, 0.82],       // warm glow
+      markers,
+      onRender: (state) => {
+        if (!pointerInteracting.current) {
+          phi += 0.002;
+        }
+        state.phi = phi + pointerInteractionMovement.current;
+        state.width = width * 2;
+        state.height = width * 2;
+      },
+    });
+
+    globeRef.current = globe;
+
+    // Fade in
+    if (canvasRef.current) {
+      canvasRef.current.style.opacity = '0';
+      requestAnimationFrame(() => {
+        if (canvasRef.current) {
+          canvasRef.current.style.opacity = '1';
+        }
+      });
+    }
+
+    return () => {
+      globe.destroy();
+      window.removeEventListener('resize', onResize);
+    };
+  }, [items]);
+
+  const onPointerDown = useCallback((e) => {
+    pointerInteracting.current = e.clientX - pointerInteractionMovement.current;
+    if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
+  }, []);
+
+  const onPointerUp = useCallback(() => {
+    pointerInteracting.current = null;
+    if (canvasRef.current) canvasRef.current.style.cursor = 'grab';
+  }, []);
+
+  const onPointerOut = useCallback(() => {
+    pointerInteracting.current = null;
+    if (canvasRef.current) canvasRef.current.style.cursor = 'grab';
+  }, []);
+
+  const onMouseMove = useCallback((e) => {
+    if (pointerInteracting.current !== null) {
+      const delta = e.clientX - pointerInteracting.current;
+      pointerInteractionMovement.current = delta / 200;
+    }
+  }, []);
+
+  const onTouchMove = useCallback((e) => {
+    if (pointerInteracting.current !== null && e.touches[0]) {
+      const delta = e.touches[0].clientX - pointerInteracting.current;
+      pointerInteractionMovement.current = delta / 200;
+    }
+  }, []);
+
+  // Region list sorted by count
+  const sortedRegions = Object.entries(regionGroups)
+    .sort((a, b) => b[1].length - a[1].length);
+
   return (
-    <div className="trade-map-view">
-      <div className="trade-map-container">
-        <svg viewBox="0 0 700 520" className="trade-wine-regions-map">
-          {/* US outline */}
-          <path
-            d="M60 60 L60 30 L200 20 L300 25 L400 30 L500 25 L620 40 L640 60 L650 100 L640 140 L620 170 L600 180 L580 160 L570 180 L590 210 L600 250 L610 280 L620 320 L615 360 L600 400 L580 430 L550 450 L500 460 L450 470 L400 475 L350 480 L300 475 L250 465 L200 460 L170 470 L150 480 L130 485 L110 470 L100 450 L95 420 L100 380 L105 340 L100 300 L90 260 L80 220 L75 180 L70 140 L65 100 Z"
-            fill="rgba(114, 47, 55, 0.04)"
-            stroke="rgba(114, 47, 55, 0.2)"
-            strokeWidth="1.5"
-          />
-          {/* Washington */}
-          <path
-            d="M60 60 L60 30 L200 20 L210 60 L200 100 L180 110 L140 105 L100 100 L75 90 Z"
-            fill="rgba(114, 47, 55, 0.06)"
-            stroke="rgba(114, 47, 55, 0.25)"
-            strokeWidth="1"
-          />
-          {/* Oregon */}
-          <path
-            d="M60 60 L75 90 L100 100 L140 105 L180 110 L200 100 L200 170 L180 180 L140 175 L100 170 L75 160 L65 130 Z"
-            fill="rgba(114, 47, 55, 0.06)"
-            stroke="rgba(114, 47, 55, 0.25)"
-            strokeWidth="1"
-          />
-          {/* California */}
-          <path
-            d="M65 130 L75 160 L100 170 L140 175 L180 180 L175 220 L165 260 L155 300 L145 340 L140 380 L135 420 L130 450 L115 465 L100 450 L95 420 L100 380 L105 340 L100 300 L90 260 L80 220 L75 180 Z"
-            fill="rgba(114, 47, 55, 0.08)"
-            stroke="rgba(114, 47, 55, 0.3)"
-            strokeWidth="1"
-          />
-          {/* New York */}
-          <path
-            d="M540 130 L560 120 L590 125 L610 140 L620 170 L610 200 L590 210 L570 205 L555 190 L545 170 L540 150 Z"
-            fill="rgba(114, 47, 55, 0.06)"
-            stroke="rgba(114, 47, 55, 0.25)"
-            strokeWidth="1"
-          />
+    <div className="trade-globe-view">
+      <div className="trade-globe-container">
+        <canvas
+          ref={canvasRef}
+          className="trade-globe-canvas"
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          onPointerOut={onPointerOut}
+          onMouseMove={onMouseMove}
+          onTouchMove={onTouchMove}
+        />
+        <div className="trade-globe-overlay">
+          <h3 className="trade-globe-title">Wine Regions</h3>
+          <p className="trade-globe-subtitle">
+            {items.length} {activeTab === 'wines' ? 'wines' : 'brands'} across {sortedRegions.length} regions
+          </p>
+        </div>
+      </div>
 
-          <text x="130" y="55" className="trade-map-state-label">WASHINGTON</text>
-          <text x="115" y="140" className="trade-map-state-label">OREGON</text>
-          <text x="105" y="330" className="trade-map-state-label">CALIFORNIA</text>
-          <text x="565" y="155" className="trade-map-state-label" style={{ fontSize: '8px' }}>NEW YORK</text>
-
-          {/* Region markers */}
-          {Object.entries(regionCoordinates).map(([region, coords]) => {
-            const count = regionGroups[region]?.length || 0;
-            if (count === 0) return null;
-            const opacity = 0.3 + (count / maxCount) * 0.7;
-            const radius = 12 + (count / maxCount) * 18;
-            const isHovered = hoveredRegion === region;
-            const isSelected = selectedRegion === region;
-
-            return (
-              <g
-                key={region}
-                className="trade-map-region-marker"
-                onMouseEnter={() => setHoveredRegion(region)}
-                onMouseLeave={() => setHoveredRegion(null)}
-                onClick={() => setSelectedRegion(selectedRegion === region ? null : region)}
-                style={{ cursor: 'pointer' }}
-              >
-                {(isHovered || isSelected) && (
-                  <circle
-                    cx={coords.x} cy={coords.y} r={radius + 6}
-                    fill="none" stroke="#722f37" strokeWidth="1.5" opacity="0.4"
-                    className="trade-marker-pulse"
-                  />
-                )}
-                <circle
-                  cx={coords.x} cy={coords.y} r={radius}
-                  fill="#722f37"
-                  opacity={isHovered || isSelected ? 0.9 : opacity}
-                />
-                <text
-                  x={coords.x} y={coords.y + 1}
-                  textAnchor="middle" dominantBaseline="middle"
-                  fill="white" fontSize="11" fontWeight="600"
-                  fontFamily="var(--font-family-base)"
-                >
-                  {count}
-                </text>
-                <text
-                  x={coords.x} y={coords.y + radius + 14}
-                  textAnchor="middle" fill="#722f37" fontSize="9" fontWeight="500"
-                  fontFamily="var(--font-family-base)"
-                  opacity={isHovered || isSelected ? 1 : 0.7}
-                >
-                  {coords.label}
-                </text>
-              </g>
-            );
-          })}
-
-          {/* Tooltip */}
-          {hoveredRegion && regionGroups[hoveredRegion] && (
-            <g>
-              <rect
-                x={regionCoordinates[hoveredRegion].x + 20}
-                y={regionCoordinates[hoveredRegion].y - 35}
-                width={Math.max(hoveredRegion.length * 7.5, 120)}
-                height="30" rx="4" fill="white" stroke="#722f37" strokeWidth="1"
-                filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
-              />
-              <text
-                x={regionCoordinates[hoveredRegion].x + 28}
-                y={regionCoordinates[hoveredRegion].y - 16}
-                fill="#722f37" fontSize="11" fontWeight="600"
-                fontFamily="var(--font-family-base)"
-              >
-                {hoveredRegion} — {regionGroups[hoveredRegion].length} {activeTab === 'wines' ? 'wine' : 'brand'}{regionGroups[hoveredRegion].length !== 1 ? 's' : ''}
-              </text>
-            </g>
-          )}
-        </svg>
+      {/* Region cards */}
+      <div className="trade-globe-regions">
+        {sortedRegions.map(([region, regionItems]) => (
+          <button
+            key={region}
+            className={`trade-globe-region-card${selectedRegion === region ? ' active' : ''}`}
+            onClick={() => setSelectedRegion(selectedRegion === region ? null : region)}
+          >
+            <span className="trade-globe-region-dot" style={{
+              opacity: 0.4 + (regionItems.length / maxCount) * 0.6,
+              transform: `scale(${0.6 + (regionItems.length / maxCount) * 0.4})`
+            }} />
+            <span className="trade-globe-region-name">{region}</span>
+            <span className="trade-globe-region-count">{regionItems.length}</span>
+          </button>
+        ))}
       </div>
 
       {/* Region detail panel */}
