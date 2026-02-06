@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Sparkles } from 'lucide-react';
+import { X, Send, Sparkles } from 'lucide-react';
 import { useQuery, useQueryClient } from 'react-query';
 import { wineriesAPI, winesAPI, vintagesAPI } from '../utils/api';
 import './ChatBot.css';
@@ -20,7 +20,7 @@ const ChatBot = () => {
   // Fetch all data for context
   const { data: wineriesData, refetch: refetchWineries } = useQuery('chatbot-wineries', () => wineriesAPI.getAll());
   const { data: winesData, refetch: refetchWines } = useQuery('chatbot-wines', () => winesAPI.getAll());
-  const { data: vintagesData, refetch: refetchVintages } = useQuery('chatbot-vintages', () => vintagesAPI.getAll());
+  const { data: vintagesData } = useQuery('chatbot-vintages', () => vintagesAPI.getAll());
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -34,16 +34,13 @@ const ChatBot = () => {
     try {
       let updatedCount = 0;
       let itemsToUpdate = [];
-      let updateType = '';
 
       // Parse awards updates (e.g., "Update all white wines to have a 92 award from james suckling")
       const awardMatch = lowerQuery.match(/(\d+)\s+(?:point\s+)?award\s+from\s+([\w\s]+)/i);
-      const ratingMatch = lowerQuery.match(/rating.*?(\d+)/i);
 
       // Identify what to update
       if (lowerQuery.includes('wine')) {
         itemsToUpdate = wines;
-        updateType = 'wines';
 
         // Filter wines based on criteria
         if (lowerQuery.includes('white')) {
@@ -86,7 +83,6 @@ const ChatBot = () => {
       // Handle winery updates
       if (lowerQuery.includes('winer')) {
         itemsToUpdate = wineries;
-        updateType = 'wineries';
 
         // Filter wineries
         if (lowerQuery.includes('napa')) {
