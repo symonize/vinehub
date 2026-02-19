@@ -88,24 +88,13 @@
   max-height: calc(100vh - 8rem);
   overflow-y: auto;
   padding-right: 0.5rem;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
-/* Custom scrollbar for filters */
+/* Hide scrollbar for Chrome, Safari and Opera */
 .portfolio-sidebar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.portfolio-sidebar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.portfolio-sidebar::-webkit-scrollbar-thumb {
-  background: rgba(114, 47, 55, 0.3);
-  border-radius: 3px;
-}
-
-.portfolio-sidebar::-webkit-scrollbar-thumb:hover {
-  background: rgba(114, 47, 55, 0.5);
+  display: none;
 }
 
 .portfolio-sidebar h3 {

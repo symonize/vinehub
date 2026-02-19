@@ -15,6 +15,144 @@ const connectDB = async () => {
   }
 };
 
+// Helper function to generate realistic nutrition data based on wine type
+const generateNutritionData = (wineType) => {
+  const baseData = {
+    servingSize: 5, // 5 oz standard
+    servingsPerContainer: 5, // 750ml bottle = ~5 servings
+    fatPerServing: 0,
+    proteinPerServing: 0
+  };
+
+  // Variability ranges by wine type
+  const nutritionRanges = {
+    red: {
+      alcoholByVolume: [12.5, 15.5],
+      caloriesPerServing: [120, 135],
+      carbohydratesPerServing: [3.5, 4.5],
+      sugarPerServing: [0.5, 1.2]
+    },
+    white: {
+      alcoholByVolume: [11.5, 14],
+      caloriesPerServing: [115, 128],
+      carbohydratesPerServing: [3, 4],
+      sugarPerServing: [0.8, 2.5]
+    },
+    sparkling: {
+      alcoholByVolume: [11, 13],
+      caloriesPerServing: [90, 110],
+      carbohydratesPerServing: [2, 3.5],
+      sugarPerServing: [1, 3]
+    },
+    rosé: {
+      alcoholByVolume: [11.5, 13.5],
+      caloriesPerServing: [110, 125],
+      carbohydratesPerServing: [3, 4],
+      sugarPerServing: [1, 2.5]
+    },
+    dessert: {
+      alcoholByVolume: [8, 12],
+      caloriesPerServing: [165, 220],
+      carbohydratesPerServing: [14, 20],
+      sugarPerServing: [10, 16]
+    },
+    fortified: {
+      alcoholByVolume: [17, 20],
+      caloriesPerServing: [175, 210],
+      carbohydratesPerServing: [11, 15],
+      sugarPerServing: [7, 12]
+    }
+  };
+
+  const ranges = nutritionRanges[wineType] || nutritionRanges.red;
+
+  // Generate random values within realistic ranges
+  const alcoholByVolume = +(ranges.alcoholByVolume[0] + Math.random() * (ranges.alcoholByVolume[1] - ranges.alcoholByVolume[0])).toFixed(1);
+  const caloriesPerServing = Math.round(ranges.caloriesPerServing[0] + Math.random() * (ranges.caloriesPerServing[1] - ranges.caloriesPerServing[0]));
+  const carbohydratesPerServing = +(ranges.carbohydratesPerServing[0] + Math.random() * (ranges.carbohydratesPerServing[1] - ranges.carbohydratesPerServing[0])).toFixed(1);
+  const sugarPerServing = +(ranges.sugarPerServing[0] + Math.random() * (ranges.sugarPerServing[1] - ranges.sugarPerServing[0])).toFixed(1);
+
+  // Calculate alcohol per serving (oz of pure ethanol)
+  // Formula: (ABV/100) * serving size * 0.789 (density of ethanol)
+  const alcoholPerServing = +((alcoholByVolume / 100) * baseData.servingSize * 0.789).toFixed(2);
+
+  return {
+    ...baseData,
+    alcoholByVolume,
+    alcoholPerServing,
+    caloriesPerServing,
+    carbohydratesPerServing,
+    sugarPerServing
+  };
+};
+
+// Helper function to generate realistic ingredients based on wine type
+const generateIngredients = (wineType, variety) => {
+  // Common primary ingredients (grapes)
+  const primaryIngredients = [`Grapes (${variety})`];
+
+  // Common additives for wine production
+  const commonAdditives = [
+    'Sulfites (SO2)',
+    'Yeast (Saccharomyces cerevisiae)'
+  ];
+
+  // Randomly add optional additives (30% chance each)
+  const optionalAdditives = [
+    'Potassium Sorbate',
+    'Potassium Metabisulfite',
+    'Citric Acid',
+    'Tartaric Acid',
+    'Malolactic Cultures'
+  ];
+
+  const selectedAdditives = [...commonAdditives];
+  optionalAdditives.forEach(additive => {
+    if (Math.random() < 0.3) {
+      selectedAdditives.push(additive);
+    }
+  });
+
+  // Common processing aids
+  const processingAidOptions = [
+    'Bentonite',
+    'Egg Whites',
+    'Isinglass (Fish)',
+    'Pea Protein',
+    'PVPP (Polyvinylpolypyrrolidone)',
+    'Oak Chips'
+  ];
+
+  // Select 1-3 processing aids randomly
+  const numAids = Math.floor(Math.random() * 3) + 1;
+  const selectedAids = [];
+  const shuffled = [...processingAidOptions].sort(() => 0.5 - Math.random());
+  for (let i = 0; i < numAids; i++) {
+    selectedAids.push(shuffled[i]);
+  }
+
+  // Allergens based on processing aids
+  const allergens = {
+    milk: false,
+    eggs: selectedAids.includes('Egg Whites'),
+    fish: selectedAids.includes('Isinglass (Fish)'),
+    crustaceanShellfish: false,
+    treeNuts: false,
+    wheat: false,
+    peanuts: false,
+    soybeans: false,
+    sesame: false
+  };
+
+  return {
+    primaryIngredients,
+    additives: selectedAdditives,
+    processingAids: selectedAids,
+    allergens,
+    notes: 'Contains naturally occurring sulfites. Produced in a facility that processes tree nuts and dairy.'
+  };
+};
+
 const seedData = async () => {
   try {
     // Clear existing data
@@ -128,6 +266,8 @@ const seedData = async () => {
           { score: 96, awardName: 'Wine Spectator', year: 2023 },
           { score: 94, awardName: 'Wine Advocate', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Cabernet Sauvignon'),
         status: 'published',
         createdBy: admin._id
       },
@@ -144,6 +284,8 @@ const seedData = async () => {
           { score: 97, awardName: 'Wine Spectator', year: 2023 },
           { score: 95, awardName: 'James Suckling', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Cabernet Sauvignon'),
         status: 'published',
         createdBy: admin._id
       },
@@ -159,6 +301,8 @@ const seedData = async () => {
         awards: [
           { score: 92, awardName: 'Wine Enthusiast', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Cabernet Franc'),
         status: 'published',
         createdBy: admin._id
       },
@@ -174,6 +318,8 @@ const seedData = async () => {
         awards: [
           { score: 91, awardName: 'Wine Spectator', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Merlot'),
         status: 'published',
         createdBy: admin._id
       },
@@ -189,6 +335,8 @@ const seedData = async () => {
         awards: [
           { score: 93, awardName: 'Wine Advocate', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Petit Verdot'),
         status: 'published',
         createdBy: admin._id
       },
@@ -207,6 +355,8 @@ const seedData = async () => {
           { score: 93, awardName: 'Wine Spectator', year: 2024 },
           { score: 91, awardName: 'Wine Enthusiast', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -223,6 +373,8 @@ const seedData = async () => {
           { score: 95, awardName: 'Wine Advocate', year: 2024 },
           { score: 94, awardName: 'James Suckling', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -238,6 +390,8 @@ const seedData = async () => {
         awards: [
           { score: 92, awardName: 'Wine Spectator', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -253,6 +407,8 @@ const seedData = async () => {
         awards: [
           { score: 96, awardName: 'Wine Advocate', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -268,6 +424,8 @@ const seedData = async () => {
         awards: [
           { score: 90, awardName: 'Wine Enthusiast', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -285,6 +443,8 @@ const seedData = async () => {
         awards: [
           { score: 93, awardName: 'Wine Spectator', year: 2024 }
         ],
+        nutrition: generateNutritionData('sparkling'),
+        ingredients: generateIngredients('sparkling', 'Pinot Noir, Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -301,6 +461,8 @@ const seedData = async () => {
           { score: 94, awardName: 'Wine Enthusiast', year: 2024 },
           { score: 92, awardName: 'Wine Advocate', year: 2024 }
         ],
+        nutrition: generateNutritionData('sparkling'),
+        ingredients: generateIngredients('sparkling', 'Pinot Noir, Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -316,6 +478,8 @@ const seedData = async () => {
         awards: [
           { score: 95, awardName: 'Wine Spectator', year: 2024 }
         ],
+        nutrition: generateNutritionData('sparkling'),
+        ingredients: generateIngredients('sparkling', 'Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -331,6 +495,8 @@ const seedData = async () => {
         awards: [
           { score: 97, awardName: 'Wine Advocate', year: 2024 }
         ],
+        nutrition: generateNutritionData('sparkling'),
+        ingredients: generateIngredients('sparkling', 'Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -346,6 +512,8 @@ const seedData = async () => {
         awards: [
           { score: 96, awardName: 'Wine Spectator', year: 2024 }
         ],
+        nutrition: generateNutritionData('sparkling'),
+        ingredients: generateIngredients('sparkling', 'Pinot Noir, Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -364,6 +532,8 @@ const seedData = async () => {
           { score: 94, awardName: 'Wine Spectator', year: 2023 },
           { score: 93, awardName: 'Wine Advocate', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Zinfandel'),
         status: 'published',
         createdBy: admin._id
       },
@@ -379,6 +549,8 @@ const seedData = async () => {
         awards: [
           { score: 95, awardName: 'Wine Advocate', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Zinfandel'),
         status: 'published',
         createdBy: admin._id
       },
@@ -394,6 +566,8 @@ const seedData = async () => {
         awards: [
           { score: 92, awardName: 'Wine Enthusiast', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Grenache'),
         status: 'published',
         createdBy: admin._id
       },
@@ -409,6 +583,8 @@ const seedData = async () => {
         awards: [
           { score: 93, awardName: 'Wine Spectator', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Petite Sirah'),
         status: 'published',
         createdBy: admin._id
       },
@@ -424,6 +600,8 @@ const seedData = async () => {
         awards: [
           { score: 91, awardName: 'Wine Advocate', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Carignane'),
         status: 'published',
         createdBy: admin._id
       },
@@ -442,6 +620,8 @@ const seedData = async () => {
           { score: 94, awardName: 'Wine Spectator', year: 2023 },
           { score: 93, awardName: 'Wine Enthusiast', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Pinot Noir'),
         status: 'published',
         createdBy: admin._id
       },
@@ -457,6 +637,8 @@ const seedData = async () => {
         awards: [
           { score: 96, awardName: 'Wine Advocate', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Pinot Noir'),
         status: 'published',
         createdBy: admin._id
       },
@@ -472,6 +654,8 @@ const seedData = async () => {
         awards: [
           { score: 90, awardName: 'Wine Spectator', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Pinot Gris'),
         status: 'published',
         createdBy: admin._id
       },
@@ -487,6 +671,8 @@ const seedData = async () => {
         awards: [
           { score: 92, awardName: 'Wine Enthusiast', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -500,6 +686,8 @@ const seedData = async () => {
         variety: '100% Pinot Noir',
         foodPairing: 'Salads, grilled vegetables, light seafood.',
         awards: [],
+        nutrition: generateNutritionData('rosé'),
+        ingredients: generateIngredients('rosé', 'Pinot Noir'),
         status: 'published',
         createdBy: admin._id
       },
@@ -517,6 +705,8 @@ const seedData = async () => {
         awards: [
           { score: 93, awardName: 'Wine Advocate', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Syrah'),
         status: 'published',
         createdBy: admin._id
       },
@@ -532,6 +722,8 @@ const seedData = async () => {
         awards: [
           { score: 92, awardName: 'Wine Spectator', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Pinot Noir'),
         status: 'published',
         createdBy: admin._id
       },
@@ -547,6 +739,8 @@ const seedData = async () => {
         awards: [
           { score: 91, awardName: 'Wine Enthusiast', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -562,6 +756,8 @@ const seedData = async () => {
         awards: [
           { score: 90, awardName: 'Wine Spectator', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Grenache Blanc'),
         status: 'published',
         createdBy: admin._id
       },
@@ -575,6 +771,8 @@ const seedData = async () => {
         variety: '100% Viognier',
         foodPairing: 'Thai cuisine, pork tenderloin, triple cream Brie.',
         awards: [],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Viognier'),
         status: 'published',
         createdBy: admin._id
       },
@@ -593,6 +791,8 @@ const seedData = async () => {
           { score: 93, awardName: 'Wine Spectator', year: 2024 },
           { score: 91, awardName: 'Wine Enthusiast', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Riesling'),
         status: 'published',
         createdBy: admin._id
       },
@@ -608,6 +808,8 @@ const seedData = async () => {
         awards: [
           { score: 92, awardName: 'Wine Advocate', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Riesling'),
         status: 'published',
         createdBy: admin._id
       },
@@ -623,6 +825,8 @@ const seedData = async () => {
         awards: [
           { score: 90, awardName: 'Wine Spectator', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Gewürztraminer'),
         status: 'published',
         createdBy: admin._id
       },
@@ -638,6 +842,8 @@ const seedData = async () => {
         awards: [
           { score: 91, awardName: 'Wine Enthusiast', year: 2024 }
         ],
+        nutrition: generateNutritionData('sparkling'),
+        ingredients: generateIngredients('sparkling', 'Riesling'),
         status: 'published',
         createdBy: admin._id
       },
@@ -653,6 +859,8 @@ const seedData = async () => {
         awards: [
           { score: 95, awardName: 'Wine Spectator', year: 2024 }
         ],
+        nutrition: generateNutritionData('dessert'),
+        ingredients: generateIngredients('dessert', 'Riesling'),
         status: 'published',
         createdBy: admin._id
       },
@@ -670,6 +878,8 @@ const seedData = async () => {
         awards: [
           { score: 92, awardName: 'Wine Spectator', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Cabernet Sauvignon'),
         status: 'published',
         createdBy: admin._id
       },
@@ -685,6 +895,8 @@ const seedData = async () => {
         awards: [
           { score: 90, awardName: 'Wine Enthusiast', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Merlot'),
         status: 'published',
         createdBy: admin._id
       },
@@ -700,6 +912,8 @@ const seedData = async () => {
         awards: [
           { score: 89, awardName: 'Wine Spectator', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -715,6 +929,8 @@ const seedData = async () => {
         awards: [
           { score: 91, awardName: 'Wine Advocate', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Syrah'),
         status: 'published',
         createdBy: admin._id
       },
@@ -728,6 +944,8 @@ const seedData = async () => {
         variety: '100% Riesling',
         foodPairing: 'Spicy Thai, Indian cuisine, fruit desserts.',
         awards: [],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Riesling'),
         status: 'published',
         createdBy: admin._id
       },
@@ -746,6 +964,8 @@ const seedData = async () => {
           { score: 94, awardName: 'Wine Spectator', year: 2023 },
           { score: 93, awardName: 'Wine Advocate', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Pinot Noir'),
         status: 'published',
         createdBy: admin._id
       },
@@ -761,6 +981,8 @@ const seedData = async () => {
         awards: [
           { score: 92, awardName: 'Wine Enthusiast', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -774,6 +996,8 @@ const seedData = async () => {
         variety: '100% Pinot Noir',
         foodPairing: 'Summer salads, grilled shrimp, soft cheeses.',
         awards: [],
+        nutrition: generateNutritionData('rosé'),
+        ingredients: generateIngredients('rosé', 'Pinot Noir'),
         status: 'published',
         createdBy: admin._id
       },
@@ -789,6 +1013,8 @@ const seedData = async () => {
         awards: [
           { score: 91, awardName: 'Wine Spectator', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Zinfandel'),
         status: 'published',
         createdBy: admin._id
       },
@@ -804,6 +1030,8 @@ const seedData = async () => {
         awards: [
           { score: 89, awardName: 'Wine Enthusiast', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Sauvignon Blanc'),
         status: 'published',
         createdBy: admin._id
       },
@@ -822,6 +1050,8 @@ const seedData = async () => {
           { score: 95, awardName: 'Wine Advocate', year: 2023 },
           { score: 93, awardName: 'Wine Spectator', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Cabernet Sauvignon'),
         status: 'published',
         createdBy: admin._id
       },
@@ -837,6 +1067,8 @@ const seedData = async () => {
         awards: [
           { score: 94, awardName: 'Wine Spectator', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Syrah'),
         status: 'published',
         createdBy: admin._id
       },
@@ -852,6 +1084,8 @@ const seedData = async () => {
         awards: [
           { score: 91, awardName: 'Wine Enthusiast', year: 2023 }
         ],
+        nutrition: generateNutritionData('red'),
+        ingredients: generateIngredients('red', 'Merlot'),
         status: 'published',
         createdBy: admin._id
       },
@@ -867,6 +1101,8 @@ const seedData = async () => {
         awards: [
           { score: 90, awardName: 'Wine Spectator', year: 2024 }
         ],
+        nutrition: generateNutritionData('white'),
+        ingredients: generateIngredients('white', 'Chardonnay'),
         status: 'published',
         createdBy: admin._id
       },
@@ -882,6 +1118,8 @@ const seedData = async () => {
         awards: [
           { score: 93, awardName: 'Wine Enthusiast', year: 2024 }
         ],
+        nutrition: generateNutritionData('dessert'),
+        ingredients: generateIngredients('dessert', 'Riesling'),
         status: 'published',
         createdBy: admin._id
       }

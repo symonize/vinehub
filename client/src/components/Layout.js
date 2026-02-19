@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import AnimatedOutlet from './AnimatedOutlet';
 import { useAuth } from '../context/AuthContext';
 import { PageTitleProvider } from '../context/PageTitleContext';
 import { Wine, Building2, LogOut, LayoutDashboard, Users } from 'lucide-react';
 import ContentHeader from './ContentHeader';
+import ChatBot from './ChatBot';
 import './Layout.css';
 
 const Layout = () => {
@@ -95,13 +97,13 @@ const Layout = () => {
 
       {/* Main Content */}
       <div className="main-content">
-        {/* Page Content */}
-        <main className="content">
-          <PageTitleProvider>
-            <ContentHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
-            <Outlet />
-          </PageTitleProvider>
-        </main>
+        <PageTitleProvider>
+          <ContentHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
+          {/* Page Content */}
+          <main className="content">
+            <AnimatedOutlet />
+          </main>
+        </PageTitleProvider>
       </div>
 
       {/* Mobile Dock */}
@@ -119,6 +121,9 @@ const Layout = () => {
           <span>Wineries</span>
         </NavLink>
       </nav>
+
+      {/* AI ChatBot - Available on all pages */}
+      <ChatBot />
     </div>
   );
 };

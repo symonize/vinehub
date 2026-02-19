@@ -5,8 +5,26 @@ import { winesAPI } from '../../utils/api';
 import { Plus, Search, Trash2, Wine as WineIcon, LayoutGrid, List } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
+import { AnimatePresence, motion } from 'framer-motion';
 import CustomSelect from '../../components/CustomSelect';
 import './Wines.css';
+
+const tableVariants = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } },
+  exit:    { opacity: 0, y: -8, transition: { duration: 0.14, ease: 'easeIn' } }
+};
+
+const gridContainerVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.02 } },
+  exit:    { opacity: 0, transition: { duration: 0.14, ease: 'easeIn' } }
+};
+
+const cardVariants = {
+  initial: { opacity: 0, scale: 0.94, y: 8 },
+  animate: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.18, ease: 'easeOut' } }
+};
 
 const WinesList = () => {
   const { isEditor } = useAuth();
@@ -53,15 +71,6 @@ const WinesList = () => {
 
   return (
     <div className="page-container">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '1.5rem' }}>
-        {isEditor() && (
-          <Link to="/wines/new" className="btn btn-primary">
-            <Plus size={20} />
-            Add Wine
-          </Link>
-        )}
-      </div>
-
       <div className="filters-bar">
         <div className="search-box" style={{ maxWidth: '250px' }}>
           <Search size={20} />
@@ -127,6 +136,13 @@ const WinesList = () => {
             <LayoutGrid size={20} />
           </button>
         </div>
+
+        {isEditor() && (
+          <Link to="/wines/new" className="btn btn-primary" style={{ marginLeft: 'auto' }}>
+            <Plus size={20} />
+            Add Wine
+          </Link>
+        )}
       </div>
 
       {isLoading ? (
@@ -146,95 +162,111 @@ const WinesList = () => {
         </div>
       ) : (
         <>
-          {viewMode === 'table' ? (
-            <div className="table-container">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Wine Name</th>
-                    <th>Winery</th>
-                    <th>Type</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {wines.map((wine) => (
-                    <tr
-                      key={wine._id}
-                      onClick={() => window.location.href = `/wines/${wine._id}/edit`}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <td>
-                        <div className="wine-name" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div className="wine-thumbnail">
-                            {wine.bottleImage?.url ? (
-                              <img src={wine.bottleImage.url} alt={wine.name} style={{ width: '40px', height: '60px', objectFit: 'contain' }} />
-                            ) : (
-                              <div style={{ width: '40px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5', borderRadius: '4px' }}>
-                                <WineIcon size={24} style={{ color: getWineTypeColor(wine.type) }} />
-                              </div>
-                            )}
-                          </div>
-                          <strong style={{ fontFamily: 'Grenette, sans-serif' }}>{wine.name}</strong>
-                        </div>
-                      </td>
-                      <td>
-                        {wine.winery?.name || '-'}
-                      </td>
-                      <td>
-                        <span
-                          className="wine-type-badge"
-                          style={{
-                            backgroundColor: `${getWineTypeColor(wine.type)}20`,
-                            color: getWineTypeColor(wine.type),
-                            border: `1px solid ${getWineTypeColor(wine.type)}40`
-                          }}
-                        >
-                          {wine.type}
-                        </span>
-                      </td>
+          <AnimatePresence mode="wait">
+            {viewMode === 'table' ? (
+              <motion.div
+                key="table"
+                className="table-container"
+                variants={tableVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Wine Name</th>
+                      <th>Winery</th>
+                      <th>Type</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="items-grid">
-              {wines.map((wine) => (
-                <div key={wine._id} className="item-card wine-card-grid">
-                  <Link to={`/wines/${wine._id}/edit`} className="item-card-link">
-                    <div className="wine-card-image">
-                      {wine.bottleImage?.url ? (
-                        <img src={wine.bottleImage.url} alt={wine.name} />
-                      ) : (
-                        <div className="wine-card-placeholder">
-                          <WineIcon size={60} style={{ color: getWineTypeColor(wine.type) }} />
-                        </div>
-                      )}
-                    </div>
-                    <div className="item-card-content">
-                      <h3>{wine.name}</h3>
-                      {wine.winery?.name && (
-                        <p className="wine-card-winery">
-                          {wine.winery.name}
-                        </p>
-                      )}
-                    </div>
-                  </Link>
-                  {isEditor() && (
-                    <div className="item-card-actions">
-                      <button
-                        onClick={() => handleDelete(wine._id, wine.name)}
-                        className="btn-icon btn-icon-danger"
-                        title="Delete"
+                  </thead>
+                  <tbody>
+                    {wines.map((wine) => (
+                      <tr
+                        key={wine._id}
+                        onClick={() => window.location.href = `/wines/${wine._id}/edit`}
+                        style={{ cursor: 'pointer' }}
                       >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                        <td>
+                          <div className="wine-name" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div className="wine-thumbnail">
+                              {wine.bottleImage?.url ? (
+                                <img src={wine.bottleImage.url} alt={wine.name} style={{ width: '40px', height: '60px', objectFit: 'contain' }} />
+                              ) : (
+                                <div style={{ width: '40px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5', borderRadius: '4px' }}>
+                                  <WineIcon size={24} style={{ color: getWineTypeColor(wine.type) }} />
+                                </div>
+                              )}
+                            </div>
+                            <strong style={{ fontFamily: 'Grenette, sans-serif' }}>{wine.name}</strong>
+                          </div>
+                        </td>
+                        <td>
+                          {wine.winery?.name || '-'}
+                        </td>
+                        <td>
+                          <span
+                            className="wine-type-badge"
+                            style={{
+                              backgroundColor: `${getWineTypeColor(wine.type)}20`,
+                              color: getWineTypeColor(wine.type),
+                              border: `1px solid ${getWineTypeColor(wine.type)}40`
+                            }}
+                          >
+                            {wine.type}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="grid"
+                className="items-grid"
+                variants={gridContainerVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                {wines.map((wine) => (
+                  <motion.div key={wine._id} className="item-card wine-card-grid" variants={cardVariants}>
+                    <Link to={`/wines/${wine._id}/edit`} className="item-card-link">
+                      <div className="wine-card-image">
+                        {wine.bottleImage?.url ? (
+                          <img src={wine.bottleImage.url} alt={wine.name} />
+                        ) : (
+                          <div className="wine-card-placeholder">
+                            <WineIcon size={60} style={{ color: getWineTypeColor(wine.type) }} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="item-card-content">
+                        <h3>{wine.name}</h3>
+                        {wine.winery?.name && (
+                          <p className="wine-card-winery">
+                            {wine.winery.name}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                    {isEditor() && (
+                      <div className="item-card-actions">
+                        <button
+                          onClick={() => handleDelete(wine._id, wine.name)}
+                          className="btn-icon btn-icon-danger"
+                          title="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {totalPages > 1 && (
             <div className="pagination">

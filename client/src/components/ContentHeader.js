@@ -27,7 +27,7 @@ const ContentHeader = ({ onMenuClick }) => {
   const getPageTitle = () => {
     const path = location.pathname;
 
-    if (path === '/') return 'Dashboard';
+    if (path === '/' || path === '/dashboard') return 'Dashboard';
     if (path.startsWith('/wineries/new')) return 'New Brand';
     if (path.match(/\/wineries\/[^/]+\/edit/)) return 'Edit Brand';
     if (path.match(/\/wineries\/[^/]+/)) return 'Brand Details';
@@ -53,7 +53,7 @@ const ContentHeader = ({ onMenuClick }) => {
     const path = location.pathname;
 
     // Dashboard has no breadcrumbs
-    if (path === '/') return null;
+    if (path === '/' || path === '/dashboard') return null;
 
     // Wineries/Brands section
     if (path.startsWith('/wineries')) {

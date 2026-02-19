@@ -1,0 +1,175 @@
+/* Break out of the .content padding to fill the full main panel */
+.dashboard-alt {
+  margin: -2.5rem;
+  min-height: calc(100vh - 0px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2.5rem 2.75rem;
+  overflow: hidden;
+}
+
+/* Background image */
+.dashboard-alt::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1516594915697-87eb3b1c14ea?w=2000&q=80');
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+
+/* Dark overlay */
+.dashboard-alt::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);
+  z-index: 1;
+}
+
+/* All direct children sit above the overlays */
+.dashboard-alt > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Top Bar ── */
+.dash-alt-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dash-alt-heading {
+  font-family: 'Grenette', serif;
+  font-size: 38px;
+  font-weight: 400;
+  color: white;
+  margin: 0;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.dash-alt-search {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 8px;
+  padding: 10px 12px;
+  width: 260px;
+}
+
+.dash-alt-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'Grenette', serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: #7f3332;
+  min-width: 0;
+}
+
+.dash-alt-search-input::placeholder {
+  color: rgba(127, 51, 50, 0.75);
+}
+
+.dash-alt-search-icon {
+  color: white;
+  flex-shrink: 0;
+}
+
+/* ── Cards ── */
+.dash-alt-cards-row {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.dash-alt-cards-wide {
+  display: flex;
+}
+
+.dash-alt-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.5rem 1.75rem;
+  width: 276px;
+  min-height: 276px;
+  text-decoration: none;
+  transition: background 0.25s ease, transform 0.2s ease;
+}
+
+.dash-alt-card:hover {
+  background: rgba(0, 0, 0, 0.5);
+  transform: translateY(-2px);
+  color: inherit;
+}
+
+.dash-alt-card-wide {
+  width: 100%;
+  min-height: 200px;
+}
+
+.dash-alt-card-label {
+  font-family: 'Grenette', serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: white;
+  line-height: 1.2;
+}
+
+.dash-alt-card-value {
+  font-family: 'Grenette', serif;
+  font-size: 55px;
+  font-weight: 400;
+  color: white;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.dash-alt-card-sub {
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.02em;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .dashboard-alt {
+    margin: -1rem;
+    padding: 1.5rem;
+  }
+
+  .dash-alt-cards-row {
+    flex-direction: column;
+  }
+
+  .dash-alt-card {
+    width: 100%;
+    min-height: 160px;
+  }
+
+  .dash-alt-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .dash-alt-search {
+    width: 100%;
+  }
+}

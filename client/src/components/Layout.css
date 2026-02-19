@@ -177,7 +177,7 @@
   flex-direction: column;
   background-color: #FAF6ED;
   border-radius: 1.5rem 0 0 1.5rem;
-  overflow: hidden;
+  overflow: clip;
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.06);
 }
 
@@ -192,6 +192,16 @@
   width: 100%;
   margin: 0 auto;
   background-color: #FAF6ED;
+}
+
+/* Page Transition */
+@keyframes pageEnter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.page-transition {
+  animation: pageEnter 0.2s ease both;
 }
 
 /* Mobile Overlay */

@@ -3,6 +3,7 @@ const router = express.Router();
 const OpenAI = require('openai');
 const axios = require('axios');
 const FormData = require('form-data');
+const sharp = require('sharp');
 const { protect } = require('../middleware/auth');
 const Wine = require('../models/Wine');
 
@@ -40,14 +41,16 @@ router.post('/generate-wine-image', protect, async (req, res) => {
     }
 
     // Create a detailed prompt for DALL-E 3
-    const prompt = `Professional product photography of a ${wineType} wine bottle isolated on transparent background.
+    // Note: DALL-E 3 doesn't support transparent backgrounds natively,
+    // so we generate on a clean white background for easier removal
+    const prompt = `Professional product photography of a ${wineType} wine bottle isolated on pure white background.
 The bottle is elegant and premium, with a ${wineType === 'red' ? 'dark bordeaux' : wineType === 'white' ? 'light champagne' : wineType === 'rosé' ? 'pink' : 'dark'} glass bottle.
 ${wineryName ? `The label shows "${wineryName}" as the winery name.` : ''}
 The label features "${wineName}" prominently displayed.
 ${variety ? `It's a ${variety} wine.` : ''}
 ${region ? `From ${region}.` : ''}
-PNG with transparent background, no background elements, studio lighting on the bottle only, centered composition,
-photorealistic, professional product shot, sharp focus on the label details, cutout style.`;
+Clean white background, no shadows, studio lighting on the bottle only, centered composition,
+photorealistic, professional product shot, sharp focus on the label details, cutout style, product photography.`;
 
     console.log('Generating image with prompt:', prompt);
 
@@ -85,17 +88,35 @@ photorealistic, professional product shot, sharp focus on the label details, cut
           encoding: null
         });
 
-        // Convert the image buffer to base64 data URL
-        const base64Image = Buffer.from(bgRemovalResponse.data, 'binary').toString('base64');
+        console.log('Background removed successfully');
+
+        // Process and crop the image
+        console.log('Processing image: cropping and centering...');
+        const imageBuffer = Buffer.from(bgRemovalResponse.data, 'binary');
+
+        // Process with sharp: trim whitespace, resize to standard size, and center
+        const processedBuffer = await sharp(imageBuffer)
+          .trim({ threshold: 10 }) // Remove transparent edges
+          .resize(800, 1200, {
+            fit: 'contain',
+            background: { r: 0, g: 0, b: 0, alpha: 0 }
+          })
+          .png()
+          .toBuffer();
+
+        // Convert processed image to base64
+        const base64Image = processedBuffer.toString('base64');
         imageUrl = `data:image/png;base64,${base64Image}`;
 
-        console.log('Background removed successfully');
+        console.log('Image processed and cropped successfully');
       } catch (bgError) {
         console.error('Background removal failed:', bgError.response?.data?.errors || bgError.message);
         console.log('Using original image without background removal');
       }
     } else {
-      console.log('REMOVEBG_API_KEY not configured, skipping background removal');
+      console.log('REMOVEBG_API_KEY not configured - images will be generated on white background');
+      console.log('To enable automatic background removal, add REMOVEBG_API_KEY to your .env file');
+      console.log('Get an API key at: https://www.remove.bg/api');
     }
 
     // If wineId is provided, update the wine document
@@ -131,6 +152,54 @@ photorealistic, professional product shot, sharp focus on the label details, cut
     res.status(500).json({
       success: false,
       message,
+      error: error.message
+    });
+  }
+});
+
+// @route   POST /api/ai/upload-wine-image/:wineId
+// @desc    Upload wine bottle image manually
+// @access  Private
+router.post('/upload-wine-image/:wineId', protect, async (req, res) => {
+  try {
+    const { imageUrl } = req.body;
+
+    if (!imageUrl) {
+      return res.status(400).json({
+        success: false,
+        message: 'Image URL is required'
+      });
+    }
+
+    const wine = await Wine.findById(req.params.wineId);
+
+    if (!wine) {
+      return res.status(404).json({
+        success: false,
+        message: 'Wine not found'
+      });
+    }
+
+    wine.bottleImage = {
+      url: imageUrl,
+      generatedAt: new Date(),
+      prompt: 'Manually uploaded'
+    };
+    wine.updatedBy = req.user.id;
+    await wine.save();
+
+    res.json({
+      success: true,
+      data: {
+        imageUrl
+      }
+    });
+
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
       error: error.message
     });
   }

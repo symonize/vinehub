@@ -2,10 +2,14 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding-bottom: 2rem;
-  margin-bottom: 2rem;
+  padding: 2rem 2.5rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   gap: 2rem;
+  background-color: #FAF6ED;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-radius: 1.5rem 0 0 0;
 }
 
 .content-header-left {
@@ -131,8 +135,8 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
-    padding-bottom: 1.5rem;
-    margin-bottom: 1.5rem;
+    padding: 1.25rem 1rem;
+    border-radius: 0;
   }
 
   .content-header-left {

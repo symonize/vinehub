@@ -20,6 +20,7 @@ import VintageForm from './pages/vintages/VintageForm';
 import VintageDetail from './pages/vintages/VintageDetail';
 import UserManagement from './pages/users/UserManagement';
 import StyleGuide from './pages/StyleGuide';
+import DashboardAlt from './pages/DashboardAlt';
 
 // Layout
 import Layout from './components/Layout';
@@ -80,6 +81,7 @@ function AppRoutes() {
         </ProtectedRoute>
       }>
         <Route index element={<Dashboard />} />
+        <Route path="dashboard" element={<Dashboard />} />
 
         {/* Wineries */}
         <Route path="wineries" element={<WineriesList />} />
@@ -104,6 +106,9 @@ function AppRoutes() {
 
         {/* Style Guide */}
         <Route path="style-guide" element={<StyleGuide />} />
+
+        {/* Dashboard Alt */}
+        <Route path="dashboard-alt" element={<DashboardAlt />} />
       </Route>
 
       {/* 404 */}

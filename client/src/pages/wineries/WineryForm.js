@@ -8,6 +8,25 @@ import { ArrowLeft, Upload } from 'lucide-react';
 import CustomSelect from '../../components/CustomSelect';
 import './Wineries.css';
 
+const WINE_COUNTRIES = [
+  { value: 'Argentina', label: 'Argentina' },
+  { value: 'Australia', label: 'Australia' },
+  { value: 'Austria', label: 'Austria' },
+  { value: 'Canada', label: 'Canada' },
+  { value: 'Chile', label: 'Chile' },
+  { value: 'France', label: 'France' },
+  { value: 'Germany', label: 'Germany' },
+  { value: 'Greece', label: 'Greece' },
+  { value: 'Hungary', label: 'Hungary' },
+  { value: 'Italy', label: 'Italy' },
+  { value: 'New Zealand', label: 'New Zealand' },
+  { value: 'Portugal', label: 'Portugal' },
+  { value: 'South Africa', label: 'South Africa' },
+  { value: 'Spain', label: 'Spain' },
+  { value: 'United States', label: 'United States' },
+  { value: 'Other', label: 'Other' },
+];
+
 const WineryForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -111,6 +130,23 @@ const WineryForm = () => {
               {...register('description', { required: 'Description is required' })}
             />
             {errors.description && <span className="form-error">{errors.description.message}</span>}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Country</label>
+            <Controller
+              name="country"
+              control={control}
+              defaultValue=""
+              render={({ field }) => (
+                <CustomSelect
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select country..."
+                  options={WINE_COUNTRIES}
+                />
+              )}
+            />
           </div>
 
           <div className="form-group">

@@ -15,6 +15,10 @@ const wineSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Description is required']
   },
+  country: {
+    type: String,
+    trim: true
+  },
   region: {
     type: String,
     required: [true, 'Region is required'],
@@ -72,6 +76,79 @@ const wineSchema = new mongoose.Schema({
       max: new Date().getFullYear() + 1
     }
   }],
+  // Nutrition & Ingredients (TTB proposed regulations 2025)
+  nutrition: {
+    // Alcohol Facts Statement fields
+    servingSize: {
+      type: Number, // in ml or oz
+      default: 5 // 5 oz standard wine serving
+    },
+    servingsPerContainer: {
+      type: Number
+    },
+    alcoholByVolume: {
+      type: Number, // percentage (e.g., 13.5)
+      min: 0,
+      max: 100
+    },
+    alcoholPerServing: {
+      type: Number // fluid ounces of pure ethyl alcohol per serving
+    },
+    caloriesPerServing: {
+      type: Number
+    },
+    carbohydratesPerServing: {
+      type: Number // in grams
+    },
+    fatPerServing: {
+      type: Number, // in grams
+      default: 0
+    },
+    proteinPerServing: {
+      type: Number, // in grams
+      default: 0
+    },
+    sugarPerServing: {
+      type: Number // in grams (optional, commonly requested)
+    }
+  },
+  ingredients: {
+    // List of ingredients used in production
+    primaryIngredients: [{
+      type: String,
+      trim: true
+    }],
+    additives: [{
+      type: String,
+      trim: true
+    }],
+    // Major Food Allergens (TTB Notice No. 238 - proposed 2025)
+    allergens: {
+      milk: { type: Boolean, default: false },
+      eggs: { type: Boolean, default: false },
+      fish: { type: Boolean, default: false },
+      crustaceanShellfish: { type: Boolean, default: false },
+      treeNuts: { type: Boolean, default: false },
+      wheat: { type: Boolean, default: false },
+      peanuts: { type: Boolean, default: false },
+      soybeans: { type: Boolean, default: false },
+      sesame: { type: Boolean, default: false }
+    },
+    // Optional notes
+    processingAids: [{
+      type: String,
+      trim: true
+    }],
+    notes: {
+      type: String,
+      trim: true
+    }
+  },
+  // QR Code for compliance (can be generated from this data)
+  complianceQRCode: {
+    url: String,
+    generatedAt: Date
+  },
   status: {
     type: String,
     enum: ['draft', 'published', 'archived'],

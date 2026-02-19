@@ -107,6 +107,7 @@ export const uploadAPI = {
 // AI API
 export const aiAPI = {
   generateWineImage: (data) => api.post('/ai/generate-wine-image', data),
+  uploadWineImage: (wineId, imageUrl) => api.post(`/ai/upload-wine-image/${wineId}`, { imageUrl }),
   removeWineImage: (wineId) => api.delete(`/ai/wine-image/${wineId}`)
 };
 

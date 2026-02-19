@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { wineriesAPI, winesAPI, vintagesAPI } from '../utils/api';
 import { Building2, GlassWater, Calendar } from 'lucide-react';
-import ChatBot from '../components/ChatBot';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -87,8 +86,6 @@ const Dashboard = () => {
           </Link>
         </div>
       </div>
-
-      <ChatBot />
     </div>
   );
 };

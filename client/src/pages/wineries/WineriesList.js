@@ -5,8 +5,26 @@ import { wineriesAPI, getFileUrl } from '../../utils/api';
 import { Plus, Search, Edit, Trash2, Eye, Building2, LayoutGrid, List } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
+import { AnimatePresence, motion } from 'framer-motion';
 import CustomSelect from '../../components/CustomSelect';
 import './Wineries.css';
+
+const tableVariants = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } },
+  exit:    { opacity: 0, y: -8, transition: { duration: 0.14, ease: 'easeIn' } }
+};
+
+const gridContainerVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.02 } },
+  exit:    { opacity: 0, transition: { duration: 0.14, ease: 'easeIn' } }
+};
+
+const cardVariants = {
+  initial: { opacity: 0, scale: 0.94, y: 8 },
+  animate: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.18, ease: 'easeOut' } }
+};
 
 const WineriesList = () => {
   const { isEditor } = useAuth();
@@ -107,107 +125,125 @@ const WineriesList = () => {
         </div>
       ) : (
         <>
-          {viewMode === 'table' ? (
-            <div className="table-container">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Status</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {wineries.map((winery) => (
-                    <tr key={winery._id}>
-                      <td>
-                        <div className="winery-name">
-                          {winery.logo?.path && (
-                            <img
-                              src={getFileUrl(winery.logo.path)}
-                              alt={winery.name}
-                              className="winery-logo-thumb"
-                            />
-                          )}
-                          <strong>{winery.name}</strong>
-                        </div>
-                      </td>
-                      <td className="description-cell">
-                        {winery.description?.substring(0, 100)}...
-                      </td>
-                      <td>
-                        <span className={`badge badge-${winery.status}`}>
-                          {winery.status}
-                        </span>
-                      </td>
-                      <td>{new Date(winery.createdAt).toLocaleDateString()}</td>
-                      <td>
-                        <div className="action-buttons">
-                          <Link
-                            to={`/wineries/${winery._id}`}
-                            className="btn-icon"
-                            title="View"
-                          >
-                            <Eye size={18} />
-                          </Link>
-                          {isEditor() && (
-                            <>
-                              <Link
-                                to={`/wineries/${winery._id}/edit`}
-                                className="btn-icon"
-                                title="Edit"
-                              >
-                                <Edit size={18} />
-                              </Link>
-                              <button
-                                onClick={() => handleDelete(winery._id, winery.name)}
-                                className="btn-icon btn-icon-danger"
-                                title="Delete"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
+          <AnimatePresence mode="wait">
+            {viewMode === 'table' ? (
+              <motion.div
+                key="table"
+                className="table-container"
+                variants={tableVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Description</th>
+                      <th>Status</th>
+                      <th>Created</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="items-grid">
-              {wineries.map((winery) => (
-                <Link key={winery._id} to={`/wineries/${winery._id}/edit`} className="item-card">
-                  {winery.featuredImage?.path || winery.logo?.path ? (
-                    <div className="item-card-image">
-                      <img
-                        src={getFileUrl(winery.featuredImage?.path || winery.logo?.path)}
-                        alt={winery.name}
-                        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="item-card-icon">
-                      <Building2 size={40} style={{ color: 'var(--primary)' }} />
-                    </div>
-                  )}
-                  <div className="item-card-content">
-                    <h3>{winery.name}</h3>
-                    <p className="item-card-description">
-                      {winery.description?.substring(0, 100)}
-                      {winery.description?.length > 100 ? '...' : ''}
-                    </p>
-                    <p className="item-card-date">
-                      Created {new Date(winery.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {wineries.map((winery) => (
+                      <tr key={winery._id}>
+                        <td>
+                          <div className="winery-name">
+                            {winery.logo?.path && (
+                              <img
+                                src={getFileUrl(winery.logo.path)}
+                                alt={winery.name}
+                                className="winery-logo-thumb"
+                              />
+                            )}
+                            <strong>{winery.name}</strong>
+                          </div>
+                        </td>
+                        <td className="description-cell">
+                          {winery.description?.substring(0, 100)}...
+                        </td>
+                        <td>
+                          <span className={`badge badge-${winery.status}`}>
+                            {winery.status}
+                          </span>
+                        </td>
+                        <td>{new Date(winery.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          <div className="action-buttons">
+                            <Link
+                              to={`/wineries/${winery._id}`}
+                              className="btn-icon"
+                              title="View"
+                            >
+                              <Eye size={18} />
+                            </Link>
+                            {isEditor() && (
+                              <>
+                                <Link
+                                  to={`/wineries/${winery._id}/edit`}
+                                  className="btn-icon"
+                                  title="Edit"
+                                >
+                                  <Edit size={18} />
+                                </Link>
+                                <button
+                                  onClick={() => handleDelete(winery._id, winery.name)}
+                                  className="btn-icon btn-icon-danger"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="grid"
+                className="items-grid"
+                variants={gridContainerVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                {wineries.map((winery) => (
+                  <motion.div key={winery._id} variants={cardVariants}>
+                    <Link to={`/wineries/${winery._id}/edit`} className="item-card" style={{ display: 'block' }}>
+                      {winery.featuredImage?.path || winery.logo?.path ? (
+                        <div className="item-card-image">
+                          <img
+                            src={getFileUrl(winery.featuredImage?.path || winery.logo?.path)}
+                            alt={winery.name}
+                            style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="item-card-icon">
+                          <Building2 size={40} style={{ color: 'var(--primary)' }} />
+                        </div>
+                      )}
+                      <div className="item-card-content">
+                        <h3>{winery.name}</h3>
+                        <p className="item-card-description">
+                          {winery.description?.substring(0, 100)}
+                          {winery.description?.length > 100 ? '...' : ''}
+                        </p>
+                        <p className="item-card-date">
+                          Created {new Date(winery.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {totalPages > 1 && (
             <div className="pagination">

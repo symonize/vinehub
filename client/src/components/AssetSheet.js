@@ -6,6 +6,15 @@ import './AssetSheet.css';
 
 const AssetSheet = ({ vintage, wineName, onClose, onUpdate }) => {
   const [uploading, setUploading] = useState({});
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = () => {
+    setIsClosing(true);
+    // Wait for animation to complete before calling onClose
+    setTimeout(() => {
+      onClose();
+    }, 300); // Match animation duration
+  };
 
   const assetTypes = [
     { key: 'bottleImage', label: 'Bottle Image', icon: Image, accept: 'image/*,.webp' },
@@ -164,14 +173,14 @@ const AssetSheet = ({ vintage, wineName, onClose, onUpdate }) => {
 
   return (
     <>
-      <div className="sheet-overlay" onClick={onClose} />
-      <div className="sheet-container">
+      <div className={`sheet-overlay ${isClosing ? 'closing' : ''}`} onClick={handleClose} />
+      <div className={`sheet-container ${isClosing ? 'closing' : ''}`}>
         <div className="sheet-header">
           <div className="sheet-title">
             <h2>{wineName}</h2>
             <span className="sheet-subtitle">Vintage {vintage.year}</span>
           </div>
-          <button onClick={onClose} className="btn-close">
+          <button onClick={handleClose} className="btn-close">
             <X size={24} />
           </button>
         </div>

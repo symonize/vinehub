@@ -33,6 +33,10 @@ const winerySchema = new mongoose.Schema({
     uploadedAt: Date,
     caption: String
   }],
+  country: {
+    type: String,
+    trim: true
+  },
   status: {
     type: String,
     enum: ['draft', 'published', 'archived'],
