@@ -74,6 +74,10 @@ router.get('/:id', async (req, res) => {
       });
     }
 
+    console.log('[winery GET] id:', req.params.id);
+    console.log('[winery GET] featuredImage:', JSON.stringify(winery.featuredImage));
+    console.log('[winery GET] logo:', JSON.stringify(winery.logo));
+
     res.json({
       success: true,
       data: winery
@@ -158,11 +162,15 @@ router.put('/:id', [
       });
     }
 
+    console.log('[winery PUT] featuredImage in body:', JSON.stringify(req.body.featuredImage));
+
     winery = await Winery.findByIdAndUpdate(
       req.params.id,
       { ...req.body, updatedBy: req.user.id },
       { new: true, runValidators: true }
     );
+
+    console.log('[winery PUT] saved featuredImage:', JSON.stringify(winery.featuredImage));
 
     res.json({
       success: true,
