@@ -103,8 +103,8 @@ const AssetSheet = ({ vintage, wineName, onClose, onUpdate }) => {
         <div className="asset-card-body">
           {asset ? (
             <div className="asset-preview">
-              {assetType.accept.includes('image') && asset.url ? (
-                <img src={getFileUrl(asset.url)} alt={assetType.label} className="asset-image" />
+              {assetType.accept.includes('image') && (asset.url || asset.path) ? (
+                <img src={getFileUrl(asset.url || asset.path)} alt={assetType.label} className="asset-image" />
               ) : (
                 <div className="asset-file-icon">
                   <File size={48} />
@@ -113,7 +113,7 @@ const AssetSheet = ({ vintage, wineName, onClose, onUpdate }) => {
               )}
               <div className="asset-actions">
                 <a
-                  href={getFileUrl(asset.url)}
+                  href={getFileUrl(asset.url || asset.path)}
                   download={asset.filename}
                   className="btn-icon"
                   title="Download"

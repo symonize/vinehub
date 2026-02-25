@@ -16,6 +16,7 @@ const vintageSchema = new mongoose.Schema({
     bottleImage: {
       filename: String,
       url: String,
+      path: String,    // legacy field
       public_id: String,
       mimetype: String,
       size: Number,
@@ -24,6 +25,7 @@ const vintageSchema = new mongoose.Schema({
     labelImage: {
       filename: String,
       url: String,
+      path: String,    // legacy field
       public_id: String,
       mimetype: String,
       size: Number,
@@ -32,6 +34,7 @@ const vintageSchema = new mongoose.Schema({
     techSheet: {
       filename: String,
       url: String,
+      path: String,    // legacy field
       public_id: String,
       mimetype: String,
       size: Number,
@@ -40,6 +43,7 @@ const vintageSchema = new mongoose.Schema({
     tastingCard: {
       filename: String,
       url: String,
+      path: String,    // legacy field
       public_id: String,
       mimetype: String,
       size: Number,
@@ -48,6 +52,7 @@ const vintageSchema = new mongoose.Schema({
     lifestyleImage: {
       filename: String,
       url: String,
+      path: String,    // legacy field
       public_id: String,
       mimetype: String,
       size: Number,
@@ -56,6 +61,7 @@ const vintageSchema = new mongoose.Schema({
     shelfTalker: {
       filename: String,
       url: String,
+      path: String,    // legacy field
       public_id: String,
       mimetype: String,
       size: Number,

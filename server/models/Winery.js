@@ -14,6 +14,7 @@ const winerySchema = new mongoose.Schema({
   featuredImage: {
     filename: String,
     url: String,
+    path: String,    // legacy field — kept so old documents still serialize
     public_id: String,
     mimetype: String,
     size: Number,
@@ -22,6 +23,7 @@ const winerySchema = new mongoose.Schema({
   logo: {
     filename: String,
     url: String,
+    path: String,    // legacy field
     public_id: String,
     mimetype: String,
     size: Number,
@@ -30,6 +32,7 @@ const winerySchema = new mongoose.Schema({
   lifestyleImages: [{
     filename: String,
     url: String,
+    path: String,    // legacy field
     public_id: String,
     mimetype: String,
     size: Number,

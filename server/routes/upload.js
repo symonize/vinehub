@@ -20,10 +20,21 @@ router.post('/',
         });
       }
 
+      // multer-storage-cloudinary v4 sets path = secure_url, filename = public_id
+      console.log('[upload] req.file keys:', Object.keys(req.file));
+      console.log('[upload] path:', req.file.path, '| filename:', req.file.filename);
+      const url = req.file.path || req.file.secure_url;
+      if (!url || !url.startsWith('http')) {
+        return res.status(500).json({
+          success: false,
+          message: 'Upload succeeded but Cloudinary did not return a valid URL'
+        });
+      }
+
       const fileData = {
         filename: req.file.originalname,
         originalName: req.file.originalname,
-        url: req.file.path,           // Cloudinary CDN URL
+        url,
         public_id: req.file.filename, // Cloudinary public_id (for deletion)
         mimetype: req.file.mimetype,
         size: req.file.size,
