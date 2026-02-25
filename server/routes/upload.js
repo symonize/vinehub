@@ -21,13 +21,21 @@ router.post('/',
       }
 
       // multer-storage-cloudinary v4 sets path = secure_url, filename = public_id
-      console.log('[upload] req.file keys:', Object.keys(req.file));
-      console.log('[upload] path:', req.file.path, '| filename:', req.file.filename);
+      console.log('[upload] req.file:', JSON.stringify({
+        fieldname: req.file.fieldname,
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        path: req.file.path,
+        filename: req.file.filename,
+        secure_url: req.file.secure_url
+      }));
       const url = req.file.path || req.file.secure_url;
-      if (!url || !url.startsWith('http')) {
+      if (!url || typeof url !== 'string' || !url.startsWith('http')) {
+        console.error('[upload] Invalid URL from Cloudinary:', url);
         return res.status(500).json({
           success: false,
-          message: 'Upload succeeded but Cloudinary did not return a valid URL'
+          message: `Upload failed: Cloudinary did not return a valid URL (got: ${url})`
         });
       }
 
