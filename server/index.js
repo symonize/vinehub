@@ -22,7 +22,8 @@ const allowedOrigins = [
   'http://localhost:3001',
   'http://localhost:3002',
   process.env.CLIENT_URL,
-  'https://app.vino-hub.com'
+  'https://app.vino-hub.com',
+  'https://vinehub-production-cc25.up.railway.app'
 ].filter(Boolean);
 
 app.use(cors({
