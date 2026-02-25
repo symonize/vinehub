@@ -248,6 +248,13 @@ const TradeTools = () => {
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [selectedRegions, setSelectedRegions] = useState([]);
   const [selectedMarkets, setSelectedMarkets] = useState([]);
+  const [browseSearch, setBrowseSearch] = useState('');
+  const [scoreMin, setScoreMin] = useState(85);
+  const [scoreMax, setScoreMax] = useState(100);
+
+  // Generator type selector
+  const [activeGenerator, setActiveGenerator] = useState('sales-sheet');
+  const [isGeneratorDropdownOpen, setIsGeneratorDropdownOpen] = useState(false);
 
   // Sales Sheet Generator State
   const [selectedWinesForSheet, setSelectedWinesForSheet] = useState([]);
@@ -270,8 +277,15 @@ const TradeTools = () => {
     personalNote: ''
   });
 
-  // Ref for PDF preview
+  // Shelf Talker Generator State
+  const [selectedWineForCard, setSelectedWineForCard] = useState(null);
+  const [cardWineSearchQuery, setCardWineSearchQuery] = useState('');
+  const [isCardWineDropdownOpen, setIsCardWineDropdownOpen] = useState(false);
+  const [isGeneratingCardPDF, setIsGeneratingCardPDF] = useState(false);
+
+  // Refs for PDF previews
   const pdfPreviewRef = useRef(null);
+  const tastingCardRef = useRef(null);
 
   // Collapse state for filter sections
   const [expandedSections, setExpandedSections] = useState({
@@ -284,11 +298,15 @@ const TradeTools = () => {
 
   // Fetch wines for Browse tab
   const { data: winesData, isLoading: winesLoading } = useQuery(
-    ['trade-wines', selectedTypes, selectedRegions, selectedMarkets],
+    ['trade-wines', selectedTypes, selectedRegions, selectedMarkets, browseSearch],
     () => {
       const params = {
         limit: 100
       };
+
+      if (browseSearch) {
+        params.search = browseSearch;
+      }
 
       if (selectedTypes.length > 0) {
         params.type = selectedTypes[0];
@@ -312,8 +330,8 @@ const TradeTools = () => {
 
   // Fetch brands (wineries) for Browse tab
   const { data: brandsData, isLoading: brandsLoading } = useQuery(
-    'trade-brands',
-    () => wineriesAPI.getAll({ limit: 100 }),
+    ['trade-brands', browseSearch],
+    () => wineriesAPI.getAll({ limit: 100, ...(browseSearch ? { search: browseSearch } : {}) }),
     {
       keepPreviousData: true,
       enabled: activeTab === 'browse' && activeWinesTab === 'brands'
@@ -404,7 +422,7 @@ const TradeTools = () => {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm
-      const margin = 25.4; // 1 inch margin in mm
+      const margin = 10; // 10mm margin
       const contentWidth = pageWidth - (2 * margin);
       const contentHeight = pageHeight - (2 * margin);
 
@@ -419,8 +437,10 @@ const TradeTools = () => {
       const imgWidth = contentWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      // Calculate how many pages we need
+      // Calculate how many pages we need based on printable content height
       const totalPages = Math.ceil(imgHeight / contentHeight);
+      const sliceHeightPx = canvas.height / totalPages;
+      const sliceHeightMm = imgHeight / totalPages;
 
       for (let page = 0; page < totalPages; page++) {
         if (page > 0) {
@@ -428,8 +448,8 @@ const TradeTools = () => {
         }
 
         // Calculate the portion of the image for this page
-        const sourceY = page * (canvas.height / totalPages);
-        const sourceHeight = canvas.height / totalPages;
+        const sourceY = page * sliceHeightPx;
+        const sourceHeight = sliceHeightPx;
 
         // Create a temporary canvas for this page
         const pageCanvas = document.createElement('canvas');
@@ -445,7 +465,7 @@ const TradeTools = () => {
         );
 
         const pageImgData = pageCanvas.toDataURL('image/png');
-        const pageImgHeight = contentHeight;
+        const pageImgHeight = sliceHeightMm;
 
         pdf.addImage(pageImgData, 'PNG', margin, margin, imgWidth, pageImgHeight);
       }
@@ -504,6 +524,61 @@ const TradeTools = () => {
     }));
   };
 
+  const handleGenerateTastingCardPDF = async () => {
+    if (!tastingCardRef.current || !selectedWineForCard) {
+      alert('Please select a wine to generate a shelf talker.');
+      return;
+    }
+
+    setIsGeneratingCardPDF(true);
+
+    try {
+      // Capture the single card preview
+      const canvas = await html2canvas(tastingCardRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#faf8f3'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+
+      // A4 portrait: 210mm x 297mm
+      // Layout: 2 columns x 3 rows = 6 cards, preserving card's natural aspect ratio
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+
+      const cols = 2;
+      const rows = 3;
+      const margin = 8;
+      const gutterX = 5;
+      const gutterY = 5;
+
+      // Derive card height from the actual captured pixel ratio — no stretching
+      const cardWidth = (pageWidth - margin * 2 - gutterX * (cols - 1)) / cols;
+      const cardHeight = cardWidth * (canvas.height / canvas.width);
+
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const x = margin + col * (cardWidth + gutterX);
+          const y = margin + row * (cardHeight + gutterY);
+          pdf.addImage(imgData, 'PNG', x, y, cardWidth, cardHeight);
+        }
+      }
+
+      const filename = selectedWineForCard.name
+        ? `tasting_cards_${selectedWineForCard.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`
+        : 'tasting_cards.pdf';
+
+      pdf.save(filename);
+    } catch (error) {
+      console.error('Error generating shelf talker PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingCardPDF(false);
+    }
+  };
+
   return (
     <div className="trade-tools-page">
       {/* Trade Tools Header */}
@@ -516,17 +591,53 @@ const TradeTools = () => {
                 className={activeTab === 'browse' ? 'tab active' : 'tab'}
                 onClick={() => setActiveTab('browse')}
               >
-                Browse
+                <span className="tab-icon">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
+                    <line x1="9.8" y1="9.8" x2="13.5" y2="13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </span>
+                <span>Browse</span>
               </button>
+              <div className={`tab-dropdown-wrap${activeTab === 'generators' ? ' active' : ''}`}>
                 <button
                   className={activeTab === 'generators' ? 'tab active' : 'tab'}
                   onClick={() => {
                     setActiveTab('generators');
                     setGeneratorAnimationKey(prev => prev + 1);
+                    setIsGeneratorDropdownOpen(v => !v);
                   }}
                 >
-                Generators
-              </button>
+                  <span className="tab-icon">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M3 8.5L6 7L7.5 4L9 7L12 8.5L9 10L7.5 13L6 10L3 8.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <span>{activeTab === 'generators' ? (activeGenerator === 'sales-sheet' ? 'Sales Sheet' : 'Shelf Talker') : 'Generators'}</span>
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className={isGeneratorDropdownOpen ? 'gen-chevron expanded' : 'gen-chevron'}>
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                {isGeneratorDropdownOpen && activeTab === 'generators' && (
+                  <>
+                    <div className="gen-dropdown-backdrop" onClick={() => setIsGeneratorDropdownOpen(false)} />
+                    <div className="generator-type-menu">
+                      <button
+                        className={activeGenerator === 'sales-sheet' ? 'gen-menu-item active' : 'gen-menu-item'}
+                        onClick={() => { setActiveGenerator('sales-sheet'); setIsGeneratorDropdownOpen(false); setGeneratorAnimationKey(k => k + 1); }}
+                      >
+                        Sales Sheet
+                      </button>
+                      <button
+                        className={activeGenerator === 'shelf-talker' ? 'gen-menu-item active' : 'gen-menu-item'}
+                        onClick={() => { setActiveGenerator('shelf-talker'); setIsGeneratorDropdownOpen(false); setGeneratorAnimationKey(k => k + 1); }}
+                      >
+                        Shelf Talker
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -536,30 +647,53 @@ const TradeTools = () => {
       {activeTab === 'browse' ? (
         <div className="trade-tools-content">
           <div className="container">
-            {/* Secondary Tabs */}
-            <div className="trade-tools-secondary-tabs">
-              <button
-                className={activeWinesTab === 'wines' ? 'secondary-tab active' : 'secondary-tab'}
-                onClick={() => setActiveWinesTab('wines')}
-              >
-                Wines
-              </button>
-              <button
-                className={activeWinesTab === 'brands' ? 'secondary-tab active' : 'secondary-tab'}
-                onClick={() => setActiveWinesTab('brands')}
-              >
-                Brands
-              </button>
-            </div>
-
-            {/* Controls Bar */}
-              <div className="trade-tools-controls-bar">
-                <div className="results-count">
-                  Showing <span className="count-badge">
-                    {activeWinesTab === 'wines' ? wines.length : brands.length}
-                  </span>
+              {/* Secondary Tabs + Search Row */}
+                <div className="trade-tools-tab-row">
+                  <div className="trade-tools-secondary-tabs">
+                    <button
+                      className={activeWinesTab === 'wines' ? 'tab active' : 'tab'}
+                      onClick={() => setActiveWinesTab('wines')}
+                    >
+                      Wines
+                    </button>
+                    <button
+                      className={activeWinesTab === 'brands' ? 'tab active' : 'tab'}
+                      onClick={() => setActiveWinesTab('brands')}
+                    >
+                      Brands
+                    </button>
+                  </div>
+                  <div className="trade-header-search-wrapper">
+                    <svg className="search-bar-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/>
+                      <line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    <input
+                      type="text"
+                      className="search-bar-input"
+                      placeholder={activeWinesTab === 'wines' ? 'Search wines...' : 'Search brands...'}
+                      value={browseSearch}
+                      onChange={e => setBrowseSearch(e.target.value)}
+                    />
+                    {browseSearch && (
+                      <button className="search-bar-clear" onClick={() => setBrowseSearch('')} aria-label="Clear search">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                          <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="controls-right">
+
+              {/* Controls Bar */}
+                <div className="trade-tools-controls-bar">
+                  <div className="results-count">
+                    Showing <span className="count-badge">
+                      {activeWinesTab === 'wines' ? wines.length : brands.length}
+                    </span>
+                  </div>
+                  <div className="controls-right">
                   <div className="view-toggle-group">
                     <button
                       className={`view-toggle-btn${viewMode === 'grid' ? ' active' : ''}`}
@@ -745,15 +879,43 @@ const TradeTools = () => {
                       <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </h4>
-                  {expandedSections.score && (
-                    <div className="score-slider">
-                      <input type="range" min="0" max="100" />
-                      <div className="score-labels">
-                        <span>90</span>
-                        <span>97</span>
+                    {expandedSections.score && (
+                      <div className="score-slider">
+                        <div className="score-range-track-wrapper">
+                          <div
+                            className="score-range-fill"
+                            style={{
+                              left: `${((scoreMin - 80) / 20) * 100}%`,
+                              right: `${100 - ((scoreMax - 80) / 20) * 100}%`
+                            }}
+                          />
+                          <input
+                            type="range"
+                            className="score-range-input"
+                            min="80" max="100"
+                            value={scoreMin}
+                            onChange={e => {
+                              const v = Math.min(Number(e.target.value), scoreMax - 1);
+                              setScoreMin(v);
+                            }}
+                          />
+                          <input
+                            type="range"
+                            className="score-range-input"
+                            min="80" max="100"
+                            value={scoreMax}
+                            onChange={e => {
+                              const v = Math.max(Number(e.target.value), scoreMin + 1);
+                              setScoreMax(v);
+                            }}
+                          />
+                        </div>
+                        <div className="score-labels">
+                          <span>{scoreMin}</span>
+                          <span>{scoreMax}</span>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               </aside>
 
@@ -926,7 +1088,168 @@ const TradeTools = () => {
       ) : (
         <div className="trade-tools-content">
           <div className="container">
+
               <div className="generator-layout" key={generatorAnimationKey}>
+                {activeGenerator === 'shelf-talker' ? (
+                  <>
+                    {/* Shelf Talker - Left Controls */}
+                    <div className="generator-controls generator-animate generator-animate-1">
+                      <h2 className="generator-subhead">Create A Shelf Talker</h2>
+
+                      {/* Single Wine Selector */}
+                      <div className="wine-selector">
+                        <label htmlFor="card-wine-search">Select Wine</label>
+                        <div className="wine-combobox">
+                          <input
+                            id="card-wine-search"
+                            type="text"
+                            className="wine-search-input"
+                            placeholder="Search wines..."
+                            value={cardWineSearchQuery}
+                            onChange={(e) => setCardWineSearchQuery(e.target.value)}
+                            onFocus={() => setIsCardWineDropdownOpen(true)}
+                          />
+                          {isCardWineDropdownOpen && (
+                            <>
+                              <div
+                                className="combobox-backdrop"
+                                onClick={() => { setIsCardWineDropdownOpen(false); setCardWineSearchQuery(''); }}
+                              />
+                              <div className="wine-dropdown">
+                                {wines
+                                  .filter(wine => {
+                                    const s = cardWineSearchQuery.toLowerCase();
+                                    return wine.name.toLowerCase().includes(s) || (wine.winery?.name || '').toLowerCase().includes(s);
+                                  })
+                                  .slice(0, 50)
+                                  .map((wine) => (
+                                    <div
+                                      key={wine._id}
+                                      className="wine-dropdown-item"
+                                      onClick={() => {
+                                        setSelectedWineForCard(wine);
+                                        setCardWineSearchQuery('');
+                                        setIsCardWineDropdownOpen(false);
+                                      }}
+                                    >
+                                      <div className="wine-dropdown-name">{wine.name}</div>
+                                      <div className="wine-dropdown-winery">{wine.winery?.name || 'Unknown'}</div>
+                                    </div>
+                                  ))}
+                                {wines.filter(wine => {
+                                  const s = cardWineSearchQuery.toLowerCase();
+                                  return wine.name.toLowerCase().includes(s) || (wine.winery?.name || '').toLowerCase().includes(s);
+                                }).length === 0 && (
+                                  <div className="wine-dropdown-empty">No wines found</div>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Selected Wine Pill */}
+                      {selectedWineForCard && (
+                        <div className="added-wines-section">
+                          <div className="added-wines-label">SELECTED WINE</div>
+                          <div className="wine-pills">
+                            <div className="wine-pill">
+                              <span>{selectedWineForCard.name}</span>
+                              <button className="remove-wine" onClick={() => setSelectedWineForCard(null)}>×</button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="generator-actions">
+                        <div className="action-divider"></div>
+                        <button
+                          className="btn-generate"
+                          onClick={handleGenerateTastingCardPDF}
+                          disabled={isGeneratingCardPDF || !selectedWineForCard}
+                        >
+                          {isGeneratingCardPDF ? 'Generating...' : 'Generate Shelf Talker'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Shelf Talker - Preview */}
+                    <div className="pdf-preview generator-animate generator-animate-2">
+                      <div className="shelf-talker-paper" ref={tastingCardRef}>
+                        {selectedWineForCard ? (
+                          <>
+                            {/* Left: Bottle Image */}
+                            <div className="tc-bottle-col">
+                              {selectedWineForCard.bottleImage?.url ? (
+                                <img className="tc-bottle-img" src={selectedWineForCard.bottleImage.url} alt={selectedWineForCard.name} />
+                              ) : (
+                                <div className="tc-bottle-placeholder">
+                                  <svg width="60" height="160" viewBox="0 0 100 250" fill="none">
+                                    <path d="M50 10 L35 60 L25 240 L75 240 L65 60 Z" fill={getWineTypeColor(selectedWineForCard.type)}/>
+                                    <ellipse cx="50" cy="50" rx="15" ry="8" fill={getWineTypeColor(selectedWineForCard.type)} opacity="0.3"/>
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Right: Info */}
+                            <div className="tc-info-col">
+                              {/* Winery logo or name */}
+                              {selectedWineForCard.winery?.logo?.url ? (
+                                <img className="tc-winery-logo" src={selectedWineForCard.winery.logo.url} alt={selectedWineForCard.winery.name} />
+                              ) : (
+                                <div className="tc-winery-name">{selectedWineForCard.winery?.name || ''}</div>
+                              )}
+
+                              {/* Divider */}
+                              <div className="tc-divider"></div>
+
+                              {/* Region / Location */}
+                              {selectedWineForCard.region && (
+                                <div className="tc-region">{selectedWineForCard.region}</div>
+                              )}
+
+                              {/* Wine name */}
+                              <div className="tc-wine-name">{selectedWineForCard.name}</div>
+
+                              {/* Wine type */}
+                              {selectedWineForCard.type && (
+                                <div className="tc-wine-type">{selectedWineForCard.type.charAt(0).toUpperCase() + selectedWineForCard.type.slice(1)}</div>
+                              )}
+
+                              {/* Award badge */}
+                              {selectedWineForCard.awards?.length > 0 && (
+                                <div className="tc-award-badge" style={{ background: getWineTypeColor(selectedWineForCard.type) }}>
+                                  <div className="tc-award-score">{selectedWineForCard.awards[0].score}</div>
+                                  <div className="tc-award-label">POINTS</div>
+                                  {selectedWineForCard.awards[0].awardName && (
+                                    <div className="tc-award-source">{selectedWineForCard.awards[0].awardName}</div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Description */}
+                              {selectedWineForCard.description && (
+                                <p className="tc-description">{selectedWineForCard.description}</p>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="tc-empty-state">
+                            <div className="tc-empty-icon">
+                              <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" fill="#d4a574" opacity="0.4"/>
+                              </svg>
+                            </div>
+                            <p>Select a wine to preview your shelf talker</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
                 {/* Left Panel - Controls */}
                 <div className="generator-controls generator-animate generator-animate-1">
                 <h2 className="generator-subhead">Create Your Sales Sheet</h2>
@@ -1020,40 +1343,56 @@ const TradeTools = () => {
                   <div className="sheet-settings-label">SALES SHEET SETTINGS</div>
                   <div className="settings-toggles">
                     <label className="toggle-label">
-                      <input
-                        type="radio"
-                        name="setting"
-                        checked={sheetSettings.grapes}
-                        onChange={() => setSheetSettings({ grapes: true, region: false, caseSize: false, ratings: false })}
-                      />
                       <span>Grapes</span>
+                      <input
+                        type="checkbox"
+                        checked={sheetSettings.grapes}
+                        onChange={() =>
+                          setSheetSettings(prev => ({
+                            ...prev,
+                            grapes: !prev.grapes
+                          }))
+                        }
+                      />
                     </label>
                     <label className="toggle-label">
-                      <input
-                        type="radio"
-                        name="setting"
-                        checked={sheetSettings.region}
-                        onChange={() => setSheetSettings({ grapes: false, region: true, caseSize: false, ratings: false })}
-                      />
                       <span>Region</span>
+                      <input
+                        type="checkbox"
+                        checked={sheetSettings.region}
+                        onChange={() =>
+                          setSheetSettings(prev => ({
+                            ...prev,
+                            region: !prev.region
+                          }))
+                        }
+                      />
                     </label>
                     <label className="toggle-label">
-                      <input
-                        type="radio"
-                        name="setting"
-                        checked={sheetSettings.caseSize}
-                        onChange={() => setSheetSettings({ grapes: false, region: false, caseSize: true, ratings: false })}
-                      />
                       <span>Case Size</span>
+                      <input
+                        type="checkbox"
+                        checked={sheetSettings.caseSize}
+                        onChange={() =>
+                          setSheetSettings(prev => ({
+                            ...prev,
+                            caseSize: !prev.caseSize
+                          }))
+                        }
+                      />
                     </label>
                     <label className="toggle-label">
-                      <input
-                        type="radio"
-                        name="setting"
-                        checked={sheetSettings.ratings}
-                        onChange={() => setSheetSettings({ grapes: false, region: false, caseSize: false, ratings: true })}
-                      />
                       <span>Ratings</span>
+                      <input
+                        type="checkbox"
+                        checked={sheetSettings.ratings}
+                        onChange={() =>
+                          setSheetSettings(prev => ({
+                            ...prev,
+                            ratings: !prev.ratings
+                          }))
+                        }
+                      />
                     </label>
                   </div>
                 </div>
@@ -1080,7 +1419,13 @@ const TradeTools = () => {
 
                 {/* Right Panel - PDF Preview */}
                 <div className="pdf-preview generator-animate generator-animate-2">
-                <div className="pdf-paper" ref={pdfPreviewRef}>
+                <div
+                  className="pdf-paper"
+                  ref={pdfPreviewRef}
+                  style={{
+                    '--pdf-page-break': `${(595 * (297 - 2 * 25.4)) / (210 - 2 * 25.4)}px`,
+                  }}
+                >
                   {/* PDF Header */}
                   <div className="pdf-header">
                     <div className="pdf-logo">VineHub</div>
@@ -1120,8 +1465,13 @@ const TradeTools = () => {
                           </div>
 
                           <div className="pdf-wine-details-horizontal">
-                            <div className="pdf-detail">
-                              <svg width="16" height="16" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            {wine.region && (
+                              <div
+                                className={`pdf-detail pdf-detail-toggle${sheetSettings.region ? ' is-visible' : ''}`}
+                                aria-hidden={!sheetSettings.region}
+                              >
+                                <div className="pdf-detail-header">
+                                  <svg width="16" height="16" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M15.9414 2.39093C14.1542 2.39093 12.7002 3.84496 12.7002 5.63213C12.7002 7.41931 14.1542 8.87334 15.9414 8.87334C17.7286 8.87334 19.1826 7.41931 19.1826 5.63213C19.1826 3.84532 17.7286 2.39093 15.9414 2.39093ZM15.9414 8.31451C14.4626 8.31451 13.2594 7.11132 13.2594 5.63249C13.2594 4.15366 14.4626 2.95048 15.9414 2.95048C17.4202 2.95048 18.6234 4.15366 18.6234 5.63249C18.6234 7.11132 17.4202 8.31451 15.9414 8.31451Z" fill="#7F3332"/>
                                 <path d="M18.5892 6.062C18.8265 4.59987 17.8336 3.22222 16.3715 2.98492C14.9094 2.74763 13.5317 3.74055 13.2944 5.20268C13.0571 6.66481 14.05 8.04246 15.5122 8.27976C16.9743 8.51705 18.3519 7.52413 18.5892 6.062Z" fill="#7F3232" fill-opacity="0.68"/>
                                 <path d="M16.2208 0H15.6616V1.45547H16.2208V0Z" fill="#7F3332"/>
@@ -1141,12 +1491,18 @@ const TradeTools = () => {
                                 <path d="M16.1098 14.0109L15.703 14.394C15.6954 14.3865 15.5729 14.2593 15.3396 14.0562C14.0394 12.9206 9.29316 9.38758 1.78546 10.6594L1.69238 10.1078C1.9824 10.0585 2.26882 10.0161 2.55021 9.98163C2.73888 9.95791 2.92504 9.93707 3.10868 9.91838C5.00366 9.73366 6.70926 9.84543 8.21432 10.1293C8.40371 10.1638 8.58987 10.2023 8.77279 10.2433C12.5973 11.0943 15.0202 13.0176 15.8187 13.7353C16.0052 13.9024 16.1026 14.0041 16.1098 14.0109Z" fill="#7F3332"/>
                                 <path d="M8.21453 6.35947V10.1293C6.70947 9.84541 5.00387 9.734 3.10889 9.91836V6.35911L5.66153 3.90027L8.21453 6.35947Z" fill="#7F3232" fill-opacity="0.68"/>
                                 <path d="M8.77323 6.12159V10.5239H8.2144V6.3595L5.66176 3.90065L3.10876 6.3595V10.1049H2.55029V6.12159L5.66176 3.12512L8.77323 6.12159Z" fill="#7F3332"/>
-                              </svg>
-                              <span>Region</span>
-                              <span className="pdf-detail-value">{wine.region || 'Puglia'}</span>
-                            </div>
-                            <div className="pdf-detail">
-                              <svg width="16" height="16" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                </svg>
+                                  <span>Region</span>
+                                </div>
+                                <span className="pdf-detail-value">{wine.region}</span>
+                              </div>
+                            )}
+                            <div
+                              className={`pdf-detail pdf-detail-toggle${sheetSettings.caseSize ? ' is-visible' : ''}`}
+                              aria-hidden={!sheetSettings.caseSize}
+                            >
+                                <div className="pdf-detail-header">
+                                  <svg width="16" height="16" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M8.82493 7.80166V2.23243C8.82493 2.07143 8.69376 1.94061 8.53312 1.94061H5.96718C5.80618 1.94061 5.67537 2.07178 5.67537 2.23243V7.80166C4.52537 7.94649 3.63232 8.9301 3.63232 10.1189V22.1231C3.63232 22.6065 4.02548 23 4.5092 23H9.99146C10.4748 23 10.8683 22.6068 10.8683 22.1231V10.1189C10.868 8.9301 9.97529 7.94649 8.82493 7.80166ZM10.2833 22.1231C10.2833 22.2841 10.1521 22.4149 9.99146 22.4149H4.5092C4.3482 22.4149 4.21739 22.2838 4.21739 22.1231V10.1189C4.21739 9.15363 5.00226 8.36803 5.96754 8.36803C6.12926 8.36803 6.26043 8.23758 6.26043 8.07622V2.5246H8.24131V8.07586C8.24131 8.23758 8.37176 8.36768 8.53312 8.36768C9.4984 8.36768 10.2833 9.15363 10.2833 10.1186V22.1231Z" fill="#7F3332"/>
                                 <path d="M6.95824 12.47V19.7304C6.95824 19.8921 7.08869 20.0233 7.25005 20.0233H10.2832V22.1235C10.2832 22.2845 10.152 22.4153 9.99136 22.4153H4.5091C4.3481 22.4153 4.21729 22.2841 4.21729 22.1235V10.1189C4.21729 9.15365 5.00216 8.36805 5.96744 8.36805C6.12916 8.36805 6.26033 8.2376 6.26033 8.07624V5.42297H8.24121V8.07624C8.24121 8.23796 8.37166 8.36805 8.53302 8.36805C9.4983 8.36805 10.2832 9.154 10.2832 10.1189V12.1781H7.25005C7.08833 12.1778 6.95824 12.309 6.95824 12.47Z" fill="#7F3232" fill-opacity="0.68"/>
                                 <path d="M8.17649 2.52497H6.32391C6.16255 2.52497 6.03174 2.39416 6.03174 2.2328V0.292172C6.03138 0.130813 6.16219 0 6.32355 0H8.17613C8.33749 0 8.4683 0.130813 8.4683 0.292172V2.2328C8.46866 2.39416 8.33785 2.52497 8.17649 2.52497ZM6.61572 1.94063H7.88396V0.584344H6.61572V1.94063Z" fill="#7F3332"/>
@@ -1157,12 +1513,18 @@ const TradeTools = () => {
                                 <path d="M16.4183 18.0377H15.834V22.8846H16.4183V18.0377Z" fill="#7F3332"/>
                                 <path d="M17.8365 22.4156H14.416V23H17.8365V22.4156Z" fill="#7F3332"/>
                                 <path d="M19.0736 13.9948H13.2334V14.5795H19.0736V13.9948Z" fill="#7F3332"/>
-                              </svg>
-                              <span>Case</span>
-                              <span className="pdf-detail-value">12/750 ml</span>
-                            </div>
-                            <div className="pdf-detail">
-                              <svg width="16" height="16" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                </svg>
+                                  <span>Case</span>
+                                </div>
+                                <span className="pdf-detail-value">12/750 ml</span>
+                              </div>
+                            {wine.varietal && (
+                              <div
+                                className={`pdf-detail pdf-detail-toggle${sheetSettings.grapes ? ' is-visible' : ''}`}
+                                aria-hidden={!sheetSettings.grapes}
+                              >
+                                <div className="pdf-detail-header">
+                                  <svg width="16" height="16" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <g clipPath="url(#clip0_105_1724)">
                                 <path d="M9.49957 5.89552C9.11936 5.16419 8.35461 4.66394 7.47593 4.66394C6.21956 4.66394 5.19678 5.68672 5.19678 6.9431C5.19678 7.37147 5.31573 7.77361 5.52309 8.11646C5.90762 8.75399 6.59475 9.18919 7.38357 9.21974C7.41448 9.22153 7.44503 9.22225 7.47593 9.22225C7.49175 9.22225 7.50756 9.22225 7.52337 9.22046C8.33125 9.20464 9.03778 8.76513 9.42986 8.11538C9.45465 8.07477 9.47801 8.03308 9.49993 7.99068C9.66309 7.67694 9.75545 7.3208 9.75545 6.9431C9.75509 6.56539 9.66273 6.20925 9.49957 5.89552ZM7.47593 8.61742C6.55306 8.61742 5.80161 7.86669 5.80161 6.9431C5.80161 6.02022 6.55306 5.26877 7.47593 5.26877C8.39953 5.26877 9.15026 6.02022 9.15026 6.9431C9.1499 7.86669 8.39953 8.61742 7.47593 8.61742Z" fill="#7F3332"/>
                                 <path d="M7.4756 8.61746C8.4003 8.61746 9.14993 7.86783 9.14993 6.94313C9.14993 6.01842 8.4003 5.2688 7.4756 5.2688C6.55089 5.2688 5.80127 6.01842 5.80127 6.94313C5.80127 7.86783 6.55089 8.61746 7.4756 8.61746Z" fill="#7F3232" fill-opacity="0.68"/>
@@ -1192,9 +1554,28 @@ const TradeTools = () => {
                                 </clipPath>
                                 </defs>
                               </svg>
-                              <span>Grapes</span>
-                              <span className="pdf-detail-value">{wine.varietal || 'Verdeca 90%, Semillon 10%'}</span>
-                            </div>
+                                  <span>Grapes</span>
+                                </div>
+                                <span className="pdf-detail-value">{wine.varietal}</span>
+                              </div>
+                            )}
+                            {wine.awards?.length > 0 && (
+                              <div
+                                className={`pdf-detail pdf-detail-toggle${sheetSettings.ratings ? ' is-visible' : ''}`}
+                                aria-hidden={!sheetSettings.ratings}
+                              >
+                                <div className="pdf-detail-header">
+                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 1.5L9.85 5.26L14 5.88L10.9 8.86L11.7 13L8 10.98L4.3 13L5.1 8.86L2 5.88L6.15 5.26L8 1.5Z" stroke="#7F3332" strokeWidth="1.2" fill="none"/>
+                                  </svg>
+                                  <span>Rating</span>
+                                </div>
+                                <span className="pdf-detail-value">
+                                  {wine.awards[0].score}
+                                  {wine.awards[0].awardName ? ` pts · ${wine.awards[0].awardName}` : ' pts'}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -1207,7 +1588,9 @@ const TradeTools = () => {
                   </div>
                 </div>
               </div>
-            </div>
+                </>
+                )}
+              </div>
           </div>
         </div>
       )}
