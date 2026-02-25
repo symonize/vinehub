@@ -26,10 +26,10 @@ const Header = () => {
             <span>VineHub</span>
           </Link>
 
-          <nav className="nav-right">
-            <Link to="/" className="nav-link">Login</Link>
-            <Link to="/" className="btn-contact">Contact</Link>
-          </nav>
+            <nav className="nav-right">
+              <SwapLink to="/">Login</SwapLink>
+              <Link to="/" className="btn-contact">Contact</Link>
+            </nav>
         </div>
       </div>
     </header>

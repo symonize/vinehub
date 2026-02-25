@@ -286,6 +286,45 @@ const TradeTools = () => {
   // Refs for PDF previews
   const pdfPreviewRef = useRef(null);
   const tastingCardRef = useRef(null);
+  const wineEntriesRef = useRef([]);
+
+  // Page layout: array of arrays of wine indices (computed after render)
+  const [pdfPages, setPdfPages] = useState([]);
+
+  useEffect(() => {
+    // A4 at 595px wide: page height = 595 * (297/210) ≈ 841.4px
+    // Reserve space for header+title on first page (~100px) and margin padding (48px total)
+    const PAGE_H = Math.round(595 * 297 / 210);
+    const HEADER_H = 100; // approx header + title height on first page
+    const PADDING = 48;   // .pdf-paper padding (1.5rem * 2 = 48px)
+    const firstPageContent = PAGE_H - PADDING - HEADER_H;
+    const otherPageContent = PAGE_H - PADDING;
+
+    if (selectedWinesForSheet.length === 0) {
+      setPdfPages([]);
+      return;
+    }
+
+    // Build pages using measured heights
+    const pages = [];
+    let currentPage = [];
+    let remaining = firstPageContent;
+
+    selectedWinesForSheet.forEach((wine, i) => {
+      const el = wineEntriesRef.current[i];
+      const h = el ? el.getBoundingClientRect().height : 120;
+      if (currentPage.length > 0 && h > remaining) {
+        pages.push(currentPage);
+        currentPage = [i];
+        remaining = otherPageContent - h;
+      } else {
+        currentPage.push(i);
+        remaining -= h;
+      }
+    });
+    if (currentPage.length > 0) pages.push(currentPage);
+    setPdfPages(pages);
+  }, [selectedWinesForSheet, sheetSettings]);
 
   // Collapse state for filter sections
   const [expandedSections, setExpandedSections] = useState({
@@ -426,48 +465,64 @@ const TradeTools = () => {
       const contentWidth = pageWidth - (2 * margin);
       const contentHeight = pageHeight - (2 * margin);
 
-      // Capture the entire preview
-      const canvas = await html2canvas(pdfPreviewRef.current, {
+      const html2canvasOpts = {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff'
-      });
+      };
 
-      const imgWidth = contentWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      // Helper: capture a DOM element and return { imgData, heightMm }
+      const captureElement = async (el) => {
+        const canvas = await html2canvas(el, html2canvasOpts);
+        const heightMm = (canvas.height * contentWidth) / canvas.width;
+        return { imgData: canvas.toDataURL('image/png'), heightMm };
+      };
 
-      // Calculate how many pages we need based on printable content height
-      const totalPages = Math.ceil(imgHeight / contentHeight);
-      const sliceHeightPx = canvas.height / totalPages;
-      const sliceHeightMm = imgHeight / totalPages;
+      // 1. Capture the header block (header + title input) from first visible page
+      const firstPage = pdfPreviewRef.current.querySelector('.pdf-paper');
+      const headerEl = firstPage.querySelector('.pdf-header');
+      const titleEl = firstPage.querySelector('.pdf-title-input');
 
-      for (let page = 0; page < totalPages; page++) {
-        if (page > 0) {
-          pdf.addPage();
+      // Wrap header + title in a temporary container so we get one canvas
+      const headerWrapper = document.createElement('div');
+      headerWrapper.style.cssText = 'background:#ffffff;width:595px;padding:0;margin:0;';
+      const headerClone = headerEl.cloneNode(true);
+      const titleClone = titleEl.cloneNode(true);
+      headerWrapper.appendChild(headerClone);
+      headerWrapper.appendChild(titleClone);
+      document.body.appendChild(headerWrapper);
+      const header = await captureElement(headerWrapper);
+      document.body.removeChild(headerWrapper);
+
+      // 2. Capture each wine entry from the hidden measurement layer (one per wine, no duplicates)
+      const wineEntries = [];
+      for (const el of wineEntriesRef.current) {
+        if (el) wineEntries.push(await captureElement(el));
+      }
+
+      // 3. Layout pages — never split a wine entry across pages
+      let cursorY = margin;
+      let isFirstPage = true;
+
+      const startNewPage = () => {
+        if (!isFirstPage) pdf.addPage();
+        isFirstPage = false;
+        cursorY = margin;
+      };
+
+      // Place header on first page
+      startNewPage();
+      pdf.addImage(header.imgData, 'PNG', margin, cursorY, contentWidth, header.heightMm);
+      cursorY += header.heightMm;
+
+      for (const entry of wineEntries) {
+        // If this entry won't fit on the current page, start a new one
+        if (cursorY + entry.heightMm > margin + contentHeight) {
+          startNewPage();
         }
-
-        // Calculate the portion of the image for this page
-        const sourceY = page * sliceHeightPx;
-        const sourceHeight = sliceHeightPx;
-
-        // Create a temporary canvas for this page
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = sourceHeight;
-        const pageContext = pageCanvas.getContext('2d');
-
-        // Draw the relevant portion of the full canvas
-        pageContext.drawImage(
-          canvas,
-          0, sourceY, canvas.width, sourceHeight,
-          0, 0, canvas.width, sourceHeight
-        );
-
-        const pageImgData = pageCanvas.toDataURL('image/png');
-        const pageImgHeight = sliceHeightMm;
-
-        pdf.addImage(pageImgData, 'PNG', margin, margin, imgWidth, pageImgHeight);
+        pdf.addImage(entry.imgData, 'PNG', margin, cursorY, contentWidth, entry.heightMm);
+        cursorY += entry.heightMm;
       }
 
       // Generate filename from title or use default
@@ -1419,32 +1474,10 @@ const TradeTools = () => {
 
                 {/* Right Panel - PDF Preview */}
                 <div className="pdf-preview generator-animate generator-animate-2">
-                <div
-                  className="pdf-paper"
-                  ref={pdfPreviewRef}
-                  style={{
-                    '--pdf-page-break': `${(595 * (297 - 2 * 25.4)) / (210 - 2 * 25.4)}px`,
-                  }}
-                >
-                  {/* PDF Header */}
-                  <div className="pdf-header">
-                    <div className="pdf-logo">VineHub</div>
-                    <div className="pdf-website">vinehub.com</div>
-                  </div>
-
-                  {/* PDF Title */}
-                  <input
-                    type="text"
-                    className="pdf-title-input"
-                    value={sheetTitle}
-                    onChange={(e) => setSheetTitle(e.target.value)}
-                    placeholder="Custom Sales Sheet Title..."
-                  />
-
-                  {/* Wine Entries */}
-                  <div className="pdf-wines">
-                    {selectedWinesForSheet.map((wine, index) => (
-                      <div key={wine._id} className="pdf-wine-entry">
+                {/* Hidden measurement layer — renders all entries off-screen so we can measure heights */}
+                <div style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none', width: 595, left: -9999 }}>
+                  {selectedWinesForSheet.map((wine, index) => (
+                    <div key={wine._id} className="pdf-wine-entry" ref={el => { wineEntriesRef.current[index] = el; }}>
                         <div className="pdf-wine-image">
                           {wine.bottleImage?.url ? (
                             <img src={wine.bottleImage.url} alt={wine.name} />
@@ -1585,7 +1618,86 @@ const TradeTools = () => {
                         />
                       </div>
                     ))}
-                  </div>
+                </div>
+
+                {/* Visible multi-page preview */}
+                <div className="pdf-pages-stack" ref={pdfPreviewRef}>
+                  {(pdfPages.length > 0 ? pdfPages : [selectedWinesForSheet.map((_, i) => i)]).map((pageIndices, pageNum) => (
+                    <div key={pageNum} className="pdf-paper">
+                      {/* Header only on first page */}
+                      {pageNum === 0 && (
+                        <>
+                          <div className="pdf-header">
+                            <div className="pdf-logo">VineHub</div>
+                            <div className="pdf-website">vinehub.com</div>
+                          </div>
+                          <input
+                            type="text"
+                            className="pdf-title-input"
+                            value={sheetTitle}
+                            onChange={(e) => setSheetTitle(e.target.value)}
+                            placeholder="Custom Sales Sheet Title..."
+                          />
+                        </>
+                      )}
+                      <div className="pdf-wines">
+                        {pageIndices.map((wineIndex) => {
+                          const wine = selectedWinesForSheet[wineIndex];
+                          if (!wine) return null;
+                          return (
+                            <div key={wine._id} className="pdf-wine-entry">
+                              <div className="pdf-wine-image">
+                                {wine.bottleImage?.url ? (
+                                  <img src={wine.bottleImage.url} alt={wine.name} />
+                                ) : (
+                                  <div className="pdf-wine-placeholder">
+                                    <svg width="40" height="100" viewBox="0 0 100 250" fill="none">
+                                      <path d="M50 10 L35 60 L25 240 L75 240 L65 60 Z" fill={getWineTypeColor(wine.type)}/>
+                                      <ellipse cx="50" cy="50" rx="15" ry="8" fill={getWineTypeColor(wine.type)} opacity="0.3"/>
+                                    </svg>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="pdf-wine-info">
+                                <div className="pdf-wine-title">
+                                  <div className="pdf-wine-producer">{wine.winery?.name || 'Unknown Producer'}</div>
+                                  <div className="pdf-wine-name">{wine.name}</div>
+                                </div>
+                                <div className="pdf-wine-details-horizontal">
+                                  {wine.region && (
+                                    <div className={`pdf-detail pdf-detail-toggle${sheetSettings.region ? ' is-visible' : ''}`} aria-hidden={!sheetSettings.region}>
+                                      <div className="pdf-detail-header"><span>Region</span></div>
+                                      <span className="pdf-detail-value">{wine.region}</span>
+                                    </div>
+                                  )}
+                                  <div className={`pdf-detail pdf-detail-toggle${sheetSettings.caseSize ? ' is-visible' : ''}`} aria-hidden={!sheetSettings.caseSize}>
+                                    <div className="pdf-detail-header"><span>Case</span></div>
+                                    <span className="pdf-detail-value">12/750 ml</span>
+                                  </div>
+                                  {wine.varietal && (
+                                    <div className={`pdf-detail pdf-detail-toggle${sheetSettings.grapes ? ' is-visible' : ''}`} aria-hidden={!sheetSettings.grapes}>
+                                      <div className="pdf-detail-header"><span>Grapes</span></div>
+                                      <span className="pdf-detail-value">{wine.varietal}</span>
+                                    </div>
+                                  )}
+                                  {wine.awards?.length > 0 && (
+                                    <div className={`pdf-detail pdf-detail-toggle${sheetSettings.ratings ? ' is-visible' : ''}`} aria-hidden={!sheetSettings.ratings}>
+                                      <div className="pdf-detail-header"><span>Rating</span></div>
+                                      <span className="pdf-detail-value">
+                                        {wine.awards[0].score}
+                                        {wine.awards[0].awardName ? ` pts · ${wine.awards[0].awardName}` : ' pts'}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <textarea className="pdf-custom-notes" placeholder="Add notes or custom offer" />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
                 </>
