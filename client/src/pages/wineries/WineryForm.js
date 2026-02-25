@@ -56,6 +56,7 @@ const WineryForm = () => {
     try {
       const response = await uploadAPI.single(file);
       const fileData = response.data.data;
+      console.log('[WineryForm] upload response fileData:', fileData);
 
       if (type === 'featured') {
         setFeaturedImage(fileData);
@@ -80,6 +81,9 @@ const WineryForm = () => {
         featuredImage,
         logo
       };
+
+      console.log('[WineryForm] featuredImage state:', featuredImage);
+      console.log('[WineryForm] payload.featuredImage:', payload.featuredImage);
 
       if (isEdit) {
         await wineriesAPI.update(id, payload);
