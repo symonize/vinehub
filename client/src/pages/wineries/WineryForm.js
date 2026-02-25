@@ -191,7 +191,7 @@ const WineryForm = () => {
             )}
             {featuredImage && (
               <div className="file-preview">
-                <img src={getFileUrl(featuredImage.path)} alt="Featured" />
+                <img src={getFileUrl(featuredImage.url)} alt="Featured" />
                 <div className="file-preview-info">
                   <p>{featuredImage.filename || featuredImage.originalName}</p>
                 </div>
@@ -223,7 +223,7 @@ const WineryForm = () => {
             )}
             {logo && (
               <div className="file-preview">
-                <img src={getFileUrl(logo.path)} alt="Logo" />
+                <img src={getFileUrl(logo.url)} alt="Logo" />
                 <div className="file-preview-info">
                   <p>{logo.filename || logo.originalName}</p>
                 </div>

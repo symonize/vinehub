@@ -1,48 +1,38 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-// Create uploads directory if it doesn't exist
-// Use absolute path relative to project root
-const uploadDir = path.join(__dirname, '..', '..', 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-// Configure storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // Create subdirectories based on file type
-    let subdir = 'others';
-
-    if (file.mimetype.startsWith('image/')) {
-      subdir = 'images';
-    } else if (file.mimetype === 'application/pdf') {
-      subdir = 'documents';
-    }
-
-    const fullPath = path.join(uploadDir, subdir);
-    if (!fs.existsSync(fullPath)) {
-      fs.mkdirSync(fullPath, { recursive: true });
-    }
-
-    cb(null, fullPath);
-  },
-  filename: (req, file, cb) => {
-    // Generate unique filename
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+// Configure Cloudinary storage for multer
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    const isPdf = file.mimetype === 'application/pdf';
+    return {
+      folder: 'winehub',
+      resource_type: isPdf ? 'raw' : 'image',
+      allowed_formats: ['jpeg', 'jpg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx'],
+      use_filename: false,
+      unique_filename: true
+    };
   }
 });
 
 // File filter
 const fileFilter = (req, file, cb) => {
-  // Allowed file types
-  const allowedTypes = /jpeg|jpg|png|gif|webp|pdf|doc|docx/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
+  const allowedMimetypes = [
+    'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+    'application/pdf', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ];
 
-  if (mimetype && extname) {
+  if (allowedMimetypes.includes(file.mimetype)) {
     return cb(null, true);
   } else {
     cb(new Error('Invalid file type. Only JPEG, PNG, GIF, WebP, PDF, DOC, and DOCX files are allowed.'));
@@ -51,11 +41,11 @@ const fileFilter = (req, file, cb) => {
 
 // Configure multer
 const upload = multer({
-  storage: storage,
+  storage,
   limits: {
     fileSize: parseInt(process.env.MAX_FILE_SIZE) || 10485760 // 10MB default
   },
-  fileFilter: fileFilter
+  fileFilter
 });
 
 // Error handling middleware for multer
@@ -80,7 +70,4 @@ const handleMulterError = (err, req, res, next) => {
   next();
 };
 
-module.exports = {
-  upload,
-  handleMulterError
-};
+module.exports = { upload, handleMulterError, cloudinary };

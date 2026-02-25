@@ -233,8 +233,7 @@ const WineForm = () => {
     try {
       // Upload to server
       const uploadResponse = await uploadAPI.single(file);
-      const uploadedPath = uploadResponse.data.data.path;
-      const imageUrl = getFileUrl(uploadedPath);
+      const imageUrl = uploadResponse.data.data.url;
 
       // Update wine with uploaded image
       if (isEdit) {

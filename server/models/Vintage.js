@@ -15,42 +15,48 @@ const vintageSchema = new mongoose.Schema({
   assets: {
     bottleImage: {
       filename: String,
-      path: String,
+      url: String,
+      public_id: String,
       mimetype: String,
       size: Number,
       uploadedAt: Date
     },
     labelImage: {
       filename: String,
-      path: String,
+      url: String,
+      public_id: String,
       mimetype: String,
       size: Number,
       uploadedAt: Date
     },
     techSheet: {
       filename: String,
-      path: String,
+      url: String,
+      public_id: String,
       mimetype: String,
       size: Number,
       uploadedAt: Date
     },
     tastingCard: {
       filename: String,
-      path: String,
+      url: String,
+      public_id: String,
       mimetype: String,
       size: Number,
       uploadedAt: Date
     },
     lifestyleImage: {
       filename: String,
-      path: String,
+      url: String,
+      public_id: String,
       mimetype: String,
       size: Number,
       uploadedAt: Date
     },
     shelfTalker: {
       filename: String,
-      path: String,
+      url: String,
+      public_id: String,
       mimetype: String,
       size: Number,
       uploadedAt: Date

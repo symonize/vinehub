@@ -13,21 +13,24 @@ const winerySchema = new mongoose.Schema({
   },
   featuredImage: {
     filename: String,
-    path: String,
+    url: String,
+    public_id: String,
     mimetype: String,
     size: Number,
     uploadedAt: Date
   },
   logo: {
     filename: String,
-    path: String,
+    url: String,
+    public_id: String,
     mimetype: String,
     size: Number,
     uploadedAt: Date
   },
   lifestyleImages: [{
     filename: String,
-    path: String,
+    url: String,
+    public_id: String,
     mimetype: String,
     size: Number,
     uploadedAt: Date,

@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const path = require('path');
-const fs = require('fs');
-const { upload, handleMulterError } = require('../middleware/upload');
+const { upload, handleMulterError, cloudinary } = require('../middleware/upload');
 const { protect, authorize } = require('../middleware/auth');
 
 // @route   POST /api/upload
@@ -22,16 +20,11 @@ router.post('/',
         });
       }
 
-      // Convert absolute path to relative path for URL access
-      // Extract just the uploads/subdir/filename part
-      const pathParts = req.file.path.split(path.sep);
-      const uploadsIndex = pathParts.lastIndexOf('uploads');
-      const relativePath = pathParts.slice(uploadsIndex).join('/');
-
       const fileData = {
-        filename: req.file.filename,
+        filename: req.file.originalname,
         originalName: req.file.originalname,
-        path: relativePath,
+        url: req.file.path,           // Cloudinary CDN URL
+        public_id: req.file.filename, // Cloudinary public_id (for deletion)
         mimetype: req.file.mimetype,
         size: req.file.size,
         uploadedAt: new Date(),
@@ -70,23 +63,16 @@ router.post('/multiple',
         });
       }
 
-      const filesData = req.files.map(file => {
-        // Convert absolute path to relative path for URL access
-        // Extract just the uploads/subdir/filename part
-        const pathParts = file.path.split(path.sep);
-        const uploadsIndex = pathParts.lastIndexOf('uploads');
-        const relativePath = pathParts.slice(uploadsIndex).join('/');
-
-        return {
-          filename: file.filename,
-          originalName: file.originalname,
-          path: relativePath,
-          mimetype: file.mimetype,
-          size: file.size,
-          uploadedAt: new Date(),
-          uploadedBy: req.user.id
-        };
-      });
+      const filesData = req.files.map(file => ({
+        filename: file.originalname,
+        originalName: file.originalname,
+        url: file.path,
+        public_id: file.filename,
+        mimetype: file.mimetype,
+        size: file.size,
+        uploadedAt: new Date(),
+        uploadedBy: req.user.id
+      }));
 
       res.json({
         success: true,
@@ -103,32 +89,17 @@ router.post('/multiple',
   }
 );
 
-// @route   DELETE /api/upload/:filename
-// @desc    Delete uploaded file
+// @route   DELETE /api/upload/:public_id
+// @desc    Delete uploaded file from Cloudinary
 // @access  Private (Admin, Editor)
-router.delete('/:filename', protect, authorize('admin', 'editor'), async (req, res) => {
+router.delete('/:public_id(*)', protect, authorize('admin', 'editor'), async (req, res) => {
   try {
-    const { filename } = req.params;
-    const uploadDir = path.join(__dirname, '..', '..', 'uploads');
+    const public_id = req.params.public_id;
 
-    // Search for file in subdirectories
-    const subdirs = ['images', 'documents', 'others'];
-    let deleted = false;
-
-    for (const subdir of subdirs) {
-      const filePath = path.join(uploadDir, subdir, filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        deleted = true;
-        break;
-      }
-    }
-
-    if (!deleted) {
-      return res.status(404).json({
-        success: false,
-        message: 'File not found'
-      });
+    // Try image first, then raw (PDFs are stored as raw)
+    const imageResult = await cloudinary.uploader.destroy(public_id, { resource_type: 'image' });
+    if (imageResult.result !== 'ok') {
+      await cloudinary.uploader.destroy(public_id, { resource_type: 'raw' }).catch(() => {});
     }
 
     res.json({

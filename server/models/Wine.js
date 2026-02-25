@@ -56,6 +56,7 @@ const wineSchema = new mongoose.Schema({
   },
   bottleImage: {
     url: String,
+    public_id: String,
     generatedAt: Date,
     prompt: String
   },

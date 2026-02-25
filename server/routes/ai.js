@@ -6,6 +6,7 @@ const FormData = require('form-data');
 const sharp = require('sharp');
 const { protect } = require('../middleware/auth');
 const Wine = require('../models/Wine');
+const { cloudinary } = require('../middleware/upload');
 
 // Initialize OpenAI only if API key is available
 let openai = null;
@@ -104,19 +105,31 @@ photorealistic, professional product shot, sharp focus on the label details, cut
           .png()
           .toBuffer();
 
-        // Convert processed image to base64
-        const base64Image = processedBuffer.toString('base64');
-        imageUrl = `data:image/png;base64,${base64Image}`;
+        // Upload processed image to Cloudinary
+        const cloudinaryResult = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: 'winehub/wine-images', resource_type: 'image', format: 'png' },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          uploadStream.end(processedBuffer);
+        });
+        imageUrl = cloudinaryResult.secure_url;
 
-        console.log('Image processed and cropped successfully');
+        console.log('Image processed and uploaded to Cloudinary successfully');
       } catch (bgError) {
         console.error('Background removal failed:', bgError.response?.data?.errors || bgError.message);
         console.log('Using original image without background removal');
       }
     } else {
-      console.log('REMOVEBG_API_KEY not configured - images will be generated on white background');
-      console.log('To enable automatic background removal, add REMOVEBG_API_KEY to your .env file');
-      console.log('Get an API key at: https://www.remove.bg/api');
+      console.log('REMOVEBG_API_KEY not configured - uploading DALL-E image directly to Cloudinary');
+      const cloudinaryResult = await cloudinary.uploader.upload(imageUrl, {
+        folder: 'winehub/wine-images',
+        resource_type: 'image'
+      });
+      imageUrl = cloudinaryResult.secure_url;
     }
 
     // If wineId is provided, update the wine document

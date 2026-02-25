@@ -20,6 +20,7 @@ app.use(helmet());
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
+  'http://localhost:3002',
   process.env.CLIENT_URL,
   'https://app.vino-hub.com'
 ].filter(Boolean);
@@ -45,9 +46,6 @@ app.use(compression());
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
-
-// Serve static files (uploads)
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
