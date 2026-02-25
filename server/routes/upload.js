@@ -50,6 +50,7 @@ router.post('/',
         uploadedBy: req.user.id
       };
 
+      console.log('[upload] sending response url:', fileData.url);
       res.json({
         success: true,
         message: 'File uploaded successfully',
