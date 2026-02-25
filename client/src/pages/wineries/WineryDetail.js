@@ -56,10 +56,10 @@ const WineryDetail = () => {
 
       <div className="detail-grid">
         <div className="detail-main">
-          {winery.featuredImage && (
+          {winery.featuredImage && (winery.featuredImage.url || winery.featuredImage.path) && (
             <div className="detail-image">
               <img
-                src={getFileUrl(winery.featuredImage.path)}
+                src={getFileUrl(winery.featuredImage.url || winery.featuredImage.path)}
                 alt={winery.name}
               />
             </div>
@@ -88,11 +88,11 @@ const WineryDetail = () => {
         </div>
 
         <div className="detail-sidebar">
-          {winery.logo && (
+          {winery.logo && (winery.logo.url || winery.logo.path) && (
             <div className="card">
               <h3>Logo</h3>
               <img
-                src={getFileUrl(winery.logo.path)}
+                src={getFileUrl(winery.logo.url || winery.logo.path)}
                 alt="Logo"
                 style={{ width: '100%', borderRadius: '0.5rem' }}
               />

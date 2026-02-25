@@ -13,11 +13,11 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const isPdf = file.mimetype === 'application/pdf';
+    const isRaw = file.mimetype === 'application/pdf' || file.mimetype === 'image/svg+xml';
     return {
       folder: 'winehub',
-      resource_type: isPdf ? 'raw' : 'image',
-      allowed_formats: ['jpeg', 'jpg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx'],
+      resource_type: isRaw ? 'raw' : 'image',
+      allowed_formats: ['jpeg', 'jpg', 'png', 'gif', 'webp', 'svg', 'pdf', 'doc', 'docx'],
       use_filename: false,
       unique_filename: true
     };
@@ -27,7 +27,7 @@ const storage = new CloudinaryStorage({
 // File filter
 const fileFilter = (req, file, cb) => {
   const allowedMimetypes = [
-    'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+    'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
     'application/pdf', 'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   ];
@@ -35,7 +35,7 @@ const fileFilter = (req, file, cb) => {
   if (allowedMimetypes.includes(file.mimetype)) {
     return cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only JPEG, PNG, GIF, WebP, PDF, DOC, and DOCX files are allowed.'));
+    cb(new Error('Invalid file type. Only JPEG, PNG, GIF, WebP, SVG, PDF, DOC, and DOCX files are allowed.'));
   }
 };
 

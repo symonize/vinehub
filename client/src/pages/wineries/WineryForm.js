@@ -215,7 +215,7 @@ const WineryForm = () => {
                   <span>Choose Logo</span>
                   <input
                     type="file"
-                    accept="image/*,.webp"
+                    accept="image/*,.webp,.svg"
                     onChange={(e) => handleFileUpload(e.target.files[0], 'logo')}
                   />
                 </label>

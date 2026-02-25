@@ -150,9 +150,9 @@ const WineriesList = () => {
                       <tr key={winery._id}>
                         <td>
                           <div className="winery-name">
-                            {winery.logo?.path && (
+                            {(winery.logo?.url || winery.logo?.path) && (
                               <img
-                                src={getFileUrl(winery.logo.path)}
+                                src={getFileUrl(winery.logo.url || winery.logo.path)}
                                 alt={winery.name}
                                 className="winery-logo-thumb"
                               />
@@ -215,10 +215,10 @@ const WineriesList = () => {
                 {wineries.map((winery) => (
                   <motion.div key={winery._id} variants={cardVariants}>
                     <Link to={`/wineries/${winery._id}/edit`} className="item-card" style={{ display: 'block' }}>
-                      {winery.featuredImage?.path || winery.logo?.path ? (
+                      {(winery.featuredImage?.url || winery.featuredImage?.path || winery.logo?.url || winery.logo?.path) ? (
                         <div className="item-card-image">
                           <img
-                            src={getFileUrl(winery.featuredImage?.path || winery.logo?.path)}
+                            src={getFileUrl(winery.featuredImage?.url || winery.featuredImage?.path || winery.logo?.url || winery.logo?.path)}
                             alt={winery.name}
                             style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                           />
