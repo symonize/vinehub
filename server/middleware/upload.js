@@ -13,14 +13,17 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const isRaw = file.mimetype === 'application/pdf' || file.mimetype === 'image/svg+xml';
+    const isPdf = file.mimetype === 'application/pdf';
+    const isSvg = file.mimetype === 'image/svg+xml';
     const params = {
       folder: 'winehub',
-      resource_type: isRaw ? 'raw' : 'image',
+      resource_type: isPdf ? 'raw' : 'image',
       use_filename: false,
       unique_filename: true
     };
-    if (!isRaw) {
+    if (isSvg) {
+      params.format = 'svg';
+    } else if (!isPdf) {
       params.allowed_formats = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
     }
     return params;
