@@ -9,10 +9,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-console.log('[upload middleware] Cloudinary cloud_name:', process.env.CLOUDINARY_CLOUD_NAME || 'MISSING');
-console.log('[upload middleware] Cloudinary api_key set:', !!process.env.CLOUDINARY_API_KEY);
-console.log('[upload middleware] Cloudinary api_secret set:', !!process.env.CLOUDINARY_API_SECRET);
-
 // Configure Cloudinary storage for multer
 const storage = new CloudinaryStorage({
   cloudinary,

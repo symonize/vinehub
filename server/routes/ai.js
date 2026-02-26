@@ -176,8 +176,6 @@ photorealistic, professional product shot, sharp focus on the label details, cut
 router.post('/upload-wine-image/:wineId', protect, async (req, res) => {
   try {
     const { imageUrl } = req.body;
-    console.log('[upload-wine-image] body:', JSON.stringify(req.body));
-    console.log('[upload-wine-image] imageUrl:', imageUrl);
 
     if (!imageUrl) {
       return res.status(400).json({

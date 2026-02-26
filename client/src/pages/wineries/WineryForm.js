@@ -56,19 +56,24 @@ const WineryForm = () => {
     try {
       const response = await uploadAPI.single(file);
       const fileData = response.data.data;
-      console.log('[WineryForm] upload response fileData:', fileData);
 
       if (type === 'featured') {
         setFeaturedImage(fileData);
         setValue('featuredImage', fileData);
+        if (isEdit) {
+          await wineriesAPI.update(id, { featuredImage: fileData });
+        }
       } else if (type === 'logo') {
         setLogo(fileData);
         setValue('logo', fileData);
+        if (isEdit) {
+          await wineriesAPI.update(id, { logo: fileData });
+        }
       }
 
-      toast.success('File uploaded successfully');
+      toast.success('Image saved successfully');
     } catch (error) {
-      toast.error('Failed to upload file');
+      toast.error('Failed to upload image');
     }
   };
 
@@ -81,9 +86,6 @@ const WineryForm = () => {
         featuredImage,
         logo
       };
-
-      console.log('[WineryForm] featuredImage state:', featuredImage);
-      console.log('[WineryForm] payload.featuredImage:', payload.featuredImage);
 
       if (isEdit) {
         await wineriesAPI.update(id, payload);
