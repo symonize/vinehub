@@ -62,16 +62,20 @@ const WineryForm = () => {
         setValue('featuredImage', fileData);
         if (isEdit) {
           await wineriesAPI.update(id, { featuredImage: fileData });
+          toast.success('Featured image saved');
+        } else {
+          toast.success('Image ready — click Save to keep it');
         }
       } else if (type === 'logo') {
         setLogo(fileData);
         setValue('logo', fileData);
         if (isEdit) {
           await wineriesAPI.update(id, { logo: fileData });
+          toast.success('Logo saved');
+        } else {
+          toast.success('Logo ready — click Save to keep it');
         }
       }
-
-      toast.success('Image saved successfully');
     } catch (error) {
       console.error('Upload error:', error.response?.data || error.message);
       toast.error(error.response?.data?.message || 'Failed to upload image');
