@@ -73,7 +73,8 @@ const WineryForm = () => {
 
       toast.success('Image saved successfully');
     } catch (error) {
-      toast.error('Failed to upload image');
+      console.error('Upload error:', error.response?.data || error.message);
+      toast.error(error.response?.data?.message || 'Failed to upload image');
     }
   };
 
