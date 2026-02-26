@@ -619,7 +619,7 @@
 .trade-wine-card-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(26, 15, 12, 0.45);
+  background: rgba(26, 15, 12, 0.35);
   z-index: 1;
   transition: background 0.3s ease;
   display: none;
@@ -630,7 +630,7 @@
 }
 
 .brand-card:hover .trade-wine-card-overlay {
-  background: rgba(26, 15, 12, 0.55);
+  background: rgba(26, 15, 12, 0.45);
 }
 
 .trade-wine-card:hover {
@@ -703,8 +703,8 @@
 }
 
 .trade-wine-card-logo {
-  max-width: 150px;
-  max-height: 150px;
+  width: 135px;
+  height: 90px;
   object-fit: contain;
   filter: brightness(0) invert(1);
   transition: transform 0.3s ease;
