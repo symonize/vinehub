@@ -66,14 +66,14 @@
 
 /* Wine Carousel Section */
 .wine-carousel-section {
-  padding: 4rem 0;
+  padding: 4rem 0 0;
   background: var(--bg-cream);
 }
 
 .carousel-tabs {
   display: flex;
   gap: 3rem;
-  margin-bottom: 3rem;
+  margin-bottom: 0;
   justify-content: center;
   border-bottom: 1px solid rgba(114, 47, 55, 0.2);
 }
@@ -104,89 +104,41 @@
   color: var(--text-dark);
 }
 
-.wine-carousel {
-  display: flex;
-  gap: 2rem;
-  overflow-x: auto;
-  padding: 2rem 0;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+.gallery-wrapper {
+  width: 100%;
+  height: 500px;
+  background: var(--bg-cream);
+  position: relative;
+  overflow: hidden;
 }
 
-.carousel-wine-card {
-  flex: 0 0 200px;
-  text-decoration: none;
-  color: inherit;
-}
-
-.carousel-wine-image {
-  width: 200px;
-  height: 350px;
-  background: white;
-  border-radius: 0.5rem;
+.gallery-center-label {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-  padding: 2rem 1rem;
-}
-
-.carousel-wine-image img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-
-.wine-bottle-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.carousel-wine-info {
+  gap: 3px;
   text-align: center;
+  padding-bottom: 2.5rem;
+  pointer-events: none;
+  min-height: 3.5rem;
 }
 
-.wine-producer {
-  font-size: 0.8125rem;
-  color: var(--text-light);
-  margin-bottom: 0.25rem;
+.gallery-label-winery {
+  font-family: var(--font-family-body, sans-serif);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: #999;
 }
 
-.wine-name {
-  font-size: 1rem;
-  font-weight: 400;
-  color: var(--text-dark);
-  margin: 0;
+.gallery-label-wine {
   font-family: var(--font-family-heading);
-}
-
-.carousel-nav {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.carousel-arrow {
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--border);
-  background: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 1.25rem;
-  transition: all 0.2s;
-}
-
-.carousel-arrow:hover {
-  border-color: var(--primary);
-  color: var(--primary);
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: #722f37;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 /* Explore By Type Section */

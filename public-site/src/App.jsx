@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { TransitionProvider } from './context/TransitionContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import PageTransition from './components/PageTransition';
+import AboutPanel from './components/AboutPanel';
 import Home from './pages/Home';
 import Wineries from './pages/Wineries';
 import WineryDetail from './pages/WineryDetail';
@@ -10,9 +13,11 @@ import Wines from './pages/Wines';
 import TradeTools from './pages/TradeTools';
 
 function App() {
+  const [aboutOpen, setAboutOpen] = useState(false);
+
   return (
-    <>
-      <Header />
+    <TransitionProvider>
+      <Header onAboutOpen={() => setAboutOpen(true)} />
       <main style={{ flex: 1 }}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -24,7 +29,11 @@ function App() {
         </Routes>
       </main>
       <Footer />
-    </>
+      <PageTransition />
+      {aboutOpen && (
+        <AboutPanel isOpen={aboutOpen} onClose={() => setAboutOpen(false)} />
+      )}
+    </TransitionProvider>
   );
 }
 

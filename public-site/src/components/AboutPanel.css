@@ -1,0 +1,144 @@
+/* ── Overlay ───────────────────────────────────────────────── */
+.ap-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 14, 10, 0.55);
+  z-index: 300;
+  cursor: pointer;
+}
+
+/* ── Close button ──────────────────────────────────────────── */
+.ap-close {
+  position: fixed;
+  top: 36px;
+  right: 36px;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 500;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ap-close span {
+  position: absolute;
+  width: 22px;
+  height: 1.5px;
+  background: #fff;
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+
+.ap-close span:first-child { transform: rotate(45deg); }
+.ap-close span:last-child  { transform: rotate(-45deg); }
+
+.ap-close:hover span { background: #e8ddd0; }
+
+/* ── Panel ─────────────────────────────────────────────────── */
+.ap-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 46%;
+  height: 100%;
+  background: #1e0f0b;
+  z-index: 400;
+  will-change: transform;
+  overflow: hidden;
+}
+
+/* ── Content scroll area ───────────────────────────────────── */
+.ap-content {
+  height: 100%;
+  overflow-y: auto;
+  padding: 100px 9% 80px 8%;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+
+.ap-content::-webkit-scrollbar { width: 4px; }
+.ap-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+/* ── Typography ────────────────────────────────────────────── */
+.ap-eyebrow {
+  font-family: var(--font-family-base);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 1.8rem;
+}
+
+.ap-heading {
+  font-family: var(--font-family-heading);
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 400;
+  color: #fff;
+  line-height: 1.18;
+  margin-bottom: 1.8rem;
+}
+
+.ap-subheading {
+  font-family: var(--font-family-heading);
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 0.75rem;
+}
+
+.ap-body {
+  font-family: var(--font-family-base);
+  font-size: 0.92rem;
+  line-height: 1.75;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 0;
+}
+
+.ap-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+  margin: 2rem 0;
+}
+
+/* ── Contact row ───────────────────────────────────────────── */
+.ap-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.ap-contact-label {
+  font-family: var(--font-family-base);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
+
+.ap-contact-link {
+  font-family: var(--font-family-heading);
+  font-size: 1.15rem;
+  color: #e8ddd0;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.ap-contact-link:hover { color: #fff; }
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .ap-panel { width: 75%; }
+}
+
+@media (max-width: 600px) {
+  .ap-panel  { width: 100%; }
+  .ap-content { padding: 90px 6% 60px; }
+  .ap-close  { top: 24px; right: 24px; }
+}

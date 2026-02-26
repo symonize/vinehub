@@ -85,6 +85,21 @@
   color: var(--primary);
 }
 
+.nav-btn-about {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-family-heading);
+  font-size: 1.125rem;
+  font-weight: 400;
+  color: var(--text-dark);
+}
+
+.nav-btn-about:hover {
+  color: var(--primary);
+}
+
 .btn-contact {
   padding: 0.5rem 1.25rem;
   background: #722f37;

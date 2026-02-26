@@ -282,6 +282,31 @@ const TradeTools = () => {
   const [cardWineSearchQuery, setCardWineSearchQuery] = useState('');
   const [isCardWineDropdownOpen, setIsCardWineDropdownOpen] = useState(false);
   const [isGeneratingCardPDF, setIsGeneratingCardPDF] = useState(false);
+  const [shelfTalkerAnimState, setShelfTalkerAnimState] = useState('idle'); // 'idle' | 'in' | 'out'
+
+  const selectWineForCard = (wine) => {
+    if (selectedWineForCard) {
+      // animate out first, then swap in
+      setShelfTalkerAnimState('out');
+      setTimeout(() => {
+        setSelectedWineForCard(wine);
+        setShelfTalkerAnimState('in');
+        setTimeout(() => setShelfTalkerAnimState('idle'), 400);
+      }, 280);
+    } else {
+      setSelectedWineForCard(wine);
+      setShelfTalkerAnimState('in');
+      setTimeout(() => setShelfTalkerAnimState('idle'), 400);
+    }
+  };
+
+  const removeWineForCard = () => {
+    setShelfTalkerAnimState('out');
+    setTimeout(() => {
+      setSelectedWineForCard(null);
+      setShelfTalkerAnimState('idle');
+    }, 280);
+  };
 
   // Refs for PDF previews
   const pdfPreviewRef = useRef(null);
@@ -986,63 +1011,69 @@ const TradeTools = () => {
                       wines.length === 0 ? (
                         <div className="empty-state"><p>No wines found</p></div>
                       ) : (
-                        <div className="trade-wines-grid">
-                          {wines.map((wine) => (
-                            <div
-                              key={wine._id}
-                              className="trade-wine-card"
-                              onClick={() => handleWineClick(wine)}
-                            >
-                              <div className="trade-wine-producer">
-                                {wine.winery?.name || 'L\'ANTICA QUERCIA'}
-                              </div>
-                              <h3 className="trade-wine-name">{wine.name}</h3>
-                              <div className="trade-wine-image">
-                                {wine.bottleImage?.url ? (
-                                  <img src={wine.bottleImage.url} alt={wine.name} />
-                                ) : (
-                                  <div className="trade-wine-placeholder">
-                                    <svg width="80" height="200" viewBox="0 0 100 250" fill="none">
-                                      <path d="M50 10 L35 60 L25 240 L75 240 L65 60 Z" fill={getWineTypeColor(wine.type)}/>
-                                      <ellipse cx="50" cy="50" rx="15" ry="8" fill={getWineTypeColor(wine.type)} opacity="0.3"/>
-                                    </svg>
+                            <div className="trade-wines-grid">
+                              {wines.map((wine) => (
+                                <div
+                                  key={wine._id}
+                                  className="trade-wine-card"
+                                  onClick={() => handleWineClick(wine)}
+                                >
+                                  <div className="trade-wine-producer">
+                                    {wine.winery?.name || 'L\'ANTICA QUERCIA'}
                                   </div>
-                                )}
-                              </div>
+                                  <h3 className="trade-wine-name">{wine.name}</h3>
+                                  <div className="trade-wine-image">
+                                    {wine.bottleImage?.url ? (
+                                      <img src={wine.bottleImage.url} alt={wine.name} />
+                                    ) : (
+                                      <div className="trade-wine-placeholder">
+                                        <svg width="60" height="150" viewBox="0 0 100 250" fill="none">
+                                          <path d="M50 10 L35 60 L25 240 L75 240 L65 60 Z" fill={getWineTypeColor(wine.type)}/>
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
                       )
                     ) : (
                       brands.length === 0 ? (
                         <div className="empty-state"><p>No brands found</p></div>
                       ) : (
-                        <div className="trade-wines-grid">
-                          {brands.map((brand) => (
-                            <div
-                              key={brand._id}
-                              className="trade-wine-card"
-                              onClick={() => window.location.href = `/wineries/${brand._id}`}
-                            >
-                              <div className="trade-wine-producer">
-                                {brand.region || 'ITALY'}
-                              </div>
-                              <h3 className="trade-wine-name">{brand.name}</h3>
-                              <div className="trade-wine-image">
-                                {brand.logo?.url ? (
-                                  <img src={brand.logo.url} alt={brand.name} />
-                                ) : (
-                                  <div className="trade-wine-placeholder">
-                                    <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-                                      <circle cx="60" cy="60" r="50" stroke="#722f37" strokeWidth="2" fill="none"/>
-                                      <text x="60" y="70" textAnchor="middle" fill="#722f37" fontSize="40" fontFamily="moret">W</text>
-                                    </svg>
+                            <div className="trade-wines-grid">
+                              {brands.map((brand) => (
+                                  <div
+                                    key={brand._id}
+                                    className="trade-wine-card brand-card"
+                                    onClick={() => window.location.href = `/wineries/${brand._id}`}
+                                  >
+                                    <div 
+                                      className="brand-card-bg" 
+                                      style={{
+                                        backgroundImage: brand.featuredImage?.url ? `url(${brand.featuredImage.url})` : 'none'
+                                      }}
+                                    />
+                                    <div className="trade-wine-card-overlay"></div>
+                                  <div className="trade-wine-producer">
+                                    {brand.region || 'ITALY'}
                                   </div>
-                                )}
-                              </div>
+                                  <h3 className="trade-wine-name">{brand.name}</h3>
+                                  <div className="trade-wine-image">
+                                    {brand.logo?.url ? (
+                                      <img src={brand.logo.url} alt={brand.name} className="trade-wine-card-logo" />
+                                    ) : (
+                                      <div className="trade-wine-placeholder">
+                                        <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                                          <circle cx="60" cy="60" r="50" stroke="white" strokeWidth="2" fill="none"/>
+                                          <text x="60" y="70" textAnchor="middle" fill="white" fontSize="40" fontFamily="moret">W</text>
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
                       )
                     )
                   ) : viewMode === 'table' ? (
@@ -1182,9 +1213,9 @@ const TradeTools = () => {
                                       key={wine._id}
                                       className="wine-dropdown-item"
                                       onClick={() => {
-                                        setSelectedWineForCard(wine);
-                                        setCardWineSearchQuery('');
-                                        setIsCardWineDropdownOpen(false);
+                                        selectWineForCard(wine);
+                                          setCardWineSearchQuery('');
+                                          setIsCardWineDropdownOpen(false);
                                       }}
                                     >
                                       <div className="wine-dropdown-name">{wine.name}</div>
@@ -1208,10 +1239,13 @@ const TradeTools = () => {
                         <div className="added-wines-section">
                           <div className="added-wines-label">SELECTED WINE</div>
                           <div className="wine-pills">
-                            <div className="wine-pill">
-                              <span>{selectedWineForCard.name}</span>
-                              <button className="remove-wine" onClick={() => setSelectedWineForCard(null)}>×</button>
-                            </div>
+                              <div className="wine-pill">
+                                <div className="wine-pill-text">
+                                  <span className="wine-pill-name">{selectedWineForCard.name}</span>
+                                  <span className="wine-pill-winery">{selectedWineForCard.winery?.name}</span>
+                                </div>
+                                <button className="remove-wine" onClick={removeWineForCard}>×</button>
+                              </div>
                           </div>
                         </div>
                       )}
@@ -1231,7 +1265,7 @@ const TradeTools = () => {
 
                     {/* Shelf Talker - Preview */}
                     <div className="pdf-preview generator-animate generator-animate-2">
-                      <div className="shelf-talker-paper" ref={tastingCardRef}>
+                        <div className={`shelf-talker-paper${shelfTalkerAnimState === 'in' ? ' st-anim-in' : shelfTalkerAnimState === 'out' ? ' st-anim-out' : ''}`} ref={tastingCardRef}>
                         {selectedWineForCard ? (
                           <>
                             {/* Left: Bottle Image */}
@@ -1275,13 +1309,15 @@ const TradeTools = () => {
 
                               {/* Award badge */}
                               {selectedWineForCard.awards?.length > 0 && (
-                                <div className="tc-award-badge" style={{ background: getWineTypeColor(selectedWineForCard.type) }}>
-                                  <div className="tc-award-score">{selectedWineForCard.awards[0].score}</div>
-                                  <div className="tc-award-label">POINTS</div>
-                                  {selectedWineForCard.awards[0].awardName && (
-                                    <div className="tc-award-source">{selectedWineForCard.awards[0].awardName}</div>
-                                  )}
-                                </div>
+                                  <div className="tc-award-wrapper">
+                                    <div className="tc-award-badge" style={{ background: getWineTypeColor(selectedWineForCard.type) }}>
+                                      <div className="tc-award-score">{selectedWineForCard.awards[0].score}</div>
+                                      <div className="tc-award-label">POINTS</div>
+                                    </div>
+                                    {selectedWineForCard.awards[0].awardName && (
+                                      <div className="tc-award-source">{selectedWineForCard.awards[0].awardName}</div>
+                                    )}
+                                  </div>
                               )}
 
                               {/* Description */}
@@ -1379,15 +1415,18 @@ const TradeTools = () => {
                     <div className="added-wines-label">ADDED WINES</div>
                     <div className="wine-pills">
                       {selectedWinesForSheet.map((wine) => (
-                        <div key={wine._id} className="wine-pill">
-                          <span>{wine.name}</span>
-                          <button
-                            className="remove-wine"
-                            onClick={() => setSelectedWinesForSheet(selectedWinesForSheet.filter(w => w._id !== wine._id))}
-                          >
-                            ×
-                          </button>
-                        </div>
+                          <div key={wine._id} className="wine-pill">
+                            <div className="wine-pill-text">
+                              <span className="wine-pill-name">{wine.name}</span>
+                              <span className="wine-pill-winery">{wine.winery?.name}</span>
+                            </div>
+                            <button
+                              className="remove-wine"
+                              onClick={() => setSelectedWinesForSheet(selectedWinesForSheet.filter(w => w._id !== wine._id))}
+                            >
+                              ×
+                            </button>
+                          </div>
                       ))}
                     </div>
                   </div>
