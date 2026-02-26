@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { winesAPI, wineriesAPI, vintagesAPI, aiAPI, uploadAPI, getFileUrl } from '../../utils/api';
+import { winesAPI, wineriesAPI, vintagesAPI, aiAPI, uploadAPI } from '../../utils/api';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { Wine, Sparkles, Loader, X, Tag, Droplet, MapPin, Grape, FileText, Utensils, AlertCircle, Check, ChevronDown, Plus, Upload } from 'lucide-react';
