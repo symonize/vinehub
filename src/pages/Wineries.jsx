@@ -363,21 +363,42 @@ const Wineries = () => {
         <div className="container">
           <div className="portfolio-header-content">
             <h1>Portfolio</h1>
-            <div className="portfolio-tabs">
-              <button
-                className={activeTab === 'wines' ? 'tab active' : 'tab'}
-                onClick={() => setActiveTab('wines')}
-              >
-                Wines
-              </button>
-              <button
-                className={activeTab === 'brands' ? 'tab active' : 'tab'}
-                onClick={() => setActiveTab('brands')}
-              >
-                Brands
-              </button>
+              <div className="portfolio-tabs">
+                <button
+                  className={activeTab === 'wines' ? 'tab active' : 'tab'}
+                  onClick={() => setActiveTab('wines')}
+                >
+                  Wines
+                </button>
+                <button
+                  className={activeTab === 'brands' ? 'tab active' : 'tab'}
+                  onClick={() => setActiveTab('brands')}
+                >
+                  Brands
+                </button>
+              </div>
+              <div className="header-search-wrapper">
+                <svg className="search-bar-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/>
+                  <line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <input
+                  type="text"
+                  className="search-bar-input"
+                  placeholder={activeTab === 'wines' ? 'Search wines...' : 'Search brands...'}
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+                {search && (
+                  <button className="search-bar-clear" onClick={() => setSearch('')} aria-label="Clear search">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
         </div>
       </div>
 
@@ -385,13 +406,13 @@ const Wineries = () => {
       <div className="portfolio-content">
         <div className="container">
           {/* Controls Bar - Above Grid */}
-            <div className="portfolio-controls-bar">
-              <div className="results-count">
-                Showing <span className="count-badge">
-                  {activeTab === 'wines' ? wines.length : brands.length}
-                </span>
-              </div>
-              <div className="controls-right">
+        <div className="portfolio-controls-bar">
+                <div className="results-count">
+                  Showing <span className="count-badge">
+                    {activeTab === 'wines' ? wines.length : brands.length}
+                  </span>
+                </div>
+                <div className="controls-right">
                 <div className="view-toggle-group">
                   <button
                     className={`view-toggle-btn${viewMode === 'grid' ? ' active' : ''}`}

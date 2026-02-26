@@ -1,0 +1,60 @@
+.page-transition-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Shared panel base */
+.pt-panel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: translateX(-100%);
+}
+
+/* Panel 1 — burgundy, leads */
+.pt-panel-1 {
+  background: #722f37;
+  z-index: 2;
+}
+
+/* Panel 2 — cream, trails behind */
+.pt-panel-2 {
+  background: #FAF6ED;
+  z-index: 1;
+}
+
+/* ── SWEEP IN (left → cover screen) ── */
+@keyframes curtain-in {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(0%); }
+}
+
+/* ── SWEEP OUT (cover screen → right) ── */
+@keyframes curtain-out {
+  0%   { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Panel 1 in */
+.pt-panel-1.pt-panel-in {
+  animation: curtain-in 0.55s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+/* Panel 2 in — staggered 80ms behind */
+.pt-panel-2.pt-panel-in {
+  animation: curtain-in 0.55s cubic-bezier(0.76, 0, 0.24, 1) 0.08s forwards;
+}
+
+/* Panel 1 out — cream leads out */
+.pt-panel-2.pt-panel-out {
+  animation: curtain-out 0.5s cubic-bezier(0.76, 0, 0.24, 1) 0s forwards;
+}
+
+/* Panel 2 out — burgundy trails 80ms */
+.pt-panel-1.pt-panel-out {
+  animation: curtain-out 0.5s cubic-bezier(0.76, 0, 0.24, 1) 0.08s forwards;
+}

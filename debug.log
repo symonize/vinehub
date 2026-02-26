@@ -24,3 +24,57 @@
 2026-02-06T18:34:17.854Z [console][error] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
 2026-02-06T18:34:19.412Z [console][error] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
 2026-02-06T18:34:19.412Z [console][error] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+2026-02-25T16:50:57.820Z [console][error] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+2026-02-25T16:50:57.820Z [console][error] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+2026-02-25T22:09:07.890Z [console][error] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+2026-02-25T22:09:07.890Z [console][error] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+2026-02-25T22:11:23.061Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:11:23.119Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:15:13.941Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:15:14.314Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:15:14.315Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:15:21.342Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:15:21.343Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:15:21.709Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:15:28.648Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:15:28.649Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:15:29.125Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:15:29.126Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:17:34.640Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:17:34.967Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:17:34.968Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:17:42.862Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:17:43.364Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:17:58.052Z [console][error] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+2026-02-25T22:17:58.052Z [console][error] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+2026-02-25T22:17:58.242Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:17:58.292Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:17:58.293Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:19:17.365Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:19:17.615Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:19:36.693Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:19:36.694Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:19:37.006Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:22:18.435Z [console][error] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+2026-02-25T22:22:18.435Z [console][error] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+2026-02-25T22:23:15.505Z [console][error] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+2026-02-25T22:23:15.505Z [console][error] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+2026-02-25T22:29:45.490Z [console][error] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+2026-02-25T22:29:45.490Z [console][error] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+2026-02-25T22:29:45.658Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:29:45.659Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:29:45.717Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:30:13.844Z [console][log] [vite] hot updated: /src/components/CircularGallery.jsx
+2026-02-25T22:30:13.974Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:30:14.162Z [console][log] [vite] hot updated: /src/components/CircularGallery.jsx
+2026-02-25T22:30:14.230Z [console][error] WebGL: INVALID_VALUE: texImage2D: no canvas
+2026-02-25T22:30:25.377Z [console][log] [vite] hot updated: /src/pages/Home.css
+2026-02-25T22:30:25.892Z [console][log] [vite] hot updated: /src/pages/Home.css
+2026-02-25T22:30:13.844Z [console][debug] [vite] hot updated: /src/components/CircularGallery.jsx
+2026-02-25T22:30:14.162Z [console][debug] [vite] hot updated: /src/components/CircularGallery.jsx
+2026-02-25T22:30:25.377Z [console][debug] [vite] hot updated: /src/pages/Home.css
+2026-02-25T22:30:25.892Z [console][debug] [vite] hot updated: /src/pages/Home.css
+2026-02-25T22:57:27.587Z [console][error] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+2026-02-25T22:57:27.587Z [console][error] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+2026-02-25T23:07:20.323Z [console][error] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+2026-02-25T23:07:20.323Z [console][error] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
