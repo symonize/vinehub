@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { TransitionProvider } from './context/TransitionContext';
+import { InkTransitionProvider, InkTransitionCanvas } from './components/InkTransition';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import PageTransition from './components/PageTransition';
 import AboutPanel from './components/AboutPanel';
 import Home from './pages/Home';
 import Wineries from './pages/Wineries';
@@ -16,7 +15,7 @@ function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
 
   return (
-    <TransitionProvider>
+    <InkTransitionProvider phaseInDuration={1800} holdDuration={300} phaseOutDuration={1800}>
       <Header onAboutOpen={() => setAboutOpen(true)} />
       <main style={{ flex: 1 }}>
         <Routes>
@@ -29,11 +28,11 @@ function App() {
         </Routes>
       </main>
       <Footer />
-      <PageTransition />
+      <InkTransitionCanvas />
       {aboutOpen && (
         <AboutPanel isOpen={aboutOpen} onClose={() => setAboutOpen(false)} />
       )}
-    </TransitionProvider>
+    </InkTransitionProvider>
   );
 }
 
