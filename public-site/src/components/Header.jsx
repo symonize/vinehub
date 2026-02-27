@@ -1,40 +1,29 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { useTransition } from '../context/TransitionContext';
+import { useInkTransition, InkLink } from './InkTransition';
 import './Header.css';
 
-const SwapLink = ({ to, children, swapText }) => {
-  const { transitionTo } = useTransition();
-  const location = useLocation();
-
-  function handleClick(e) {
-    e.preventDefault();
-    if (location.pathname === to) return;
-    transitionTo(to);
-  }
-
-  return (
-    <a href={to} className="nav-link nav-link-swap" onClick={handleClick}>
-      <span className="nav-link-default">{children}</span>
-      <span className="nav-link-hover">{swapText || children}</span>
-    </a>
-  );
-};
+const SwapLink = ({ to, children, swapText }) => (
+  <InkLink to={to} className="nav-link nav-link-swap">
+    <span className="nav-link-default">{children}</span>
+    <span className="nav-link-hover">{swapText || children}</span>
+  </InkLink>
+);
 
 const Header = ({ onAboutOpen }) => {
-  const { transitionTo } = useTransition();
+  const { navigateWithInk } = useInkTransition();
   const location = useLocation();
 
   function handleLogoClick(e) {
     e.preventDefault();
     if (location.pathname === '/') return;
-    transitionTo('/');
+    navigateWithInk('/');
   }
 
   function handleContactClick(e) {
     e.preventDefault();
     if (location.pathname === '/contact') return;
-    transitionTo('/contact');
+    navigateWithInk('/contact');
   }
 
   return (
