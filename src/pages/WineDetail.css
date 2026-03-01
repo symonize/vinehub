@@ -297,3 +297,39 @@
     font-size: 2rem;
   }
 }
+
+@media (max-width: 640px) {
+  .wine-detail {
+    padding: 1.5rem 0;
+  }
+
+  .wine-image-container {
+    min-height: 280px;
+    padding: 1.5rem;
+  }
+
+  .wine-image-container img {
+    max-height: 280px;
+  }
+
+  .wine-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .wine-meta-tags {
+    gap: 0.5rem;
+  }
+
+  .award-circle {
+    width: 70px;
+    height: 70px;
+  }
+
+  .award-score {
+    font-size: 2rem;
+  }
+
+  .nutrition-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

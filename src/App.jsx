@@ -15,7 +15,7 @@ function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
 
   return (
-    <InkTransitionProvider phaseInDuration={1800} holdDuration={300} phaseOutDuration={1800}>
+    <InkTransitionProvider phaseInDuration={900} holdDuration={100} phaseOutDuration={1800}>
       <Header onAboutOpen={() => setAboutOpen(true)} />
       <main style={{ flex: 1 }}>
         <Routes>

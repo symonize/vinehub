@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery } from 'react-query';
-import { winesAPI, wineriesAPI } from '../utils/api';
+import { winesAPI, wineriesAPI, vintagesAPI } from '../utils/api';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import createGlobe from 'cobe';
@@ -243,6 +243,7 @@ const TradeTools = () => {
   const [activeTab, setActiveTab] = useState('browse');
   const [generatorAnimationKey, setGeneratorAnimationKey] = useState(0);
   const [selectedWine, setSelectedWine] = useState(null);
+  const [selectedVintage, setSelectedVintage] = useState(null);
   const [activeWinesTab, setActiveWinesTab] = useState('wines');
   const [viewMode, setViewMode] = useState('grid');
   const [selectedTypes, setSelectedTypes] = useState([]);
@@ -251,6 +252,11 @@ const TradeTools = () => {
   const [browseSearch, setBrowseSearch] = useState('');
   const [scoreMin, setScoreMin] = useState(85);
   const [scoreMax, setScoreMax] = useState(100);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [sortBy, setSortBy] = useState('name-asc');
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef(null);
 
   // Generator type selector
   const [activeGenerator, setActiveGenerator] = useState('sales-sheet');
@@ -258,6 +264,7 @@ const TradeTools = () => {
 
   // Sales Sheet Generator State
   const [selectedWinesForSheet, setSelectedWinesForSheet] = useState([]);
+  const [wineNotes, setWineNotes] = useState({});
   const [sheetTitle, setSheetTitle] = useState('Custom Sales Sheet Title...');
   const [sheetSettings, setSheetSettings] = useState({
     grapes: true,
@@ -466,12 +473,66 @@ const TradeTools = () => {
     return colors[wineType] || '#6c757d';
   };
 
+  // Close sort dropdown on outside click
+  useEffect(() => {
+    if (!sortOpen) return;
+    function handleClick(e) {
+      if (sortRef.current && !sortRef.current.contains(e.target)) {
+        setSortOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [sortOpen]);
+
+  const SORT_OPTIONS = [
+    { value: 'name-asc',  label: 'Name A–Z' },
+    { value: 'name-desc', label: 'Name Z–A' },
+    { value: 'type',      label: 'Type' },
+    { value: 'region',    label: 'Region' },
+    { value: 'producer',  label: 'Producer' },
+  ];
+
+  function applySortWines(list) {
+    return [...list].sort((a, b) => {
+      switch (sortBy) {
+        case 'name-desc': return (b.name || '').localeCompare(a.name || '');
+        case 'type':      return (a.type || '').localeCompare(b.type || '');
+        case 'region':    return (a.region || '').localeCompare(b.region || '');
+        case 'producer':  return (a.winery?.name || '').localeCompare(b.winery?.name || '');
+        default:          return (a.name || '').localeCompare(b.name || '');
+      }
+    });
+  }
+
+  function applySortBrands(list) {
+    return [...list].sort((a, b) => {
+      switch (sortBy) {
+        case 'name-desc': return (b.name || '').localeCompare(a.name || '');
+        case 'region':    return (a.region || '').localeCompare(b.region || '');
+        default:          return (a.name || '').localeCompare(b.name || '');
+      }
+    });
+  }
+
+  const sortedWines = applySortWines(wines);
+  const sortedBrands = applySortBrands(brands);
+
+  const { data: vintagesData } = useQuery(
+    ['vintages', selectedWine?._id],
+    () => vintagesAPI.getByWine(selectedWine._id),
+    { enabled: !!selectedWine }
+  );
+  const vintages = vintagesData?.data?.data || [];
+
   const handleWineClick = (wine) => {
     setSelectedWine(wine);
+    setSelectedVintage(null);
   };
 
   const closeSheet = () => {
     setSelectedWine(null);
+    setSelectedVintage(null);
   };
 
   const handleGeneratePDF = async () => {
@@ -484,70 +545,43 @@ const TradeTools = () => {
 
     try {
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      const margin = 10; // 10mm margin
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 10;
       const contentWidth = pageWidth - (2 * margin);
       const contentHeight = pageHeight - (2 * margin);
 
-      const html2canvasOpts = {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      };
+      // Add class to hide empty note areas during capture
+      pdfPreviewRef.current.classList.add('pdf-generating');
 
-      // Helper: capture a DOM element and return { imgData, heightMm }
-      const captureElement = async (el) => {
-        const canvas = await html2canvas(el, html2canvasOpts);
-        const heightMm = (canvas.height * contentWidth) / canvas.width;
-        return { imgData: canvas.toDataURL('image/png'), heightMm };
-      };
+      // Capture each visible .pdf-paper page directly — one canvas per PDF page
+      const paperPages = pdfPreviewRef.current.querySelectorAll('.pdf-paper');
 
-      // 1. Capture the header block (header + title input) from first visible page
-      const firstPage = pdfPreviewRef.current.querySelector('.pdf-paper');
-      const headerEl = firstPage.querySelector('.pdf-header');
-      const titleEl = firstPage.querySelector('.pdf-title-input');
+      for (let i = 0; i < paperPages.length; i++) {
+        if (i > 0) pdf.addPage();
 
-      // Wrap header + title in a temporary container so we get one canvas
-      const headerWrapper = document.createElement('div');
-      headerWrapper.style.cssText = 'background:#ffffff;width:595px;padding:0;margin:0;';
-      const headerClone = headerEl.cloneNode(true);
-      const titleClone = titleEl.cloneNode(true);
-      headerWrapper.appendChild(headerClone);
-      headerWrapper.appendChild(titleClone);
-      document.body.appendChild(headerWrapper);
-      const header = await captureElement(headerWrapper);
-      document.body.removeChild(headerWrapper);
+        const canvas = await html2canvas(paperPages[i], {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          windowWidth: paperPages[i].scrollWidth,
+          windowHeight: paperPages[i].scrollHeight,
+        });
 
-      // 2. Capture each wine entry from the hidden measurement layer (one per wine, no duplicates)
-      const wineEntries = [];
-      for (const el of wineEntriesRef.current) {
-        if (el) wineEntries.push(await captureElement(el));
-      }
+        const imgData = canvas.toDataURL('image/png');
+        // Scale to fill the content area, preserving aspect ratio
+        const canvasAspect = canvas.height / canvas.width;
+        const imgHeightMm = contentWidth * canvasAspect;
+        const fitsOnPage = imgHeightMm <= contentHeight;
 
-      // 3. Layout pages — never split a wine entry across pages
-      let cursorY = margin;
-      let isFirstPage = true;
-
-      const startNewPage = () => {
-        if (!isFirstPage) pdf.addPage();
-        isFirstPage = false;
-        cursorY = margin;
-      };
-
-      // Place header on first page
-      startNewPage();
-      pdf.addImage(header.imgData, 'PNG', margin, cursorY, contentWidth, header.heightMm);
-      cursorY += header.heightMm;
-
-      for (const entry of wineEntries) {
-        // If this entry won't fit on the current page, start a new one
-        if (cursorY + entry.heightMm > margin + contentHeight) {
-          startNewPage();
-        }
-        pdf.addImage(entry.imgData, 'PNG', margin, cursorY, contentWidth, entry.heightMm);
-        cursorY += entry.heightMm;
+        pdf.addImage(
+          imgData, 'PNG',
+          margin, margin,
+          contentWidth,
+          fitsOnPage ? imgHeightMm : contentHeight
+        );
       }
 
       // Generate filename from title or use default
@@ -560,6 +594,7 @@ const TradeTools = () => {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
     } finally {
+      pdfPreviewRef.current?.classList.remove('pdf-generating');
       setIsGeneratingPDF(false);
     }
   };
@@ -743,7 +778,17 @@ const TradeTools = () => {
                       Brands
                     </button>
                   </div>
-                  <div className="trade-header-search-wrapper">
+                  <div className={`trade-header-search-wrapper${searchOpen ? ' search-expanded' : ''}`}>
+                    <button
+                      className="search-toggle-btn"
+                      onClick={() => setSearchOpen(true)}
+                      aria-label="Open search"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                        <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/>
+                        <line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </button>
                     <svg className="search-bar-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/>
                       <line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -755,14 +800,12 @@ const TradeTools = () => {
                       value={browseSearch}
                       onChange={e => setBrowseSearch(e.target.value)}
                     />
-                    {browseSearch && (
-                      <button className="search-bar-clear" onClick={() => setBrowseSearch('')} aria-label="Clear search">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                          <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                          <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                        </svg>
-                      </button>
-                    )}
+                    <button className="search-bar-clear" onClick={() => { setBrowseSearch(''); setSearchOpen(false); }} aria-label="Close search">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </button>
                   </div>
                 </div>
 
@@ -770,7 +813,7 @@ const TradeTools = () => {
                 <div className="trade-tools-controls-bar">
                   <div className="results-count">
                     Showing <span className="count-badge">
-                      {activeWinesTab === 'wines' ? wines.length : brands.length}
+                      {activeWinesTab === 'wines' ? sortedWines.length : sortedBrands.length}
                     </span>
                   </div>
                   <div className="controls-right">
@@ -780,37 +823,83 @@ const TradeTools = () => {
                       onClick={() => setViewMode('grid')}
                       title="Grid view"
                     >
-                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                        <rect x="1" y="1" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                        <rect x="10" y="1" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                        <rect x="1" y="10" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                        <rect x="10" y="10" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                      </svg>
+                      {viewMode === 'grid' ? (
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+                          <rect x="1" y="1" width="7" height="7" rx="1"/>
+                          <rect x="10" y="1" width="7" height="7" rx="1"/>
+                          <rect x="1" y="10" width="7" height="7" rx="1"/>
+                          <rect x="10" y="10" width="7" height="7" rx="1"/>
+                        </svg>
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                          <rect x="1" y="1" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                          <rect x="10" y="1" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                          <rect x="1" y="10" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                          <rect x="10" y="10" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                        </svg>
+                      )}
                     </button>
                     <button
                       className={`view-toggle-btn${viewMode === 'table' ? ' active' : ''}`}
                       onClick={() => setViewMode('table')}
                       title="Table view"
                     >
-                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                        <line x1="1" y1="3" x2="17" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                        <line x1="1" y1="7" x2="17" y2="7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                        <line x1="1" y1="11" x2="17" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                        <line x1="1" y1="15" x2="17" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      </svg>
-                    </button>
-                    <button
-                      className={`view-toggle-btn${viewMode === 'map' ? ' active' : ''}`}
-                      onClick={() => setViewMode('map')}
-                      title="Map view"
-                    >
-                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                        <path d="M9 1C6.24 1 4 3.24 4 6c0 4.5 5 11 5 11s5-6.5 5-11c0-2.76-2.24-5-5-5z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                        <circle cx="9" cy="6" r="2" stroke="currentColor" strokeWidth="1.5"/>
-                      </svg>
+                      {viewMode === 'table' ? (
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+                          <rect x="1" y="1.25" width="16" height="2.5" rx="1.25"/>
+                          <rect x="1" y="5.25" width="16" height="2.5" rx="1.25"/>
+                          <rect x="1" y="9.25" width="16" height="2.5" rx="1.25"/>
+                          <rect x="1" y="13.25" width="16" height="2.5" rx="1.25"/>
+                        </svg>
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                          <line x1="1" y1="3" x2="17" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                          <line x1="1" y1="7" x2="17" y2="7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                          <line x1="1" y1="11" x2="17" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                          <line x1="1" y1="15" x2="17" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        </svg>
+                      )}
                     </button>
                   </div>
-                  <button className="sort-button">Sort</button>
+                  <div ref={sortRef} style={{ position: 'relative' }}>
+                    <button
+                      className={`sort-button${sortOpen ? ' sort-open' : ''}`}
+                      onClick={() => setSortOpen(o => !o)}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <line x1="1" y1="3" x2="13" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        <line x1="3" y1="7" x2="11" y2="7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        <line x1="5" y1="11" x2="9" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                      Sort
+                    </button>
+                    {sortOpen && (
+                      <div className="sort-dropdown">
+                        {SORT_OPTIONS.map(opt => (
+                          <button
+                            key={opt.value}
+                            className={`sort-option${sortBy === opt.value ? ' active' : ''}`}
+                            onClick={() => { setSortBy(opt.value); setSortOpen(false); }}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button className="filter-sheet-btn" onClick={() => setFilterSheetOpen(true)}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <line x1="2" y1="4" x2="14" y2="4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <line x1="4" y1="8" x2="12" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <line x1="6" y1="12" x2="10" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    Filters
+                    {(selectedTypes.length + selectedRegions.length + selectedMarkets.length) > 0 && (
+                      <span className="filter-sheet-btn-badge">
+                        {selectedTypes.length + selectedRegions.length + selectedMarkets.length}
+                      </span>
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -1008,11 +1097,11 @@ const TradeTools = () => {
                   ) : viewMode === 'grid' ? (
                     /* Grid View */
                     activeWinesTab === 'wines' ? (
-                      wines.length === 0 ? (
+                      sortedWines.length === 0 ? (
                         <div className="empty-state"><p>No wines found</p></div>
                       ) : (
                             <div className="trade-wines-grid">
-                              {wines.map((wine) => (
+                              {sortedWines.map((wine) => (
                                 <div
                                   key={wine._id}
                                   className="trade-wine-card"
@@ -1038,11 +1127,11 @@ const TradeTools = () => {
                             </div>
                       )
                     ) : (
-                      brands.length === 0 ? (
+                      sortedBrands.length === 0 ? (
                         <div className="empty-state"><p>No brands found</p></div>
                       ) : (
                             <div className="trade-wines-grid">
-                              {brands.map((brand) => (
+                              {sortedBrands.map((brand) => (
                                   <div
                                     key={brand._id}
                                     className="trade-wine-card brand-card"
@@ -1056,7 +1145,7 @@ const TradeTools = () => {
                                     />
                                     <div className="trade-wine-card-overlay"></div>
                                   <div className="trade-wine-producer">
-                                    {brand.region || 'ITALY'}
+                                    {brand.region || brand.country || '—'}
                                   </div>
                                   <h3 className="trade-wine-name">{brand.name}</h3>
                                   <div className="trade-wine-image">
@@ -1079,7 +1168,7 @@ const TradeTools = () => {
                   ) : viewMode === 'table' ? (
                     /* Table View */
                     activeWinesTab === 'wines' ? (
-                      wines.length === 0 ? (
+                      sortedWines.length === 0 ? (
                         <div className="empty-state"><p>No wines found</p></div>
                       ) : (
                         <div className="trade-table-wrapper">
@@ -1094,7 +1183,7 @@ const TradeTools = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {wines.map((wine) => (
+                              {sortedWines.map((wine) => (
                                 <tr key={wine._id} onClick={() => handleWineClick(wine)}>
                                   <td className="table-thumb">
                                     {wine.bottleImage?.url ? (
@@ -1122,7 +1211,7 @@ const TradeTools = () => {
                         </div>
                       )
                     ) : (
-                      brands.length === 0 ? (
+                      sortedBrands.length === 0 ? (
                         <div className="empty-state"><p>No brands found</p></div>
                       ) : (
                         <div className="trade-table-wrapper">
@@ -1135,7 +1224,7 @@ const TradeTools = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {brands.map((brand) => (
+                              {sortedBrands.map((brand) => (
                                 <tr key={brand._id} onClick={() => window.location.href = `/wineries/${brand._id}`}>
                                   <td className="table-thumb">
                                     {brand.logo?.url ? (
@@ -1161,7 +1250,7 @@ const TradeTools = () => {
                   ) : (
                     /* Map View */
                     <TradeMapView
-                      items={activeWinesTab === 'wines' ? wines : brands}
+                      items={activeWinesTab === 'wines' ? sortedWines : sortedBrands}
                       activeTab={activeWinesTab}
                       getWineTypeColor={getWineTypeColor}
                       onWineClick={handleWineClick}
@@ -1654,6 +1743,8 @@ const TradeTools = () => {
                         <textarea
                           className="pdf-custom-notes"
                           placeholder="Add notes or custom offer"
+                          value={wineNotes[wine._id] || ''}
+                          onChange={(e) => setWineNotes(prev => ({ ...prev, [wine._id]: e.target.value }))}
                         />
                       </div>
                     ))}
@@ -1730,7 +1821,12 @@ const TradeTools = () => {
                                   )}
                                 </div>
                               </div>
-                              <textarea className="pdf-custom-notes" placeholder="Add notes or custom offer" />
+                              <textarea
+                                className="pdf-custom-notes"
+                                placeholder="Add notes or custom offer"
+                                value={wineNotes[wine._id] || ''}
+                                onChange={(e) => setWineNotes(prev => ({ ...prev, [wine._id]: e.target.value }))}
+                              />
                             </div>
                           );
                         })}
@@ -1848,18 +1944,19 @@ const TradeTools = () => {
           <div className="sheet-overlay" onClick={closeSheet}></div>
           <div className="wine-detail-sheet">
             <button className="close-sheet" onClick={closeSheet}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </button>
 
             <div className="sheet-content">
+              {/* Bottle image */}
               <div className="sheet-image">
                 {selectedWine.bottleImage?.url ? (
                   <img src={selectedWine.bottleImage.url} alt={selectedWine.name} />
                 ) : (
                   <div className="sheet-placeholder">
-                    <svg width="120" height="300" viewBox="0 0 100 250" fill="none">
+                    <svg width="100" height="250" viewBox="0 0 100 250" fill="none">
                       <path d="M50 10 L35 60 L25 240 L75 240 L65 60 Z" fill={getWineTypeColor(selectedWine.type)}/>
                       <ellipse cx="50" cy="50" rx="15" ry="8" fill={getWineTypeColor(selectedWine.type)} opacity="0.3"/>
                     </svg>
@@ -1867,40 +1964,209 @@ const TradeTools = () => {
                 )}
               </div>
 
-              <div className="sheet-info">
-                <div className="sheet-producer">{selectedWine.winery?.name || 'L\'ANTICA QUERCIA'}</div>
-                <h2 className="sheet-wine-name">{selectedWine.name}</h2>
+              {/* Name + producer */}
+              <h2 className="sheet-wine-name">{selectedWine.name}</h2>
+              <div className="sheet-producer">{selectedWine.winery?.name}</div>
 
-                <div className="sheet-details">
-                  <div className="detail-row">
-                    <span className="detail-label">Type</span>
-                    <span className="detail-value">{selectedWine.type}</span>
-                  </div>
-                  {selectedWine.region && (
-                    <div className="detail-row">
-                      <span className="detail-label">Region</span>
-                      <span className="detail-value">{selectedWine.region}</span>
-                    </div>
-                  )}
-                  {selectedWine.varietal && (
-                    <div className="detail-row">
-                      <span className="detail-label">Varietal</span>
-                      <span className="detail-value">{selectedWine.varietal}</span>
-                    </div>
-                  )}
+              {/* Divider */}
+              <div className="sheet-divider" />
+
+              {/* Vintages */}
+              {vintages.length > 0 && (
+                <div className="sheet-vintages">
+                  {vintages.map((v) => (
+                    <button
+                      key={v._id}
+                      className={`sheet-vintage-btn${selectedVintage?._id === v._id ? ' active' : ''}`}
+                      onClick={() => setSelectedVintage(selectedVintage?._id === v._id ? null : v)}
+                    >
+                      {v.year}
+                    </button>
+                  ))}
                 </div>
+              )}
 
-                {selectedWine.description && (
-                  <div className="sheet-description">
-                    <h3>Description</h3>
-                    <p>{selectedWine.description}</p>
+              {/* Scores */}
+              {selectedWine.awards?.length > 0 && (
+                <div className="sheet-scores">
+                  {selectedWine.awards.map((award, i) => (
+                    <div key={i} className="sheet-score-pill">
+                      <div className="sheet-score-circle">{award.score}</div>
+                      <span className="sheet-score-pub">{award.awardName}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Wine Assets — vintage-specific when selected, wine-level fallback */}
+              {(() => {
+                const IMAGE_TYPES = new Set(['bottleImage', 'labelImage', 'lifestyleImage']);
+                const ASSET_LABELS = {
+                  bottleImage:    'Bottle Image',
+                  labelImage:     'Label Image',
+                  techSheet:      'Tech Sheet',
+                  tastingCard:    'Tasting Card',
+                  lifestyleImage: 'Lifestyle Image',
+                  shelfTalker:    'Shelf Talker',
+                };
+                const ASSET_ORDER = ['bottleImage', 'labelImage', 'lifestyleImage', 'techSheet', 'tastingCard', 'shelfTalker'];
+
+                // Build asset list from vintage.assets if selected, else wine-level fields
+                let assetEntries = [];
+                if (selectedVintage?.assets) {
+                  assetEntries = ASSET_ORDER
+                    .map(key => ({ key, asset: selectedVintage.assets[key] }))
+                    .filter(({ asset }) => asset?.url);
+                } else {
+                  assetEntries = ASSET_ORDER
+                    .map(key => ({ key, asset: selectedWine[key] }))
+                    .filter(({ asset }) => asset?.url);
+                }
+
+                if (assetEntries.length === 0) return null;
+
+                const DocIcon = () => (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                );
+                const OpenIcon = () => (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 2H2v12h12v-4M10 2h4v4M14 2L8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                );
+                const DownloadIcon = () => (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M5 7l3 3 3-3M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                );
+
+                return (
+                  <div className="sheet-assets">
+                    <div className="sheet-assets-title">
+                      {selectedVintage ? `${selectedVintage.year} Assets` : 'Wine Assets'}
+                    </div>
+                    <div className="sheet-assets-grid">
+                      {assetEntries.map(({ key, asset }) => (
+                        <div key={key} className="sheet-asset-item">
+                          <div className="sheet-asset-tooltip">
+                            {IMAGE_TYPES.has(key)
+                              ? <img src={asset.url} alt={ASSET_LABELS[key]} />
+                              : <div className="sheet-asset-tooltip-pdf-wrap"><iframe src={`https://docs.google.com/viewer?url=${encodeURIComponent(asset.url)}&embedded=true`} title={ASSET_LABELS[key]} className="sheet-asset-tooltip-pdf" /></div>
+                            }
+                          </div>
+                          <div className={`sheet-asset-thumb${IMAGE_TYPES.has(key) ? '' : ' sheet-asset-thumb-doc'}`}>
+                            {IMAGE_TYPES.has(key)
+                              ? <img src={asset.url} alt={ASSET_LABELS[key]} />
+                              : <DocIcon />
+                            }
+                          </div>
+                          <div className="sheet-asset-info">
+                            <span className="sheet-asset-name">{ASSET_LABELS[key]}</span>
+                            <div className="sheet-asset-actions">
+                              <a href={asset.url} target="_blank" rel="noopener noreferrer" className="sheet-asset-btn" title="Open"><OpenIcon /></a>
+                              <a href={asset.url} download className="sheet-asset-btn" title="Download"><DownloadIcon /></a>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                )}
-              </div>
+                );
+              })()}
             </div>
           </div>
         </>
       )}
+
+      {/* Mobile Filter Sheet */}
+      {filterSheetOpen && (
+        <div className="filter-sheet-overlay" onClick={() => setFilterSheetOpen(false)} />
+      )}
+      <div className={`filter-sheet${filterSheetOpen ? ' open' : ''}`}>
+        <div className="filter-sheet-handle" />
+        <div className="filter-sheet-header">
+          <span className="filter-sheet-title">Filters</span>
+          <button className="filter-sheet-clear" onClick={() => { setSelectedTypes([]); setSelectedRegions([]); setSelectedMarkets([]); }}>
+            Clear all
+          </button>
+        </div>
+        <div className="filter-sheet-body">
+          <div className="filter-group">
+            <h4 className="filter-header" onClick={() => toggleSection('type')}>
+              <span>Type</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={expandedSections.type ? 'chevron expanded' : 'chevron'}>
+                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </h4>
+            {expandedSections.type && (
+              <div className="filter-pills">
+                {['red','white','sparkling','rosé','dessert'].map(t => (
+                  <button key={t} className={selectedTypes.includes(t) ? 'pill active' : 'pill'} onClick={() => toggleType(t)}>
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="filter-group">
+            <h4 className="filter-header" onClick={() => toggleSection('region')}>
+              <span>Region</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={expandedSections.region ? 'chevron expanded' : 'chevron'}>
+                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </h4>
+            {expandedSections.region && (
+              <div className="filter-checkboxes">
+                {regions.map(region => (
+                  <label key={region} className="checkbox-label">
+                    <input type="checkbox" checked={selectedRegions.includes(region)} onChange={() => toggleRegion(region)} />
+                    <span className="checkbox-text">{region}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="filter-group">
+            <h4 className="filter-header" onClick={() => toggleSection('market')}>
+              <span>Market</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={expandedSections.market ? 'chevron expanded' : 'chevron'}>
+                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </h4>
+            {expandedSections.market && (
+              <div className="filter-checkboxes">
+                {markets.map(market => (
+                  <label key={market} className="checkbox-label">
+                    <input type="checkbox" checked={selectedMarkets.includes(market)} onChange={() => toggleMarket(market)} />
+                    <span className="checkbox-text">{market}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="filter-group">
+            <h4 className="filter-header" onClick={() => toggleSection('score')}>
+              <span>Score</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={expandedSections.score ? 'chevron expanded' : 'chevron'}>
+                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </h4>
+            {expandedSections.score && (
+              <div className="score-slider">
+                <div className="score-range-track-wrapper">
+                  <div className="score-range-fill" style={{ left: `${((scoreMin - 80) / 20) * 100}%`, right: `${100 - ((scoreMax - 80) / 20) * 100}%` }} />
+                  <input type="range" className="score-range-input" min="80" max="100" value={scoreMin} onChange={e => setScoreMin(Math.min(Number(e.target.value), scoreMax - 1))} />
+                  <input type="range" className="score-range-input" min="80" max="100" value={scoreMax} onChange={e => setScoreMax(Math.max(Number(e.target.value), scoreMin + 1))} />
+                </div>
+                <div className="score-labels"><span>{scoreMin}</span><span>{scoreMax}</span></div>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="filter-sheet-footer">
+          <button className="filter-sheet-done" onClick={() => setFilterSheetOpen(false)}>
+            Show {activeWinesTab === 'wines' ? sortedWines.length : sortedBrands.length} results
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
