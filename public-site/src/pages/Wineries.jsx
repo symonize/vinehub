@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { winesAPI, wineriesAPI } from '../utils/api';
 import './Wineries.css';
@@ -238,12 +238,18 @@ const MapView = ({ items, activeTab, getWineTypeColor }) => {
 };
 
 const Wineries = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('wines');
   const [viewMode, setViewMode] = useState('grid');
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [selectedRegions, setSelectedRegions] = useState([]);
   const [selectedMarkets, setSelectedMarkets] = useState([]);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [sortBy, setSortBy] = useState('name-asc');
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef(null);
+  const heroSearchRef = useRef(null);
 
   // Collapse state for filter sections
   const [expandedSections, setExpandedSections] = useState({
@@ -282,11 +288,10 @@ const Wineries = () => {
     },
     {
       keepPreviousData: true,
-      enabled: activeTab === 'wines'
     }
   );
 
-  // Fetch brands (wineries)
+  // Fetch brands (wineries) — always enabled so hero search dropdown can show both groups
   const { data: brandsData, isLoading: brandsLoading } = useQuery(
     ['brands-portfolio', search],
     () => wineriesAPI.getAll({
@@ -295,7 +300,6 @@ const Wineries = () => {
     }),
     {
       keepPreviousData: true,
-      enabled: activeTab === 'brands'
     }
   );
 
@@ -344,6 +348,73 @@ const Wineries = () => {
     }));
   };
 
+  // Close sort dropdown on outside click
+  useEffect(() => {
+    if (!sortOpen) return;
+    function handleClick(e) {
+      if (sortRef.current && !sortRef.current.contains(e.target)) {
+        setSortOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [sortOpen]);
+
+  const SORT_OPTIONS = [
+    { value: 'name-asc',    label: 'Name A–Z' },
+    { value: 'name-desc',   label: 'Name Z–A' },
+    { value: 'type',        label: 'Type' },
+    { value: 'region',      label: 'Region' },
+    { value: 'producer',    label: 'Producer' },
+  ];
+
+  function applySortWines(list) {
+    return [...list].sort((a, b) => {
+      switch (sortBy) {
+        case 'name-desc': return (b.name || '').localeCompare(a.name || '');
+        case 'type':      return (a.type || '').localeCompare(b.type || '');
+        case 'region':    return (a.region || '').localeCompare(b.region || '');
+        case 'producer':  return (a.winery?.name || '').localeCompare(b.winery?.name || '');
+        default:          return (a.name || '').localeCompare(b.name || '');
+      }
+    });
+  }
+
+  function applySortBrands(list) {
+    return [...list].sort((a, b) => {
+      switch (sortBy) {
+        case 'name-desc': return (b.name || '').localeCompare(a.name || '');
+        case 'region':    return (a.region || '').localeCompare(b.region || '');
+        default:          return (a.name || '').localeCompare(b.name || '');
+      }
+    });
+  }
+
+  const sortedWines = applySortWines(wines);
+  const sortedBrands = applySortBrands(brands);
+
+  // Hero search dropdown — client-side filter from loaded data
+  const heroQuery = search.trim().toLowerCase();
+  const heroWineResults = heroQuery.length > 0
+    ? wines.filter(w => w.name?.toLowerCase().includes(heroQuery) || w.winery?.name?.toLowerCase().includes(heroQuery)).slice(0, 5)
+    : [];
+  const heroBrandResults = heroQuery.length > 0
+    ? brands.filter(b => b.name?.toLowerCase().includes(heroQuery) || b.region?.toLowerCase().includes(heroQuery)).slice(0, 5)
+    : [];
+  const showHeroDropdown = heroQuery.length > 0 && (heroWineResults.length > 0 || heroBrandResults.length > 0);
+
+  // Close hero search dropdown on outside click
+  useEffect(() => {
+    if (!showHeroDropdown) return;
+    function handleClick(e) {
+      if (heroSearchRef.current && !heroSearchRef.current.contains(e.target)) {
+        setSearch('');
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showHeroDropdown]);
+
   const getWineTypeColor = (wineType) => {
     const colors = {
       red: '#722f37',
@@ -358,58 +429,124 @@ const Wineries = () => {
 
   return (
     <div className="portfolio-page">
-      {/* Portfolio Header */}
-      <div className="portfolio-header">
-        <div className="container">
-          <div className="portfolio-header-content">
-            <h1>Portfolio</h1>
-              <div className="portfolio-tabs">
-                <button
-                  className={activeTab === 'wines' ? 'tab active' : 'tab'}
-                  onClick={() => setActiveTab('wines')}
-                >
-                  Wines
-                </button>
-                <button
-                  className={activeTab === 'brands' ? 'tab active' : 'tab'}
-                  onClick={() => setActiveTab('brands')}
-                >
-                  Brands
-                </button>
-              </div>
-              <div className="header-search-wrapper">
-                <svg className="search-bar-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/>
-                  <line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      {/* Portfolio Hero */}
+      <div className="portfolio-hero">
+        <div className="portfolio-hero-overlay" />
+        <div className="portfolio-hero-content">
+          <h1>Portfolio</h1>
+          <div className="portfolio-hero-search" ref={heroSearchRef}>
+            <svg className="portfolio-hero-search-icon" width="18" height="18" viewBox="0 0 16 16" fill="none">
+              <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/>
+              <line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <input
+              type="text"
+              className="portfolio-hero-search-input"
+              placeholder="Find a wine or producer"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              autoComplete="off"
+            />
+            {search && (
+              <button className="portfolio-hero-search-clear" onClick={() => setSearch('')} aria-label="Clear search">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-                <input
-                  type="text"
-                  className="search-bar-input"
-                  placeholder={activeTab === 'wines' ? 'Search wines...' : 'Search brands...'}
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                />
-                {search && (
-                  <button className="search-bar-clear" onClick={() => setSearch('')} aria-label="Clear search">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </button>
+              </button>
+            )}
+            {showHeroDropdown && (
+              <div className="search-results-dropdown">
+                {heroWineResults.length > 0 && (
+                  <div className="search-results-group">
+                    <div className="search-results-group-label">
+                      <svg width="7" height="22" viewBox="0 0 21 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8.41406 0.23877C9.57799 -0.114485 12.8209 -0.173047 13.7207 0.746582C14.2719 1.3108 14.1559 4.79025 14.2256 5.78564C14.3504 7.6219 14.6235 9.49041 14.667 11.3267C14.7134 13.3557 14.1122 17.8339 15.2383 19.3638C15.5866 19.8367 16.3274 20.1758 16.7686 20.5991C17.4335 21.2359 19.2753 23.0887 19.7139 23.7661C21.4844 26.4841 20.9159 38.504 20.9043 42.2876C20.884 49.5978 21.0142 52.5232 20.6543 59.8335C20.4888 63.1645 20.135 66.8897 16.1934 67.6079C12.7801 68.2297 5.95348 68.3262 3.04785 66.3062C1.19905 65.0188 0.978285 64.0199 0.644531 61.8599C0.351375 59.971 0.37763 57.5416 0.345703 55.6089C0.287654 52.0327 0.258641 53.0221 0.139648 49.5894C0.0264487 46.378 0.478705 43.1015 0.290039 39.8726L0.287109 39.8696L0 40.019C0.0957844 39.6337 0.252387 39.534 0.298828 39.0786C0.409031 37.9928 0.0640239 37.2252 0.0117188 36.4487C-0.00569559 36.1626 0.263862 35.6632 0.287109 35.272C0.501899 31.611 -0.30756 25.9061 2.10156 22.937C3.35544 21.3928 5.49198 20.5639 6.41211 18.6606C7.07965 17.274 6.84749 14.1501 6.82715 12.4976C6.78651 9.21908 6.3797 5.70962 6.66992 2.42529C6.76859 1.3044 7.33464 0.568744 8.41406 0.23877ZM13.0674 15.5571C11.262 15.4112 9.49096 15.3934 7.68848 15.4927C7.63914 16.7393 7.74418 18.3512 7.22754 19.481C5.99677 22.1666 2.77727 22.6571 2.04004 25.7954C1.76146 26.9806 1.79984 28.3001 1.60254 29.5874C1.52127 30.1158 1.4774 31.3453 1.46289 31.9321C1.23649 42.121 1.21865 48.4621 1.93848 58.6597C2.12424 61.3076 1.73 64.4574 4.79492 65.5669C7.41578 66.5157 9.92642 65.9235 12.2803 66.481C12.4021 66.5101 12.3156 66.7349 12.5908 66.7817C13.3273 66.8984 13.2619 66.4875 13.3457 66.4722C13.5837 66.4313 13.8427 66.6157 14.0488 66.5952C15.6045 66.4491 17.137 65.6572 18.1006 64.4194C19.3542 62.8109 19.3686 61.1351 19.2031 59.1763L19.4902 59.3257C19.4902 58.9578 19.6356 58.6251 19.1973 58.5229V58.231C20.0202 58.3038 19.2087 57.9574 19.1973 57.9155C19.0057 57.0339 19.5309 55.9008 19.4961 55.6089C19.4874 55.5301 19.2267 55.5447 19.2002 55.4312C18.9796 54.5057 19.6449 53.7054 19.4824 52.5435C19.3997 51.9419 19.3384 52.2047 19.2998 52.6353C19.2929 52.322 19.2816 52.0084 19.293 51.6968L19.5811 51.8452C19.6879 51.6711 19.5637 50.4874 19.5811 50.1753C19.9642 43.1746 19.6096 35.9807 19.0029 28.9976C18.7011 25.5092 19.1128 24.8262 16.4629 22.2104C15.7054 21.4631 14.9362 20.7067 14.1699 19.9155C14.045 19.7844 13.7782 19.8077 13.665 19.6968L13.6738 19.6938C12.9774 18.9962 13.3805 15.7773 13.0674 15.5571ZM19.2998 52.6353C19.3053 52.8825 19.3083 53.1295 19.293 53.3755C19.2357 54.2908 19.2424 53.2767 19.2998 52.6353ZM9.98145 30.7173C11.3224 30.6793 16.1325 30.454 17.0381 31.1255C17.1251 31.1897 17.2209 31.2344 17.2441 31.3569C17.2325 34.4689 17.0901 37.5663 17.1162 40.6812C17.1191 41.0986 17.2696 41.455 17.2725 41.8374C17.2811 42.6006 17.3876 46.8038 16.9873 47.104L16.9883 47.1069H16.9834C12.935 47.6235 8.81963 47.959 4.74219 47.5767C4.19679 47.2614 3.96432 46.6896 3.90625 46.0825C3.55214 42.4157 3.92993 36.2875 4.47852 32.6294C4.68166 31.2778 4.1155 30.957 6.01953 30.8228C6.28191 30.8046 6.52344 30.8265 6.75195 30.8589L8.29883 30.9292C8.85149 30.8574 9.4665 30.7303 9.97852 30.7173H9.98145Z" fill="currentColor"/>
+                      </svg>
+                      Wines
+                    </div>
+                    {heroWineResults.map(wine => (
+                      <button key={wine._id} className="search-result-item" onClick={() => { navigate(`/wines/${wine._id}`); setSearch(''); }}>
+                        <div className="search-result-thumb">
+                          {wine.bottleImage?.url ? (
+                            <img src={wine.bottleImage.url} alt={wine.name} />
+                          ) : (
+                            <svg width="12" height="28" viewBox="0 0 100 250" fill="none">
+                              <path d="M50 10 L35 60 L25 240 L75 240 L65 60 Z" fill={getWineTypeColor(wine.type)}/>
+                            </svg>
+                          )}
+                        </div>
+                        <div className="search-result-info">
+                          <span className="search-result-name">{wine.name}</span>
+                          {wine.winery?.name && <span className="search-result-sub">{wine.winery.name}</span>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {heroBrandResults.length > 0 && (
+                  <div className="search-results-group">
+                    <div className="search-results-group-label">
+                      <svg width="16" height="22" viewBox="0 0 35 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.1227 1.21047C18.6208 2.58836 19.2628 5.00377 20.2341 6.74397C22.2206 7.94619 25.4968 4.95437 26.4132 6.05228C27.7467 7.63877 25.4309 8.6763 24.0974 8.95078C22.9121 9.19781 21.7048 9.02763 20.514 9.07155C20.7939 11.0094 20.064 12.7166 19.6963 14.5611L22.6212 12.1347C26.5394 10.1256 31.1051 10.658 33.6459 14.4733C36.3293 18.4972 35.0507 24.8541 29.5741 24.9968C30.1722 27.555 29.6783 29.8277 27.2308 31.0354C28.1418 34.7134 26.0126 38.88 22.2426 39.7528C21.6499 39.8901 20.4042 39.632 20.0915 40.0712C20.075 42.4866 19.7512 44.2653 18.2805 46.2195C13.5612 52.4667 1.91099 47.3394 6.47668 39.3521C6.84984 38.6933 7.57969 38.3694 7.6236 37.6229C-0.437709 38.8415 -2.44069 29.5312 3.22802 25.1231C3.80422 24.6784 5.95536 24.0526 4.77552 23.597C3.71641 23.1853 2.55853 22.8888 1.8616 21.8403C0.401896 19.6555 1.83965 15.9061 3.5024 14.1439C5.85658 11.6462 12.8862 8.9398 14.6532 13.2052L17.7373 13.1503C19.0488 10.4769 17.8196 6.5189 16.1898 4.20778C15.4654 3.17574 12.3868 1.33124 13.7697 0.266263C14.7355 -0.48032 16.3599 0.507805 17.1227 1.21047ZM13.1057 13.7432C9.879 11.7285 3.52984 15.434 3.48594 19.0955C3.46398 20.8302 4.95113 21.5 6.52059 21.4231C6.78948 18.9528 8.56747 16.8503 10.3948 15.2803L13.1112 13.7487L13.1057 13.7432ZM28.7729 22.779C32.263 22.7296 33.5361 19.639 32.2849 16.6527C31.0338 13.6663 26.9949 13.0295 24.0809 13.7487L24.6297 14.1549C23.9383 14.8082 23.1865 15.8292 22.1658 15.3901L22.1328 16.5703C24.7889 18.0031 27.6314 19.8476 28.7729 22.779ZM17.6769 25.1725C19.5866 23.3774 21.1231 19.0351 18.736 17.0314C13.6764 12.788 5.63159 21.8019 9.7473 25.5513C11.7448 27.3683 15.7562 26.9786 17.6714 25.1725H17.6769ZM21.0847 24.6839C23.0383 25.5513 24.52 26.9786 25.9193 28.5321C26.4955 28.6858 26.9674 28.1369 27.165 27.6703C28.4436 24.64 24.8492 21.2529 22.5664 19.7872C21.9737 19.7049 22.2316 19.8531 22.1713 20.1989C21.8859 21.747 21.6335 23.2182 21.0847 24.6894V24.6839ZM12.2771 29.394C9.90644 28.9603 7.99675 27.5659 6.66326 25.5732C4.08957 26.3308 -0.0700385 31.3592 2.86583 33.4508C4.46822 34.5926 6.84984 35.202 8.79246 34.8067C9.90644 34.5816 10.5759 33.4178 11.6954 33.1818L12.2826 29.3885L12.2771 29.394ZM20.1408 26.4076C18.0555 28.9438 14.3624 28.0216 14.1868 31.9906C13.9837 36.5579 20.1408 39.3411 23.5048 36.3603C26.8687 33.3794 23.4444 27.9502 20.1408 26.4131V26.4076ZM8.54003 44.935C9.16013 45.5992 11.2454 46.6258 12.1509 46.6971C15.1252 46.9167 19.1092 42.7666 17.6385 39.8132C17.5397 39.6156 13.9947 37.6503 13.7752 37.6229C10.4881 37.1947 5.5822 41.751 8.54003 44.9405V44.935Z" fill="currentColor"/>
+                      </svg>
+                      Producers
+                    </div>
+                    {heroBrandResults.map(brand => (
+                      <button key={brand._id} className="search-result-item" onClick={() => { navigate(`/wineries/${brand._id}`); setSearch(''); }}>
+                        <div className="search-result-thumb search-result-thumb-brand">
+                          {brand.logo?.url ? (
+                            <img src={brand.logo.url} alt={brand.name} />
+                          ) : (
+                            <svg width="24" height="24" viewBox="0 0 120 120" fill="none">
+                              <circle cx="60" cy="60" r="50" stroke="#722f37" strokeWidth="4" fill="none"/>
+                              <text x="60" y="75" textAnchor="middle" fill="#722f37" fontSize="50" fontFamily="moret">W</text>
+                            </svg>
+                          )}
+                        </div>
+                        <div className="search-result-info">
+                          <span className="search-result-name">{brand.name}</span>
+                          {brand.region && <span className="search-result-sub">{brand.region}</span>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
-            </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Main Content Area */}
       <div className="portfolio-content">
         <div className="container">
+          {/* Mobile tab row — hidden on desktop, shown on tablet/mobile */}
+          <div className="portfolio-mobile-tabs">
+            <button
+              className={`portfolio-mobile-tab${activeTab === 'wines' ? ' active' : ''}`}
+              onClick={() => setActiveTab('wines')}
+            >
+              <svg width="7" height="22" viewBox="0 0 21 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8.41406 0.23877C9.57799 -0.114485 12.8209 -0.173047 13.7207 0.746582C14.2719 1.3108 14.1559 4.79025 14.2256 5.78564C14.3504 7.6219 14.6235 9.49041 14.667 11.3267C14.7134 13.3557 14.1122 17.8339 15.2383 19.3638C15.5866 19.8367 16.3274 20.1758 16.7686 20.5991C17.4335 21.2359 19.2753 23.0887 19.7139 23.7661C21.4844 26.4841 20.9159 38.504 20.9043 42.2876C20.884 49.5978 21.0142 52.5232 20.6543 59.8335C20.4888 63.1645 20.135 66.8897 16.1934 67.6079C12.7801 68.2297 5.95348 68.3262 3.04785 66.3062C1.19905 65.0188 0.978285 64.0199 0.644531 61.8599C0.351375 59.971 0.37763 57.5416 0.345703 55.6089C0.287654 52.0327 0.258641 53.0221 0.139648 49.5894C0.0264487 46.378 0.478705 43.1015 0.290039 39.8726L0.287109 39.8696L0 40.019C0.0957844 39.6337 0.252387 39.534 0.298828 39.0786C0.409031 37.9928 0.0640239 37.2252 0.0117188 36.4487C-0.00569559 36.1626 0.263862 35.6632 0.287109 35.272C0.501899 31.611 -0.30756 25.9061 2.10156 22.937C3.35544 21.3928 5.49198 20.5639 6.41211 18.6606C7.07965 17.274 6.84749 14.1501 6.82715 12.4976C6.78651 9.21908 6.3797 5.70962 6.66992 2.42529C6.76859 1.3044 7.33464 0.568744 8.41406 0.23877ZM13.0674 15.5571C11.262 15.4112 9.49096 15.3934 7.68848 15.4927C7.63914 16.7393 7.74418 18.3512 7.22754 19.481C5.99677 22.1666 2.77727 22.6571 2.04004 25.7954C1.76146 26.9806 1.79984 28.3001 1.60254 29.5874C1.52127 30.1158 1.4774 31.3453 1.46289 31.9321C1.23649 42.121 1.21865 48.4621 1.93848 58.6597C2.12424 61.3076 1.73 64.4574 4.79492 65.5669C7.41578 66.5157 9.92642 65.9235 12.2803 66.481C12.4021 66.5101 12.3156 66.7349 12.5908 66.7817C13.3273 66.8984 13.2619 66.4875 13.3457 66.4722C13.5837 66.4313 13.8427 66.6157 14.0488 66.5952C15.6045 66.4491 17.137 65.6572 18.1006 64.4194C19.3542 62.8109 19.3686 61.1351 19.2031 59.1763L19.4902 59.3257C19.4902 58.9578 19.6356 58.6251 19.1973 58.5229V58.231C20.0202 58.3038 19.2087 57.9574 19.1973 57.9155C19.0057 57.0339 19.5309 55.9008 19.4961 55.6089C19.4874 55.5301 19.2267 55.5447 19.2002 55.4312C18.9796 54.5057 19.6449 53.7054 19.4824 52.5435C19.3997 51.9419 19.3384 52.2047 19.2998 52.6353C19.2929 52.322 19.2816 52.0084 19.293 51.6968L19.5811 51.8452C19.6879 51.6711 19.5637 50.4874 19.5811 50.1753C19.9642 43.1746 19.6096 35.9807 19.0029 28.9976C18.7011 25.5092 19.1128 24.8262 16.4629 22.2104C15.7054 21.4631 14.9362 20.7067 14.1699 19.9155C14.045 19.7844 13.7782 19.8077 13.665 19.6968L13.6738 19.6938C12.9774 18.9962 13.3805 15.7773 13.0674 15.5571ZM19.2998 52.6353C19.3053 52.8825 19.3083 53.1295 19.293 53.3755C19.2357 54.2908 19.2424 53.2767 19.2998 52.6353ZM9.98145 30.7173C11.3224 30.6793 16.1325 30.454 17.0381 31.1255C17.1251 31.1897 17.2209 31.2344 17.2441 31.3569C17.2325 34.4689 17.0901 37.5663 17.1162 40.6812C17.1191 41.0986 17.2696 41.455 17.2725 41.8374C17.2811 42.6006 17.3876 46.8038 16.9873 47.104L16.9883 47.1069H16.9834C12.935 47.6235 8.81963 47.959 4.74219 47.5767C4.19679 47.2614 3.96432 46.6896 3.90625 46.0825C3.55214 42.4157 3.92993 36.2875 4.47852 32.6294C4.68166 31.2778 4.1155 30.957 6.01953 30.8228C6.28191 30.8046 6.52344 30.8265 6.75195 30.8589L8.29883 30.9292C8.85149 30.8574 9.4665 30.7303 9.97852 30.7173H9.98145Z" fill="currentColor"/>
+              </svg>
+              Wines
+            </button>
+            <button
+              className={`portfolio-mobile-tab${activeTab === 'brands' ? ' active' : ''}`}
+              onClick={() => setActiveTab('brands')}
+            >
+              <svg width="16" height="22" viewBox="0 0 35 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.1227 1.21047C18.6208 2.58836 19.2628 5.00377 20.2341 6.74397C22.2206 7.94619 25.4968 4.95437 26.4132 6.05228C27.7467 7.63877 25.4309 8.6763 24.0974 8.95078C22.9121 9.19781 21.7048 9.02763 20.514 9.07155C20.7939 11.0094 20.064 12.7166 19.6963 14.5611L22.6212 12.1347C26.5394 10.1256 31.1051 10.658 33.6459 14.4733C36.3293 18.4972 35.0507 24.8541 29.5741 24.9968C30.1722 27.555 29.6783 29.8277 27.2308 31.0354C28.1418 34.7134 26.0126 38.88 22.2426 39.7528C21.6499 39.8901 20.4042 39.632 20.0915 40.0712C20.075 42.4866 19.7512 44.2653 18.2805 46.2195C13.5612 52.4667 1.91099 47.3394 6.47668 39.3521C6.84984 38.6933 7.57969 38.3694 7.6236 37.6229C-0.437709 38.8415 -2.44069 29.5312 3.22802 25.1231C3.80422 24.6784 5.95536 24.0526 4.77552 23.597C3.71641 23.1853 2.55853 22.8888 1.8616 21.8403C0.401896 19.6555 1.83965 15.9061 3.5024 14.1439C5.85658 11.6462 12.8862 8.9398 14.6532 13.2052L17.7373 13.1503C19.0488 10.4769 17.8196 6.5189 16.1898 4.20778C15.4654 3.17574 12.3868 1.33124 13.7697 0.266263C14.7355 -0.48032 16.3599 0.507805 17.1227 1.21047ZM13.1057 13.7432C9.879 11.7285 3.52984 15.434 3.48594 19.0955C3.46398 20.8302 4.95113 21.5 6.52059 21.4231C6.78948 18.9528 8.56747 16.8503 10.3948 15.2803L13.1112 13.7487L13.1057 13.7432ZM28.7729 22.779C32.263 22.7296 33.5361 19.639 32.2849 16.6527C31.0338 13.6663 26.9949 13.0295 24.0809 13.7487L24.6297 14.1549C23.9383 14.8082 23.1865 15.8292 22.1658 15.3901L22.1328 16.5703C24.7889 18.0031 27.6314 19.8476 28.7729 22.779ZM17.6769 25.1725C19.5866 23.3774 21.1231 19.0351 18.736 17.0314C13.6764 12.788 5.63159 21.8019 9.7473 25.5513C11.7448 27.3683 15.7562 26.9786 17.6714 25.1725H17.6769ZM21.0847 24.6839C23.0383 25.5513 24.52 26.9786 25.9193 28.5321C26.4955 28.6858 26.9674 28.1369 27.165 27.6703C28.4436 24.64 24.8492 21.2529 22.5664 19.7872C21.9737 19.7049 22.2316 19.8531 22.1713 20.1989C21.8859 21.747 21.6335 23.2182 21.0847 24.6894V24.6839ZM12.2771 29.394C9.90644 28.9603 7.99675 27.5659 6.66326 25.5732C4.08957 26.3308 -0.0700385 31.3592 2.86583 33.4508C4.46822 34.5926 6.84984 35.202 8.79246 34.8067C9.90644 34.5816 10.5759 33.4178 11.6954 33.1818L12.2826 29.3885L12.2771 29.394ZM20.1408 26.4076C18.0555 28.9438 14.3624 28.0216 14.1868 31.9906C13.9837 36.5579 20.1408 39.3411 23.5048 36.3603C26.8687 33.3794 23.4444 27.9502 20.1408 26.4131V26.4076ZM8.54003 44.935C9.16013 45.5992 11.2454 46.6258 12.1509 46.6971C15.1252 46.9167 19.1092 42.7666 17.6385 39.8132C17.5397 39.6156 13.9947 37.6503 13.7752 37.6229C10.4881 37.1947 5.5822 41.751 8.54003 44.9405V44.935Z" fill="currentColor"/>
+              </svg>
+              Producers
+            </button>
+          </div>
           {/* Controls Bar - Above Grid */}
         <div className="portfolio-controls-bar">
                 <div className="results-count">
                   Showing <span className="count-badge">
-                    {activeTab === 'wines' ? wines.length : brands.length}
+                    {activeTab === 'wines' ? sortedWines.length : sortedBrands.length}
                   </span>
                 </div>
                 <div className="controls-right">
@@ -419,43 +556,111 @@ const Wineries = () => {
                     onClick={() => setViewMode('grid')}
                     title="Grid view"
                   >
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                      <rect x="1" y="1" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                      <rect x="10" y="1" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                      <rect x="1" y="10" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                      <rect x="10" y="10" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                    </svg>
+                    {viewMode === 'grid' ? (
+                      <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+                        <rect x="1" y="1" width="7" height="7" rx="1"/>
+                        <rect x="10" y="1" width="7" height="7" rx="1"/>
+                        <rect x="1" y="10" width="7" height="7" rx="1"/>
+                        <rect x="10" y="10" width="7" height="7" rx="1"/>
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <rect x="1" y="1" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                        <rect x="10" y="1" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                        <rect x="1" y="10" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                        <rect x="10" y="10" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                      </svg>
+                    )}
                   </button>
                   <button
                     className={`view-toggle-btn${viewMode === 'table' ? ' active' : ''}`}
                     onClick={() => setViewMode('table')}
                     title="Table view"
                   >
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                      <line x1="1" y1="3" x2="17" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      <line x1="1" y1="7" x2="17" y2="7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      <line x1="1" y1="11" x2="17" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      <line x1="1" y1="15" x2="17" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                  <button
-                    className={`view-toggle-btn${viewMode === 'map' ? ' active' : ''}`}
-                    onClick={() => setViewMode('map')}
-                    title="Map view"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                      <path d="M9 1C6.24 1 4 3.24 4 6c0 4.5 5 11 5 11s5-6.5 5-11c0-2.76-2.24-5-5-5z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                      <circle cx="9" cy="6" r="2" stroke="currentColor" strokeWidth="1.5"/>
-                    </svg>
+                    {viewMode === 'table' ? (
+                      <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+                        <rect x="1" y="1.25" width="16" height="2.5" rx="1.25"/>
+                        <rect x="1" y="5.25" width="16" height="2.5" rx="1.25"/>
+                        <rect x="1" y="9.25" width="16" height="2.5" rx="1.25"/>
+                        <rect x="1" y="13.25" width="16" height="2.5" rx="1.25"/>
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <line x1="1" y1="3" x2="17" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        <line x1="1" y1="7" x2="17" y2="7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        <line x1="1" y1="11" x2="17" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        <line x1="1" y1="15" x2="17" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    )}
                   </button>
                 </div>
-                <button className="sort-button">Sort</button>
+                <div ref={sortRef} style={{ position: 'relative' }}>
+                  <button
+                    className={`sort-button${sortOpen ? ' sort-open' : ''}`}
+                    onClick={() => setSortOpen(o => !o)}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <line x1="1" y1="3" x2="13" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <line x1="3" y1="7" x2="11" y2="7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <line x1="5" y1="11" x2="9" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    Sort
+                  </button>
+                  {sortOpen && (
+                    <div className="sort-dropdown">
+                      {SORT_OPTIONS.map(opt => (
+                        <button
+                          key={opt.value}
+                          className={`sort-option${sortBy === opt.value ? ' active' : ''}`}
+                          onClick={() => { setSortBy(opt.value); setSortOpen(false); }}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <button className="filter-sheet-btn" onClick={() => setFilterSheetOpen(true)}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <line x1="2" y1="4" x2="14" y2="4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="4" y1="8" x2="12" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="6" y1="12" x2="10" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  Filters
+                  {(selectedTypes.length + selectedRegions.length + selectedMarkets.length) > 0 && (
+                    <span className="filter-sheet-btn-badge">
+                      {selectedTypes.length + selectedRegions.length + selectedMarkets.length}
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
 
           <div className="portfolio-layout">
             {/* Sidebar Filters */}
             <aside className="portfolio-sidebar">
+              {/* Wines / Producers tabs */}
+              <div className="portfolio-sidebar-tabs">
+                <button
+                  className={`portfolio-sidebar-tab${activeTab === 'wines' ? ' active' : ''}`}
+                  onClick={() => setActiveTab('wines')}
+                >
+                  <svg width="9" height="28" viewBox="0 0 21 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.41406 0.23877C9.57799 -0.114485 12.8209 -0.173047 13.7207 0.746582C14.2719 1.3108 14.1559 4.79025 14.2256 5.78564C14.3504 7.6219 14.6235 9.49041 14.667 11.3267C14.7134 13.3557 14.1122 17.8339 15.2383 19.3638C15.5866 19.8367 16.3274 20.1758 16.7686 20.5991C17.4335 21.2359 19.2753 23.0887 19.7139 23.7661C21.4844 26.4841 20.9159 38.504 20.9043 42.2876C20.884 49.5978 21.0142 52.5232 20.6543 59.8335C20.4888 63.1645 20.135 66.8897 16.1934 67.6079C12.7801 68.2297 5.95348 68.3262 3.04785 66.3062C1.19905 65.0188 0.978285 64.0199 0.644531 61.8599C0.351375 59.971 0.37763 57.5416 0.345703 55.6089C0.287654 52.0327 0.258641 53.0221 0.139648 49.5894C0.0264487 46.378 0.478705 43.1015 0.290039 39.8726L0.287109 39.8696L0 40.019C0.0957844 39.6337 0.252387 39.534 0.298828 39.0786C0.409031 37.9928 0.0640239 37.2252 0.0117188 36.4487C-0.00569559 36.1626 0.263862 35.6632 0.287109 35.272C0.501899 31.611 -0.30756 25.9061 2.10156 22.937C3.35544 21.3928 5.49198 20.5639 6.41211 18.6606C7.07965 17.274 6.84749 14.1501 6.82715 12.4976C6.78651 9.21908 6.3797 5.70962 6.66992 2.42529C6.76859 1.3044 7.33464 0.568744 8.41406 0.23877ZM13.0674 15.5571C11.262 15.4112 9.49096 15.3934 7.68848 15.4927C7.63914 16.7393 7.74418 18.3512 7.22754 19.481C5.99677 22.1666 2.77727 22.6571 2.04004 25.7954C1.76146 26.9806 1.79984 28.3001 1.60254 29.5874C1.52127 30.1158 1.4774 31.3453 1.46289 31.9321C1.23649 42.121 1.21865 48.4621 1.93848 58.6597C2.12424 61.3076 1.73 64.4574 4.79492 65.5669C7.41578 66.5157 9.92642 65.9235 12.2803 66.481C12.4021 66.5101 12.3156 66.7349 12.5908 66.7817C13.3273 66.8984 13.2619 66.4875 13.3457 66.4722C13.5837 66.4313 13.8427 66.6157 14.0488 66.5952C15.6045 66.4491 17.137 65.6572 18.1006 64.4194C19.3542 62.8109 19.3686 61.1351 19.2031 59.1763L19.4902 59.3257C19.4902 58.9578 19.6356 58.6251 19.1973 58.5229V58.231C20.0202 58.3038 19.2087 57.9574 19.1973 57.9155C19.0057 57.0339 19.5309 55.9008 19.4961 55.6089C19.4874 55.5301 19.2267 55.5447 19.2002 55.4312C18.9796 54.5057 19.6449 53.7054 19.4824 52.5435C19.3997 51.9419 19.3384 52.2047 19.2998 52.6353C19.2929 52.322 19.2816 52.0084 19.293 51.6968L19.5811 51.8452C19.6879 51.6711 19.5637 50.4874 19.5811 50.1753C19.9642 43.1746 19.6096 35.9807 19.0029 28.9976C18.7011 25.5092 19.1128 24.8262 16.4629 22.2104C15.7054 21.4631 14.9362 20.7067 14.1699 19.9155C14.045 19.7844 13.7782 19.8077 13.665 19.6968L13.6738 19.6938C12.9774 18.9962 13.3805 15.7773 13.0674 15.5571ZM19.2998 52.6353C19.3053 52.8825 19.3083 53.1295 19.293 53.3755C19.2357 54.2908 19.2424 53.2767 19.2998 52.6353ZM9.98145 30.7173C11.3224 30.6793 16.1325 30.454 17.0381 31.1255C17.1251 31.1897 17.2209 31.2344 17.2441 31.3569C17.2325 34.4689 17.0901 37.5663 17.1162 40.6812C17.1191 41.0986 17.2696 41.455 17.2725 41.8374C17.2811 42.6006 17.3876 46.8038 16.9873 47.104L16.9883 47.1069H16.9834C12.935 47.6235 8.81963 47.959 4.74219 47.5767C4.19679 47.2614 3.96432 46.6896 3.90625 46.0825C3.55214 42.4157 3.92993 36.2875 4.47852 32.6294C4.68166 31.2778 4.1155 30.957 6.01953 30.8228C6.28191 30.8046 6.52344 30.8265 6.75195 30.8589L8.29883 30.9292C8.85149 30.8574 9.4665 30.7303 9.97852 30.7173H9.98145Z" fill="currentColor"/>
+                  </svg>
+                  Wines
+                </button>
+                <button
+                  className={`portfolio-sidebar-tab${activeTab === 'brands' ? ' active' : ''}`}
+                  onClick={() => setActiveTab('brands')}
+                >
+                  <svg width="20" height="28" viewBox="0 0 35 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.1227 1.21047C18.6208 2.58836 19.2628 5.00377 20.2341 6.74397C22.2206 7.94619 25.4968 4.95437 26.4132 6.05228C27.7467 7.63877 25.4309 8.6763 24.0974 8.95078C22.9121 9.19781 21.7048 9.02763 20.514 9.07155C20.7939 11.0094 20.064 12.7166 19.6963 14.5611L22.6212 12.1347C26.5394 10.1256 31.1051 10.658 33.6459 14.4733C36.3293 18.4972 35.0507 24.8541 29.5741 24.9968C30.1722 27.555 29.6783 29.8277 27.2308 31.0354C28.1418 34.7134 26.0126 38.88 22.2426 39.7528C21.6499 39.8901 20.4042 39.632 20.0915 40.0712C20.075 42.4866 19.7512 44.2653 18.2805 46.2195C13.5612 52.4667 1.91099 47.3394 6.47668 39.3521C6.84984 38.6933 7.57969 38.3694 7.6236 37.6229C-0.437709 38.8415 -2.44069 29.5312 3.22802 25.1231C3.80422 24.6784 5.95536 24.0526 4.77552 23.597C3.71641 23.1853 2.55853 22.8888 1.8616 21.8403C0.401896 19.6555 1.83965 15.9061 3.5024 14.1439C5.85658 11.6462 12.8862 8.9398 14.6532 13.2052L17.7373 13.1503C19.0488 10.4769 17.8196 6.5189 16.1898 4.20778C15.4654 3.17574 12.3868 1.33124 13.7697 0.266263C14.7355 -0.48032 16.3599 0.507805 17.1227 1.21047ZM13.1057 13.7432C9.879 11.7285 3.52984 15.434 3.48594 19.0955C3.46398 20.8302 4.95113 21.5 6.52059 21.4231C6.78948 18.9528 8.56747 16.8503 10.3948 15.2803L13.1112 13.7487L13.1057 13.7432ZM28.7729 22.779C32.263 22.7296 33.5361 19.639 32.2849 16.6527C31.0338 13.6663 26.9949 13.0295 24.0809 13.7487L24.6297 14.1549C23.9383 14.8082 23.1865 15.8292 22.1658 15.3901L22.1328 16.5703C24.7889 18.0031 27.6314 19.8476 28.7729 22.779ZM17.6769 25.1725C19.5866 23.3774 21.1231 19.0351 18.736 17.0314C13.6764 12.788 5.63159 21.8019 9.7473 25.5513C11.7448 27.3683 15.7562 26.9786 17.6714 25.1725H17.6769ZM21.0847 24.6839C23.0383 25.5513 24.52 26.9786 25.9193 28.5321C26.4955 28.6858 26.9674 28.1369 27.165 27.6703C28.4436 24.64 24.8492 21.2529 22.5664 19.7872C21.9737 19.7049 22.2316 19.8531 22.1713 20.1989C21.8859 21.747 21.6335 23.2182 21.0847 24.6894V24.6839ZM12.2771 29.394C9.90644 28.9603 7.99675 27.5659 6.66326 25.5732C4.08957 26.3308 -0.0700385 31.3592 2.86583 33.4508C4.46822 34.5926 6.84984 35.202 8.79246 34.8067C9.90644 34.5816 10.5759 33.4178 11.6954 33.1818L12.2826 29.3885L12.2771 29.394ZM20.1408 26.4076C18.0555 28.9438 14.3624 28.0216 14.1868 31.9906C13.9837 36.5579 20.1408 39.3411 23.5048 36.3603C26.8687 33.3794 23.4444 27.9502 20.1408 26.4131V26.4076ZM8.54003 44.935C9.16013 45.5992 11.2454 46.6258 12.1509 46.6971C15.1252 46.9167 19.1092 42.7666 17.6385 39.8132C17.5397 39.6156 13.9947 37.6503 13.7752 37.6229C10.4881 37.1947 5.5822 41.751 8.54003 44.9405V44.935Z" fill="currentColor"/>
+                  </svg>
+                  Producers
+                </button>
+              </div>
+
               <h3>Filters</h3>
 
               <div className="filter-group">
@@ -619,11 +824,11 @@ const Wineries = () => {
                 ) : viewMode === 'grid' ? (
                   /* Grid View */
                   activeTab === 'wines' ? (
-                    wines.length === 0 ? (
+                    sortedWines.length === 0 ? (
                       <div className="empty-state"><p>No wines found</p></div>
                     ) : (
                       <div className="wines-portfolio-grid">
-                        {wines.map((wine) => (
+                        {sortedWines.map((wine) => (
                           <Link key={wine._id} to={`/wines/${wine._id}`} className="wine-portfolio-card">
                             <div className="wine-portfolio-producer">
                               {wine.winery?.name || 'L\'ANTICA QUERCIA'}
@@ -646,24 +851,31 @@ const Wineries = () => {
                       </div>
                     )
                   ) : (
-                    brands.length === 0 ? (
+                    sortedBrands.length === 0 ? (
                       <div className="empty-state"><p>No brands found</p></div>
                     ) : (
                       <div className="wines-portfolio-grid">
-                        {brands.map((brand) => (
-                          <Link key={brand._id} to={`/wineries/${brand._id}`} className="wine-portfolio-card">
-                            <div className="wine-portfolio-producer">
-                              {brand.region || 'ITALY'}
+                        {sortedBrands.map((brand) => (
+                          <Link key={brand._id} to={`/wineries/${brand._id}`} className="wine-portfolio-card trade-wine-card brand-card">
+                            <div
+                              className="brand-card-bg"
+                              style={{
+                                backgroundImage: brand.featuredImage?.url ? `url(${brand.featuredImage.url})` : 'none'
+                              }}
+                            />
+                            <div className="trade-wine-card-overlay"></div>
+                            <div className="trade-wine-producer">
+                              {brand.region || brand.country || '—'}
                             </div>
-                            <h3 className="wine-portfolio-name">{brand.name}</h3>
-                            <div className="wine-portfolio-image">
+                            <h3 className="trade-wine-name">{brand.name}</h3>
+                            <div className="trade-wine-image">
                               {brand.logo?.url ? (
-                                <img src={brand.logo.url} alt={brand.name} />
+                                <img src={brand.logo.url} alt={brand.name} className="trade-wine-card-logo" />
                               ) : (
-                                <div className="wine-portfolio-placeholder">
+                                <div className="trade-wine-placeholder">
                                   <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-                                    <circle cx="60" cy="60" r="50" stroke="#722f37" strokeWidth="2" fill="none"/>
-                                    <text x="60" y="70" textAnchor="middle" fill="#722f37" fontSize="40" fontFamily="moret">W</text>
+                                    <circle cx="60" cy="60" r="50" stroke="white" strokeWidth="2" fill="none"/>
+                                    <text x="60" y="70" textAnchor="middle" fill="white" fontSize="40" fontFamily="moret">W</text>
                                   </svg>
                                 </div>
                               )}
@@ -676,7 +888,7 @@ const Wineries = () => {
                 ) : viewMode === 'table' ? (
                   /* Table View */
                   activeTab === 'wines' ? (
-                    wines.length === 0 ? (
+                    sortedWines.length === 0 ? (
                       <div className="empty-state"><p>No wines found</p></div>
                     ) : (
                       <div className="portfolio-table-wrapper">
@@ -691,7 +903,7 @@ const Wineries = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {wines.map((wine) => (
+                            {sortedWines.map((wine) => (
                               <tr key={wine._id} onClick={() => window.location.href = `/wines/${wine._id}`}>
                                 <td className="table-thumb">
                                   {wine.bottleImage?.url ? (
@@ -719,7 +931,7 @@ const Wineries = () => {
                       </div>
                     )
                   ) : (
-                    brands.length === 0 ? (
+                    sortedBrands.length === 0 ? (
                       <div className="empty-state"><p>No brands found</p></div>
                     ) : (
                       <div className="portfolio-table-wrapper">
@@ -732,7 +944,7 @@ const Wineries = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {brands.map((brand) => (
+                            {sortedBrands.map((brand) => (
                               <tr key={brand._id} onClick={() => window.location.href = `/wineries/${brand._id}`}>
                                 <td className="table-thumb">
                                   {brand.logo?.url ? (
@@ -765,6 +977,80 @@ const Wineries = () => {
                 )}
               </div>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile Filter Sheet */}
+      {filterSheetOpen && (
+        <div className="filter-sheet-overlay" onClick={() => setFilterSheetOpen(false)} />
+      )}
+      <div className={`filter-sheet${filterSheetOpen ? ' open' : ''}`}>
+        <div className="filter-sheet-handle" />
+        <div className="filter-sheet-header">
+          <span className="filter-sheet-title">Filters</span>
+          <button className="filter-sheet-clear" onClick={() => { setSelectedTypes([]); setSelectedRegions([]); setSelectedMarkets([]); }}>
+            Clear all
+          </button>
+        </div>
+        <div className="filter-sheet-body">
+          <div className="filter-group">
+            <h4 className="filter-header" onClick={() => toggleSection('type')}>
+              <span>Type</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={expandedSections.type ? 'chevron expanded' : 'chevron'}>
+                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </h4>
+            {expandedSections.type && (
+              <div className="filter-pills">
+                {['red','white','sparkling','rosé','dessert'].map(t => (
+                  <button key={t} className={selectedTypes.includes(t) ? 'pill active' : 'pill'} onClick={() => toggleType(t)}>
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="filter-group">
+            <h4 className="filter-header" onClick={() => toggleSection('region')}>
+              <span>Region</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={expandedSections.region ? 'chevron expanded' : 'chevron'}>
+                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </h4>
+            {expandedSections.region && (
+              <div className="filter-checkboxes">
+                {regions.map(region => (
+                  <label key={region} className="checkbox-label">
+                    <input type="checkbox" checked={selectedRegions.includes(region)} onChange={() => toggleRegion(region)} />
+                    <span className="checkbox-text">{region}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="filter-group">
+            <h4 className="filter-header" onClick={() => toggleSection('market')}>
+              <span>Market</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={expandedSections.market ? 'chevron expanded' : 'chevron'}>
+                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </h4>
+            {expandedSections.market && (
+              <div className="filter-checkboxes">
+                {markets.map(market => (
+                  <label key={market} className="checkbox-label">
+                    <input type="checkbox" checked={selectedMarkets.includes(market)} onChange={() => toggleMarket(market)} />
+                    <span className="checkbox-text">{market}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="filter-sheet-footer">
+          <button className="filter-sheet-done" onClick={() => setFilterSheetOpen(false)}>
+            Show {activeTab === 'wines' ? wines.length : brands.length} results
+          </button>
         </div>
       </div>
     </div>

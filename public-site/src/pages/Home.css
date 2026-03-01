@@ -275,3 +275,48 @@
     font-size: 2rem;
   }
 }
+
+@media (max-width: 768px) {
+  .hero-image {
+    min-height: 260px;
+  }
+
+  .hero-image-placeholder {
+    min-height: 260px;
+  }
+
+  .gallery-wrapper {
+    height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-content-box {
+    padding: 2rem 1.25rem;
+  }
+
+  .hero-content-box h1 {
+    font-size: 1.75rem;
+  }
+
+  .carousel-tabs {
+    gap: 1rem;
+  }
+
+  .type-name {
+    font-size: 1.4rem;
+  }
+
+  .type-link {
+    padding: 1.25rem 0;
+  }
+
+  .explore-type-section h2,
+  .region-section h2 {
+    font-size: 1.75rem;
+  }
+
+  .gallery-wrapper {
+    height: 320px;
+  }
+}

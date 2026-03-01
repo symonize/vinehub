@@ -1,6 +1,6 @@
 .header {
   background: var(--bg-cream);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 2px solid #722f37;
   padding: 1rem 0;
   position: sticky;
   top: 0;
@@ -35,7 +35,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 400;
   color: var(--text-dark);
   text-decoration: none;
@@ -44,6 +44,11 @@
 
 .logo:hover {
   color: var(--primary);
+}
+
+/* Mobile-only logo — hidden by default */
+.logo-mobile {
+  display: none;
 }
 
 .nav-link {
@@ -116,30 +121,224 @@
   color: white;
 }
 
+/* ── Mobile top bar — floats above ink overlay ── */
+.mobile-top-bar {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  padding: 0.85rem 1.25rem 1rem;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  border-bottom: 2px solid #722f37;
+  background: var(--bg-cream);
+}
+
+.mobile-top-bar > * {
+  pointer-events: auto;
+}
+
+/* Logo inside top bar */
+.logo-mobile {
+  display: none;
+  font-size: 1.75rem;
+  color: var(--text-dark);
+  transition: color 0.3s;
+  text-decoration: none;
+  font-family: var(--font-family-heading);
+  font-weight: 400;
+}
+
+.logo-mobile.logo-menu-open {
+  color: white;
+}
+
+/* Hamburger — hidden everywhere except inside mobile-top-bar on mobile */
+.hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--text-dark);
+  transition: color 0.3s;
+}
+
+.hamburger:hover {
+  color: var(--primary);
+}
+
+.hamburger.menu-is-open {
+  color: white;
+}
+
+.hamburger-icon {
+  display: block;
+}
+
+/* ── Stair treads ── */
+@keyframes treadFillIn {
+  from { fill: transparent; }
+  to   { fill: #722f37; }
+}
+
+.hamburger .stair-tread {
+  fill: transparent;
+  transition: opacity 0.2s;
+}
+
+.hamburger:hover:not(.menu-is-open) .stair-tread {
+  animation: treadFillIn 0.2s ease forwards;
+}
+
+.hamburger:hover:not(.menu-is-open) .stair-tread-3 { animation-delay: 0s; }
+.hamburger:hover:not(.menu-is-open) .stair-tread-2 { animation-delay: 0.08s; }
+.hamburger:hover:not(.menu-is-open) .stair-tread-1 { animation-delay: 0.16s; }
+
+/* Hide treads when menu is open */
+.hamburger.menu-is-open .stair-tread {
+  opacity: 0;
+}
+
+/* ── X close lines ── */
+/* The X diagonal length ≈ sqrt((22²)+(35²)) ≈ 41 */
+.hamburger .close-line {
+  stroke-dasharray: 41;
+  stroke-dashoffset: 41;
+  stroke-linecap: round;
+  transition: none;
+}
+
+/* Draw X in when menu is open */
+.hamburger.menu-is-open .close-line-1 {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.25s ease 0.1s;
+}
+.hamburger.menu-is-open .close-line-2 {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.25s ease 0.18s;
+}
+
+/* Hide X when menu is closed */
+.hamburger:not(.menu-is-open) .close-line {
+  stroke-dashoffset: 41;
+}
+
+/* ── Tablet: tighten but don't break ───────────────────────── */
 @media (max-width: 968px) {
   .header-content {
-    grid-template-columns: 1fr;
     gap: 1rem;
-  }
-
-  .nav-left,
-  .nav-right {
-    justify-content: center;
-  }
-
-  .logo {
-    order: -1;
   }
 
   .nav-left {
-    gap: 1rem;
+    gap: 1.25rem;
   }
 
   .nav-right {
     gap: 1rem;
   }
 
-  .nav-link {
-    font-size: 0.875rem;
+  .nav-link,
+  .nav-btn-about {
+    font-size: 0.9rem;
+    white-space: nowrap;
   }
+
+  .btn-contact {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.875rem;
+  }
+
+  .logo {
+    font-size: 1.6rem;
+  }
+}
+
+/* ── Mobile: show top bar, hide header content ──────────────── */
+@media (max-width: 640px) {
+  .header {
+    display: none;
+  }
+
+  .mobile-top-bar {
+    display: flex;
+  }
+
+  .logo-mobile {
+    display: flex;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+}
+
+/* ── Mobile Menu Ink Overlay ───────────────────────────────── */
+.menu-ink-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+}
+
+.menu-overlay-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.menu-overlay-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+@keyframes menuItemIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menu-overlay-item {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-family-heading);
+  font-size: clamp(2rem, 8vw, 3rem);
+  font-weight: 400;
+  color: white;
+  padding: 0.5rem 1rem;
+  letter-spacing: 0.01em;
+  opacity: 0;
+  animation: menuItemIn 0.4s ease forwards;
+  animation-delay: calc(var(--i) * 0.08s);
+  transition: opacity 0.15s;
+}
+
+.menu-overlay-item:hover {
+  opacity: 0.7 !important;
+}
+
+.menu-overlay-contact {
+  margin-top: 1rem;
+  font-size: clamp(1rem, 4vw, 1.25rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+  padding: 0.5rem 2rem;
 }
