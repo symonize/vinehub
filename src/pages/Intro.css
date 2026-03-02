@@ -1,0 +1,69 @@
+.intro-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Full-bleed background video */
+.intro-bg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+  z-index: 1;
+}
+
+/* Positioning wrapper — centered in viewport, larger than viewport so GSAP
+   scale never reveals an edge. Transform here is CSS-only and stays fixed. */
+.intro-frame-positioner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* GSAP scales this div — its own transform-origin is center center.
+   The div is 150vw × 150vh, offset by -50% of its own size so it stays centered. */
+.intro-frame-scaler {
+  position: absolute;
+  top: -75vh;
+  left: -75vw;
+  width: 150vw;
+  height: 150vh;
+  transform-origin: center center;
+}
+
+/* SVG fills the entire scaler div */
+.intro-frame-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+/* Heading — centered over the arch window */
+.intro-heading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  color: white;
+  font-family: 'moret-variable', Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(2.5rem, 5vw, 5rem);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  text-align: center;
+}

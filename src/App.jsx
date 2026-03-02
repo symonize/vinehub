@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { InkTransitionProvider, InkTransitionCanvas } from './components/InkTransition';
+import InkEntrance from './components/InkEntrance';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import AboutPanel from './components/AboutPanel';
@@ -10,6 +11,7 @@ import WineryDetail from './pages/WineryDetail';
 import WineDetail from './pages/WineDetail';
 import Wines from './pages/Wines';
 import TradeTools from './pages/TradeTools';
+import Intro from './pages/Intro';
 
 function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -25,9 +27,11 @@ function App() {
           <Route path="/wines" element={<Wines />} />
           <Route path="/wines/:id" element={<WineDetail />} />
           <Route path="/trade-tools" element={<TradeTools />} />
+          <Route path="/intro" element={<Intro />} />
         </Routes>
       </main>
       <Footer />
+      <InkEntrance />
       <InkTransitionCanvas />
       {aboutOpen && (
         <AboutPanel isOpen={aboutOpen} onClose={() => setAboutOpen(false)} />

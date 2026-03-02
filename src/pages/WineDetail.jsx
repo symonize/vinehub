@@ -80,98 +80,12 @@ const WineDetail = () => {
                 </Link>
               )}
               <h1>{wine.name}</h1>
-              <div className="wine-meta-tags">
-                <span
-                  className="wine-type-badge"
-                  style={{
-                    backgroundColor: `${getWineTypeColor(wine.type)}20`,
-                    color: getWineTypeColor(wine.type),
-                    border: `1px solid ${getWineTypeColor(wine.type)}40`
-                  }}
-                >
-                  {wine.type}
-                </span>
-                <span className="wine-region-badge">{wine.region}</span>
-              </div>
             </div>
 
             <div className="wine-details">
-              <div className="detail-section">
-                <h3>Variety</h3>
-                <p>{wine.variety}</p>
-              </div>
-
-              <div className="detail-section">
-                <h3>Description</h3>
-                <p>{wine.description}</p>
-              </div>
-
-              {wine.foodPairing && (
-                <div className="detail-section">
-                  <h3>Food Pairings</h3>
-                  <p>{wine.foodPairing}</p>
-                </div>
-              )}
-
-              {wine.nutrition && (
-                <div className="detail-section">
-                  <h3>Nutrition Information</h3>
-                  <div className="nutrition-grid">
-                    {wine.nutrition.servingSize && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Serving Size</span>
-                        <span className="nutrition-value">{wine.nutrition.servingSize}</span>
-                      </div>
-                    )}
-                    {wine.nutrition.calories !== undefined && wine.nutrition.calories !== null && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Calories</span>
-                        <span className="nutrition-value">{wine.nutrition.calories}</span>
-                      </div>
-                    )}
-                    {wine.nutrition.carbohydrates !== undefined && wine.nutrition.carbohydrates !== null && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Carbohydrates</span>
-                        <span className="nutrition-value">{wine.nutrition.carbohydrates}g</span>
-                      </div>
-                    )}
-                    {wine.nutrition.sugars !== undefined && wine.nutrition.sugars !== null && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Sugars</span>
-                        <span className="nutrition-value">{wine.nutrition.sugars}g</span>
-                      </div>
-                    )}
-                    {wine.nutrition.protein !== undefined && wine.nutrition.protein !== null && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Protein</span>
-                        <span className="nutrition-value">{wine.nutrition.protein}g</span>
-                      </div>
-                    )}
-                    {wine.nutrition.fat !== undefined && wine.nutrition.fat !== null && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Fat</span>
-                        <span className="nutrition-value">{wine.nutrition.fat}g</span>
-                      </div>
-                    )}
-                    {wine.nutrition.alcohol !== undefined && wine.nutrition.alcohol !== null && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Alcohol</span>
-                        <span className="nutrition-value">{wine.nutrition.alcohol}%</span>
-                      </div>
-                    )}
-                    {wine.nutrition.sodium !== undefined && wine.nutrition.sodium !== null && (
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Sodium</span>
-                        <span className="nutrition-value">{wine.nutrition.sodium}mg</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
+              {/* Awards — no subheading */}
               {wine.awards && wine.awards.length > 0 && (
                 <div className="detail-section">
-                  <h3>Awards & Recognition</h3>
                   <div className="awards-list">
                     {wine.awards.map((award, index) => (
                       <div key={index} className="award-item">
@@ -188,103 +102,96 @@ const WineDetail = () => {
                 </div>
               )}
 
-              {vintages.length > 0 && (
+              {/* Description — no subheading */}
+              {wine.description && (
                 <div className="detail-section">
-                  <h3>Available Vintages</h3>
-                  <div className="vintages-list">
-                    {vintages.map((vintage) => (
-                      <div key={vintage._id} className="vintage-item">
-                        <span className="vintage-year">{vintage.year}</span>
-                        {vintage.productionNotes && (
-                          <p className="vintage-notes">{vintage.productionNotes}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <p>{wine.description}</p>
                 </div>
               )}
 
-              {(wine.bottleImage?.url || wine.techSheet?.url || wine.shelfTalker?.url) && (
-                <div className="detail-section">
-                  <h3>Trade Tools</h3>
-                  <div className="trade-tools-grid">
-                    {wine.bottleImage?.url && (
-                      <a
-                        href={wine.bottleImage.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="trade-tool-card"
-                      >
-                        <div className="trade-tool-icon">
-                          <svg width="40" height="80" viewBox="0 0 100 200" fill="none">
-                            <path d="M50 10 L35 50 L30 190 L70 190 L65 50 Z" fill="#722f37"/>
-                            <ellipse cx="50" cy="45" rx="15" ry="8" fill="#722f37" opacity="0.3"/>
-                          </svg>
-                        </div>
-                        <div className="trade-tool-info">
-                          <span className="trade-tool-label">Bottle Image</span>
-                          <div className="trade-tool-actions">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M2 8L8 2L14 8M8 2V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                            </svg>
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M8 2V8M8 8L11 5M8 8L5 5M2 12L2 14L14 14L14 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                            </svg>
-                          </div>
-                        </div>
-                      </a>
-                    )}
+              {/* Trade Tools */}
+              {(() => {
+                const IMAGE_TYPES = new Set(['bottleImage', 'labelImage', 'lifestyleImage']);
+                const ASSET_LABELS = {
+                  bottleImage:    'Bottle Image',
+                  labelImage:     'Label Image',
+                  techSheet:      'Tech Sheet',
+                  tastingCard:    'Tasting Card',
+                  lifestyleImage: 'Lifestyle Image',
+                  shelfTalker:    'Shelf Talker',
+                };
+                const ASSET_ORDER = ['bottleImage', 'labelImage', 'lifestyleImage', 'techSheet', 'tastingCard', 'shelfTalker'];
+                const assetEntries = ASSET_ORDER
+                  .map(key => ({ key, asset: wine[key] }))
+                  .filter(({ asset }) => asset?.url);
+                if (assetEntries.length === 0) return null;
 
-                    {wine.techSheet?.url && (
-                      <a
-                        href={wine.techSheet.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="trade-tool-card"
-                      >
-                        <div className="trade-tool-icon trade-tool-icon-text">
-                          TS
-                        </div>
-                        <div className="trade-tool-info">
-                          <span className="trade-tool-label">Tech Sheet</span>
-                          <div className="trade-tool-actions">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M2 8L8 2L14 8M8 2V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                            </svg>
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M8 2V8M8 8L11 5M8 8L5 5M2 12L2 14L14 14L14 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                            </svg>
-                          </div>
-                        </div>
-                      </a>
-                    )}
+                const DocIcon = () => (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                );
+                const OpenIcon = () => (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 2H2v12h12v-4M10 2h4v4M14 2L8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                );
+                const DownloadIcon = () => (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M5 7l3 3 3-3M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                );
 
-                    {wine.shelfTalker?.url && (
-                      <a
-                        href={wine.shelfTalker.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="trade-tool-card"
-                      >
-                        <div className="trade-tool-icon trade-tool-icon-text">
-                          ST
-                        </div>
-                        <div className="trade-tool-info">
-                          <span className="trade-tool-label">Shelf Talker</span>
-                          <div className="trade-tool-actions">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M2 8L8 2L14 8M8 2V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                            </svg>
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M8 2V8M8 8L11 5M8 8L5 5M2 12L2 14L14 14L14 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                            </svg>
+                return (
+                  <div className="detail-section">
+                    <h3>Trade Tools</h3>
+                    <div className="wd-assets-grid">
+                      {assetEntries.map(({ key, asset }) => (
+                        <div key={key} className="wd-asset-item">
+                          <div className="wd-asset-tooltip">
+                            {IMAGE_TYPES.has(key)
+                              ? <img src={asset.url} alt={ASSET_LABELS[key]} />
+                              : <div className="wd-asset-tooltip-pdf-wrap"><iframe src={`https://docs.google.com/viewer?url=${encodeURIComponent(asset.url)}&embedded=true`} title={ASSET_LABELS[key]} className="wd-asset-tooltip-pdf" /></div>
+                            }
+                          </div>
+                          <div className={`wd-asset-thumb${IMAGE_TYPES.has(key) ? '' : ' wd-asset-thumb-doc'}`}>
+                            {IMAGE_TYPES.has(key)
+                              ? <img src={asset.url} alt={ASSET_LABELS[key]} />
+                              : <DocIcon />
+                            }
+                          </div>
+                          <div className="wd-asset-info">
+                            <span className="wd-asset-name">{ASSET_LABELS[key]}</span>
+                            <div className="wd-asset-actions">
+                              <a href={asset.url} target="_blank" rel="noopener noreferrer" className="wd-asset-btn" title="Open"><OpenIcon /></a>
+                              <a href={asset.url} download className="wd-asset-btn" title="Download"><DownloadIcon /></a>
+                            </div>
                           </div>
                         </div>
-                      </a>
-                    )}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
+
+              {/* Country / Type / Region — 3 columns */}
+              <div className="detail-section wine-meta-cols">
+                {wine.country && (
+                  <div className="wine-meta-col">
+                    <span className="wine-meta-col-label">Country</span>
+                    <span className="wine-meta-col-value">{wine.country}</span>
+                  </div>
+                )}
+                {wine.type && (
+                  <div className="wine-meta-col">
+                    <span className="wine-meta-col-label">Type</span>
+                    <span className="wine-meta-col-value" style={{ textTransform: 'capitalize' }}>{wine.type}</span>
+                  </div>
+                )}
+                {wine.region && (
+                  <div className="wine-meta-col">
+                    <span className="wine-meta-col-label">Region</span>
+                    <span className="wine-meta-col-value">{wine.region}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -4,6 +4,12 @@ import gsap from 'gsap';
 import { useInkTransition, InkLink } from './InkTransition';
 import './Header.css';
 
+const TRADE_TOOLS_ITEMS = [
+  { label: 'Browse', sub: 'Explore all tools', path: '/trade-tools' },
+  { label: 'Sales Sheet Generator', sub: 'Create producer sell sheets', path: '/trade-tools' },
+  { label: 'Shelf Talker Generator', sub: 'Design shelf talker cards', path: '/trade-tools' },
+];
+
 const SPRITE_URL = '/ink-transition-sprite.png';
 const FRAMES = 40;
 const FRAME_ASPECT = (8192 / FRAMES) / 115;
@@ -20,6 +26,7 @@ function getMaskSize() {
   return { w: fw * FRAMES, h: fh };
 }
 
+
 const SwapLink = ({ to, children, swapText }) => (
   <InkLink to={to} className="nav-link nav-link-swap">
     <span className="nav-link-default">{children}</span>
@@ -31,8 +38,10 @@ const Header = ({ onAboutOpen }) => {
   const { navigateWithInk } = useInkTransition();
   const location = useLocation();
   const [menuVisible, setMenuVisible] = useState(false);
+  const [tradeMenuOpen, setTradeMenuOpen] = useState(false);
   const inkRef = useRef(null);
   const animatingRef = useRef(false);
+  const tradeMenuRef = useRef(null);
 
   function handleLogoClick(e) {
     e.preventDefault();
@@ -137,7 +146,29 @@ const Header = ({ onAboutOpen }) => {
           <div className="header-content">
             <nav className="nav-left">
               <SwapLink to="/wineries">Portfolio</SwapLink>
-              <SwapLink to="/trade-tools">Trade Tools</SwapLink>
+              <div
+                className={`trade-tools-nav-item${tradeMenuOpen ? ' is-open' : ''}`}
+                onMouseEnter={() => setTradeMenuOpen(true)}
+                onMouseLeave={() => setTradeMenuOpen(false)}
+              >
+                <button className="nav-link nav-link-swap trade-tools-trigger" aria-expanded={tradeMenuOpen}>
+                  <span className="nav-link-default">Trade Tools</span>
+                  <span className="nav-link-hover">Trade Tools</span>
+                </button>
+                <div className="trade-mega-menu" ref={tradeMenuRef} aria-hidden={!tradeMenuOpen}>
+                  {TRADE_TOOLS_ITEMS.map((item, i) => (
+                    <button
+                      key={item.label}
+                      className="trade-mega-item"
+                      style={{ '--i': i }}
+                      onClick={() => { setTradeMenuOpen(false); navigateWithInk(item.path); }}
+                    >
+                      <span className="trade-mega-label">{item.label}</span>
+                      <span className="trade-mega-sub">{item.sub}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <button className="nav-link nav-link-swap nav-btn-about" onClick={onAboutOpen}>
                 <span className="nav-link-default">About</span>
                 <span className="nav-link-hover">About</span>
