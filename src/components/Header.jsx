@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import gsap from 'gsap';
 import { useInkTransition, InkLink } from './InkTransition';
@@ -42,6 +42,44 @@ const Header = ({ onAboutOpen }) => {
   const inkRef = useRef(null);
   const animatingRef = useRef(false);
   const tradeMenuRef = useRef(null);
+  const headerRef = useRef(null);
+  const mobileBarRef = useRef(null);
+  const headerRevealedRef = useRef(false);
+
+  const isHome = location.pathname === '/';
+
+  useEffect(() => {
+    if (!isHome) return;
+
+    const targets = [headerRef.current, mobileBarRef.current].filter(Boolean);
+    headerRevealedRef.current = false;
+
+    // If already scrolled past intro (e.g. back navigation), show immediately
+    if (window.scrollY > window.innerHeight * 0.3) {
+      gsap.set(targets, { y: '0%', opacity: 1 });
+      headerRevealedRef.current = true;
+    } else {
+      gsap.set(targets, { y: '-100%', opacity: 0 });
+    }
+
+    function onIntroProgress(e) {
+      const progress = e.detail;
+      if (!headerRevealedRef.current && progress >= 0.13) {
+        headerRevealedRef.current = true;
+        gsap.to(targets, { y: '0%', opacity: 1, duration: 0.5, ease: 'power2.out' });
+      } else if (headerRevealedRef.current && progress < 0.1) {
+        headerRevealedRef.current = false;
+        gsap.to(targets, { y: '-100%', opacity: 0, duration: 0.3, ease: 'power2.in' });
+      }
+    }
+
+    window.addEventListener('intro-progress', onIntroProgress);
+    return () => {
+      window.removeEventListener('intro-progress', onIntroProgress);
+      // Ensure header is always visible on other pages
+      gsap.set(targets, { y: '0%', opacity: 1 });
+    };
+  }, [isHome]);
 
   function handleLogoClick(e) {
     e.preventDefault();
@@ -141,7 +179,7 @@ const Header = ({ onAboutOpen }) => {
 
   return (
     <>
-      <header className="header">
+      <header className={`header${isHome ? ' header--fixed' : ''}`} ref={headerRef}>
         <div className="container">
           <div className="header-content">
             <nav className="nav-left">
@@ -176,7 +214,7 @@ const Header = ({ onAboutOpen }) => {
             </nav>
 
             <a href="/" className="logo" onClick={handleLogoClick}>
-              <span>VineHub</span>
+              <span>VinoHub</span>
             </a>
 
             <nav className="nav-right">
@@ -189,9 +227,9 @@ const Header = ({ onAboutOpen }) => {
       </header>
 
       {/* Mobile top bar — fixed above ink overlay so logo + hamburger are always visible */}
-      <div className="mobile-top-bar">
+      <div className="mobile-top-bar" ref={mobileBarRef}>
         <a href="/" className={`logo logo-mobile${menuVisible ? ' logo-menu-open' : ''}`} onClick={menuVisible ? closeMenu : handleLogoClick}>
-          <span>VineHub</span>
+          <span>VinoHub</span>
         </a>
         <button
           className={`hamburger${menuVisible ? ' menu-is-open' : ''}`}

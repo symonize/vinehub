@@ -1753,7 +1753,7 @@ const TradeTools = () => {
                       {pageNum === 0 && (
                         <>
                           <div className="pdf-header">
-                            <div className="pdf-logo">VineHub</div>
+                            <div className="pdf-logo">VinoHub</div>
                             <div className="pdf-website">vinehub.com</div>
                           </div>
                           <input

@@ -95,12 +95,12 @@ export default function AboutPanel({ isOpen, onClose }) {
       <div ref={panelRef} className="ap-panel" style={{ transform: 'translateX(100%)' }}>
         <div ref={contentRef} className="ap-content">
 
-          <p className="ap-item ap-eyebrow">About VineHub</p>
+          <p className="ap-item ap-eyebrow">About VinoHub</p>
 
           <h2 className="ap-item ap-heading">Connecting the world's finest wineries with the trade</h2>
 
           <p className="ap-item ap-body">
-            VineHub is a curated platform for wine professionals — importers, sommeliers,
+            VinoHub is a curated platform for wine professionals — importers, sommeliers,
             and retailers — offering direct access to exceptional producers from across
             Italy, France, Spain, and beyond.
           </p>
@@ -118,7 +118,7 @@ export default function AboutPanel({ isOpen, onClose }) {
 
           <h3 className="ap-item ap-subheading">Trade Tools</h3>
           <p className="ap-item ap-body">
-            From shelf talkers to sales sheets, VineHub equips your team with
+            From shelf talkers to sales sheets, VinoHub equips your team with
             beautiful, print-ready materials — generated in seconds.
           </p>
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { wineriesAPI, winesAPI } from '../utils/api';
 import CircularGallery from '../components/CircularGallery';
+import Intro from './Intro';
 import './Home.css';
 
 const BOTTLE_PLACEHOLDER_SVG = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='400' viewBox='0 0 100 250'><rect width='100' height='250' fill='%23f5efe8'/><path d='M50 10 L35 60 L25 240 L75 240 L65 60 Z' fill='%23722f37'/><ellipse cx='50' cy='50' rx='15' ry='8' fill='%23722f37' opacity='0.3'/></svg>`;
@@ -111,35 +112,7 @@ const Home = () => {
 
   return (
     <div className="home">
-      {/* Hero Section */}
-      <section className="hero-split">
-        <div className="container">
-          <div className="hero-grid">
-            <div className="hero-image">
-              <div className="hero-image-placeholder">
-                <svg width="100%" height="100%" viewBox="0 0 400 400" fill="none" preserveAspectRatio="xMidYMid slice">
-                  <rect width="400" height="400" fill="#d4c5b0"/>
-                  <circle cx="200" cy="200" r="100" fill="#a89680" opacity="0.3"/>
-                </svg>
-              </div>
-            </div>
-            <div className="hero-content-box">
-              <h1>Explore a world of wine.</h1>
-              <p>
-                Dictum imperdiet ut vivamus eros ante nunc. Proin
-                condimentum nibh turpis neque eget amet elementum. Ut
-                posuere nisl nam risus aliquet quis sed tellus urna,
-                sed malesuada et. Dictique ipsum, laber est lectus
-                scelerisque risus ut morbi pretium.
-              </p>
-              <Link to="/wineries" className="btn-explore">
-                Explore Our Portfolio
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      <Intro />
       {/* Wine Carousel Section */}
       <section className="wine-carousel-section">
         <div className="container-narrow">

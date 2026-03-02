@@ -101,7 +101,7 @@ export default function InkEntrance() {
           userSelect: 'none',
         }}
       >
-        Vino Hub
+        VinoHub
       </div>
     </div>
   );
