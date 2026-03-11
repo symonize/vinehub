@@ -4,7 +4,7 @@ import { useQuery } from 'react-query';
 import { winesAPI, wineriesAPI, vintagesAPI, aiAPI, uploadAPI } from '../../utils/api';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
-import { Wine, Sparkles, Loader, X, Tag, Droplet, MapPin, Grape, FileText, Utensils, AlertCircle, Check, ChevronDown, Plus, Upload } from 'lucide-react';
+import { Wine, Sparkles, Loader, X, Tag, Droplet, MapPin, Grape, FileText, Utensils, AlertCircle, ChevronDown, Plus, Upload } from 'lucide-react';
 import { usePageTitle } from '../../context/PageTitleContext';
 import AssetSheet from '../../components/AssetSheet';
 import VintageSheet from '../../components/VintageSheet';
@@ -34,7 +34,7 @@ const WineForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = !!id;
-  const { setCustomTitle, setCustomBreadcrumb } = usePageTitle();
+  const { setCustomTitle, setCustomBreadcrumb, setSaveStatus } = usePageTitle();
 
   const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm();
   const [loading, setLoading] = useState(false);
@@ -59,7 +59,6 @@ const WineForm = () => {
   });
 
   // Autosave state
-  const [saveStatus, setSaveStatus] = useState('saved'); // 'saving', 'saved', 'error'
   const saveTimeoutRef = useRef(null);
   const lastSavedDataRef = useRef(null);
 
@@ -162,8 +161,9 @@ const WineForm = () => {
     return () => {
       setCustomTitle(null);
       setCustomBreadcrumb(null);
+      setSaveStatus(null);
     };
-  }, [wineData, wineriesData, isEdit, setCustomTitle, setCustomBreadcrumb]);
+  }, [wineData, wineriesData, isEdit, setCustomTitle, setCustomBreadcrumb, setSaveStatus]);
 
   const handleGenerateImage = async () => {
     const formData = watch();
@@ -367,7 +367,7 @@ const WineForm = () => {
       setSaveStatus('error');
       toast.error('Failed to autosave changes');
     }
-  }, [isEdit, id, prepareWineData]);
+  }, [isEdit, id, prepareWineData, setSaveStatus]);
 
   // Debounced autosave on form changes
   useEffect(() => {
@@ -419,30 +419,6 @@ const WineForm = () => {
 
   return (
     <div className="wine-edit-container">
-      {/* Autosave Status Indicator */}
-      {isEdit && (
-        <div className={`autosave-indicator autosave-${saveStatus}`}>
-          {saveStatus === 'saving' && (
-            <>
-              <Loader size={14} className="animate-spin" />
-              <span>Saving...</span>
-            </>
-          )}
-          {saveStatus === 'saved' && (
-            <>
-              <Check size={14} />
-              <span>All changes saved</span>
-            </>
-          )}
-          {saveStatus === 'error' && (
-            <>
-              <AlertCircle size={14} />
-              <span>Failed to save</span>
-            </>
-          )}
-        </div>
-      )}
-
       <div className="wine-edit-layout-3col">
         {/* Left Column - Wine Image */}
         <div className="wine-image-column">

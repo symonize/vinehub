@@ -458,6 +458,42 @@ select.filter-select:focus {
   box-shadow: 0 8px 32px rgba(114, 47, 55, 0.4) !important;
 }
 
+/* Autosave Indicator */
+.autosave-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  margin-left: auto;
+}
+
+.autosave-saving {
+  background: rgba(114, 47, 55, 0.08);
+  color: var(--primary);
+}
+
+.autosave-saved {
+  background: rgba(90, 146, 121, 0.08);
+  color: #5a9279;
+}
+
+.autosave-error {
+  background: rgba(224, 122, 95, 0.1);
+  color: #e07a5f;
+}
+
+.autosave-indicator svg {
+  flex-shrink: 0;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   h1 { font-size: 2rem; }

@@ -14,7 +14,7 @@ import WineryForm from './pages/wineries/WineryForm';
 import WineryDetail from './pages/wineries/WineryDetail';
 import WinesList from './pages/wines/WinesList';
 import WineForm from './pages/wines/WineForm';
-import WineDetail from './pages/wines/WineDetail';
+// WineDetail removed — wines/:id now goes directly to WineForm
 import VintagesList from './pages/vintages/VintagesList';
 import VintageForm from './pages/vintages/VintageForm';
 import VintageDetail from './pages/vintages/VintageDetail';
@@ -92,7 +92,7 @@ function AppRoutes() {
         {/* Wines */}
         <Route path="wines" element={<WinesList />} />
         <Route path="wines/new" element={<WineForm />} />
-        <Route path="wines/:id" element={<WineDetail />} />
+        <Route path="wines/:id" element={<WineForm />} />
         <Route path="wines/:id/edit" element={<WineForm />} />
 
         {/* Vintages */}

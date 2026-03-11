@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Search, Menu } from 'lucide-react';
+import { Search, Menu, Loader, Check, AlertCircle } from 'lucide-react';
 import SearchModal from './SearchModal';
 import { usePageTitle } from '../context/PageTitleContext';
 import './ContentHeader.css';
@@ -8,7 +8,7 @@ import './ContentHeader.css';
 const ContentHeader = ({ onMenuClick }) => {
   const location = useLocation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const { customTitle, customBreadcrumb } = usePageTitle();
+  const { customTitle, customBreadcrumb, saveStatus } = usePageTitle();
 
   // Keyboard shortcut: Cmd+K or Ctrl+K
   useEffect(() => {
@@ -34,8 +34,7 @@ const ContentHeader = ({ onMenuClick }) => {
     if (path.startsWith('/wineries')) return 'Brands';
 
     if (path.startsWith('/wines/new')) return 'New Wine';
-    if (path.match(/\/wines\/[^/]+\/edit/)) return 'Edit Wine';
-    if (path.match(/\/wines\/[^/]+/)) return 'Wine Details';
+    if (path.match(/\/wines\/[^/]+/)) return 'Edit Wine';
     if (path.startsWith('/wines')) return 'Wines';
 
     if (path.startsWith('/vintages/new')) return 'New Vintage';
@@ -77,7 +76,7 @@ const ContentHeader = ({ onMenuClick }) => {
           <Link to="/wines" className="breadcrumb-link">Wines</Link>
           <span className="breadcrumb-separator">/</span>
           <span className="breadcrumb-current">
-            {path.includes('/new') ? 'New Wine' : 'Wine Details'}
+            {path.includes('/new') ? 'New Wine' : 'Edit Wine'}
           </span>
         </>
       );
@@ -116,6 +115,29 @@ const ContentHeader = ({ onMenuClick }) => {
             </div>
           )}
         </div>
+
+        {saveStatus && (
+          <div className={`autosave-indicator autosave-${saveStatus}`}>
+            {saveStatus === 'saving' && (
+              <>
+                <Loader size={14} className="animate-spin" />
+                <span>Saving...</span>
+              </>
+            )}
+            {saveStatus === 'saved' && (
+              <>
+                <Check size={14} />
+                <span>Saved</span>
+              </>
+            )}
+            {saveStatus === 'error' && (
+              <>
+                <AlertCircle size={14} />
+                <span>Failed to save</span>
+              </>
+            )}
+          </div>
+        )}
 
         <div className="content-header-search" onClick={() => setIsSearchOpen(true)}>
           <Search size={20} />

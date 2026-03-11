@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { wineriesAPI, uploadAPI, getFileUrl } from '../../utils/api';
+import { wineriesAPI, winesAPI, uploadAPI, getFileUrl } from '../../utils/api';
 import { useForm, Controller } from 'react-hook-form';
 import { toast } from 'react-toastify';
-import { ArrowLeft, Upload } from 'lucide-react';
+import { Tag, FileText, MapPin, Image, Wine } from 'lucide-react';
+import { usePageTitle } from '../../context/PageTitleContext';
 import CustomSelect from '../../components/CustomSelect';
 import './Wineries.css';
 
@@ -31,17 +32,33 @@ const WineryForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = !!id;
+  const { setSaveStatus } = usePageTitle();
 
-  const { register, handleSubmit, formState: { errors }, reset, setValue, control } = useForm();
+  const { register, handleSubmit, formState: { errors }, reset, setValue, control, watch } = useForm();
   const [loading, setLoading] = useState(false);
   const [featuredImage, setFeaturedImage] = useState(null);
   const [logo, setLogo] = useState(null);
+
+  // Autosave state
+  const saveTimeoutRef = useRef(null);
+  const lastSavedDataRef = useRef(null);
+
+  // Watch all form fields for autosave
+  const watchedFields = watch();
 
   const { data: wineryData } = useQuery(
     ['winery', id],
     () => wineriesAPI.getOne(id),
     { enabled: isEdit }
   );
+
+  const { data: winesData } = useQuery(
+    ['winery-wines', id],
+    () => winesAPI.getAll({ winery: id, limit: 100 }),
+    { enabled: isEdit }
+  );
+
+  const wines = winesData?.data?.data || [];
 
   useEffect(() => {
     if (wineryData?.data?.data) {
@@ -52,6 +69,55 @@ const WineryForm = () => {
     }
   }, [wineryData, reset]);
 
+  // Autosave function
+  const autoSave = useCallback(async (data) => {
+    if (!isEdit) return;
+
+    try {
+      setSaveStatus('saving');
+      const payload = {
+        ...data,
+        featuredImage,
+        logo
+      };
+
+      const currentDataStr = JSON.stringify(payload);
+      if (lastSavedDataRef.current === currentDataStr) {
+        setSaveStatus('saved');
+        return;
+      }
+
+      await wineriesAPI.update(id, payload);
+      lastSavedDataRef.current = currentDataStr;
+      setSaveStatus('saved');
+    } catch (error) {
+      console.error('Autosave error:', error);
+      setSaveStatus('error');
+    }
+  }, [isEdit, id, featuredImage, logo, setSaveStatus]);
+
+  // Debounced autosave on form changes
+  useEffect(() => {
+    if (!isEdit) return;
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      const data = watch();
+      if (data.name) {
+        autoSave(data);
+      }
+    }, 1000);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [watchedFields, featuredImage, logo, isEdit, autoSave, watch]);
+
   const handleFileUpload = async (file, type) => {
     try {
       const response = await uploadAPI.single(file);
@@ -60,21 +126,9 @@ const WineryForm = () => {
       if (type === 'featured') {
         setFeaturedImage(fileData);
         setValue('featuredImage', fileData);
-        if (isEdit) {
-          await wineriesAPI.update(id, { featuredImage: fileData });
-          toast.success('Featured image saved');
-        } else {
-          toast.success('Image ready — click Save to keep it');
-        }
       } else if (type === 'logo') {
         setLogo(fileData);
         setValue('logo', fileData);
-        if (isEdit) {
-          await wineriesAPI.update(id, { logo: fileData });
-          toast.success('Logo saved');
-        } else {
-          toast.success('Logo ready — click Save to keep it');
-        }
       }
     } catch (error) {
       console.error('Upload error:', error.response?.data || error.message);
@@ -108,90 +162,26 @@ const WineryForm = () => {
     }
   };
 
+  // Clear save status on unmount
+  useEffect(() => {
+    return () => setSaveStatus(null);
+  }, [setSaveStatus]);
+
   return (
-    <div className="form-container">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
-        <button type="button" onClick={() => navigate('/wineries')} className="btn btn-secondary">
-          <ArrowLeft size={20} />
-          Back to List
-        </button>
-      </div>
-
+    <div className="winery-form-page">
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="form-card">
-          <h2>Basic Information</h2>
-
-          <div className="form-group">
-            <label htmlFor="name" className="form-label">Winery Name *</label>
-            <input
-              type="text"
-              id="name"
-              className="form-control"
-              {...register('name', { required: 'Name is required' })}
-            />
-            {errors.name && <span className="form-error">{errors.name.message}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="description" className="form-label">Description *</label>
-            <textarea
-              id="description"
-              className="form-control"
-              rows="5"
-              {...register('description', { required: 'Description is required' })}
-            />
-            {errors.description && <span className="form-error">{errors.description.message}</span>}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Country</label>
-            <Controller
-              name="country"
-              control={control}
-              defaultValue=""
-              render={({ field }) => (
-                <CustomSelect
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Select country..."
-                  options={WINE_COUNTRIES}
-                />
-              )}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="status" className="form-label">Status</label>
-            <Controller
-              name="status"
-              control={control}
-              defaultValue="draft"
-              render={({ field }) => (
-                <CustomSelect
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={[
-                    { value: 'draft', label: 'Draft' },
-                    { value: 'published', label: 'Published' },
-                    { value: 'archived', label: 'Archived' }
-                  ]}
-                  placeholder="Select status"
-                />
-              )}
-            />
-          </div>
-        </div>
-
-        <div className="form-card">
-          <h2>Images</h2>
-
-          <div className="form-group">
-            <label className="form-label">Featured Image</label>
-            {!featuredImage && (
-              <div className="file-input-wrapper">
-                <label className="file-input-label">
-                  <Upload size={20} />
-                  <span>Choose Featured Image</span>
+        {/* Top section: featured image left, fields right */}
+        <div className="winery-form-top">
+          <div className="winery-form-image-col">
+            <label className="form-label">
+              <Image size={16} />
+              Featured Image
+            </label>
+            {!featuredImage ? (
+              <div className="winery-featured-upload">
+                <label className="winery-featured-upload-label">
+                  <Image size={32} />
+                  <span>Add Image</span>
                   <input
                     type="file"
                     accept="image/*,.webp"
@@ -199,17 +189,13 @@ const WineryForm = () => {
                   />
                 </label>
               </div>
-            )}
-            {featuredImage && (
-              <div className="file-preview">
+            ) : (
+              <div className="winery-featured-preview">
                 <img src={getFileUrl(featuredImage.url)} alt="Featured" />
-                <div className="file-preview-info">
-                  <p>{featuredImage.filename || featuredImage.originalName}</p>
-                </div>
                 <button
                   type="button"
                   onClick={() => setFeaturedImage(null)}
-                  className="remove-file-btn"
+                  className="winery-featured-remove"
                 >
                   Remove
                 </button>
@@ -217,56 +203,181 @@ const WineryForm = () => {
             )}
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Logo</label>
-            {!logo && (
-              <div className="file-input-wrapper">
-                <label className="file-input-label">
-                  <Upload size={20} />
-                  <span>Choose Logo</span>
-                  <input
-                    type="file"
-                    accept="image/*,.webp,.svg"
-                    onChange={(e) => handleFileUpload(e.target.files[0], 'logo')}
-                  />
+          <div className="winery-form-fields-col">
+            <div className="form-group">
+              <label htmlFor="name" className="form-label">
+                <Tag size={16} />
+                Brand Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                className="form-control"
+                {...register('name', { required: 'Name is required' })}
+              />
+              {errors.name && <span className="form-error">{errors.name.message}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="description" className="form-label">
+                <FileText size={16} />
+                Description
+              </label>
+              <textarea
+                id="description"
+                className="form-control"
+                rows="5"
+                {...register('description', { required: 'Description is required' })}
+              />
+              {errors.description && <span className="form-error">{errors.description.message}</span>}
+            </div>
+
+            <div className="winery-form-row-2col">
+              <div className="form-group">
+                <label className="form-label">
+                  <MapPin size={16} />
+                  Country
                 </label>
+                <Controller
+                  name="country"
+                  control={control}
+                  defaultValue=""
+                  render={({ field }) => (
+                    <CustomSelect
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select country..."
+                      options={WINE_COUNTRIES}
+                    />
+                  )}
+                />
               </div>
-            )}
-            {logo && (
-              <div className="file-preview">
-                <img src={getFileUrl(logo.url)} alt="Logo" />
-                <div className="file-preview-info">
-                  <p>{logo.filename || logo.originalName}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setLogo(null)}
-                  className="remove-file-btn"
-                >
-                  Remove
-                </button>
+              <div className="form-group">
+                <label htmlFor="region" className="form-label">
+                  <MapPin size={16} />
+                  Region
+                </label>
+                <input
+                  type="text"
+                  id="region"
+                  className="form-control"
+                  {...register('region')}
+                />
               </div>
-            )}
+            </div>
+
+            <div className="winery-form-row-2col">
+              <div className="form-group">
+                <label className="form-label">
+                  <Image size={16} />
+                  Brand Logo
+                </label>
+                {!logo ? (
+                  <div className="winery-small-upload">
+                    <label className="winery-small-upload-label">
+                      <span>Add Logo</span>
+                      <input
+                        type="file"
+                        accept="image/*,.webp,.svg"
+                        onChange={(e) => handleFileUpload(e.target.files[0], 'logo')}
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  <div className="winery-small-preview">
+                    <img src={getFileUrl(logo.url)} alt="Logo" />
+                    <button
+                      type="button"
+                      onClick={() => setLogo(null)}
+                      className="winery-small-remove"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="form-group">
+                <label className="form-label">Status</label>
+                <Controller
+                  name="status"
+                  control={control}
+                  defaultValue="draft"
+                  render={({ field }) => (
+                    <CustomSelect
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={[
+                        { value: 'draft', label: 'Draft' },
+                        { value: 'published', label: 'Published' },
+                        { value: 'archived', label: 'Archived' }
+                      ]}
+                      placeholder="Select status"
+                    />
+                  )}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="form-actions">
-          <button
-            type="button"
-            onClick={() => navigate('/wineries')}
-            className="btn btn-secondary"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={loading}
-          >
-            {loading ? 'Saving...' : (isEdit ? 'Update Winery' : 'Create Winery')}
-          </button>
-        </div>
+        {!isEdit && (
+          <div className="form-actions">
+            <button
+              type="button"
+              onClick={() => navigate('/wineries')}
+              className="btn btn-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading}
+            >
+              {loading ? 'Creating...' : 'Create Winery'}
+            </button>
+          </div>
+        )}
       </form>
+
+      {/* Wines section */}
+      {isEdit && (
+        <div className="winery-wines-section">
+          <div className="winery-wines-header">
+            <h2>{wineryData?.data?.data?.name} Wines</h2>
+            <Link to={`/wines/new?winery=${id}`} className="btn btn-primary btn-sm">
+              + Add Wine
+            </Link>
+          </div>
+          {wines.length > 0 ? (
+            <div className="winery-wines-grid">
+              {wines.map((wine) => (
+                <Link to={`/wines/${wine._id}`} key={wine._id} className="winery-wine-card">
+                  <div className="winery-wine-card-image">
+                    {wine.bottleImage?.url ? (
+                      <img src={getFileUrl(wine.bottleImage.url)} alt={wine.name} />
+                    ) : (
+                      <div className="winery-wine-card-placeholder">
+                        <Wine size={28} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="winery-wine-card-info">
+                    <h4>{wine.name}</h4>
+                    {wine.type && <span className="winery-wine-card-type">{wine.type}</span>}
+                    {wine.region && <span className="winery-wine-card-region">{wine.region}</span>}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="winery-wines-empty">
+              <Wine size={32} />
+              <p>No wines added yet</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
