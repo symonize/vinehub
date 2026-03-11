@@ -260,7 +260,8 @@ const TradeTools = () => {
 
   // Generator type selector
   const [activeGenerator, setActiveGenerator] = useState('sales-sheet');
-  const [isGeneratorDropdownOpen, setIsGeneratorDropdownOpen] = useState(false);
+  const [toolSelectorOpen, setToolSelectorOpen] = useState(false);
+  const toolSelectorRef = useRef(null);
 
   // Sales Sheet Generator State
   const [selectedWinesForSheet, setSelectedWinesForSheet] = useState([]);
@@ -701,57 +702,51 @@ const TradeTools = () => {
         <div className="container">
           <div className="trade-tools-header-content">
             <h1>Trade Tools</h1>
-            <div className="trade-tools-tabs">
+            <div
+              className={`tool-selector${toolSelectorOpen ? ' is-open' : ''}`}
+              ref={toolSelectorRef}
+              onMouseLeave={() => setToolSelectorOpen(false)}
+            >
               <button
-                className={activeTab === 'browse' ? 'tab active' : 'tab'}
-                onClick={() => setActiveTab('browse')}
+                className="tool-selector-trigger"
+                onMouseEnter={() => setToolSelectorOpen(true)}
+                onClick={() => setToolSelectorOpen(v => !v)}
               >
-                <span className="tab-icon">
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                    <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
-                    <line x1="9.8" y1="9.8" x2="13.5" y2="13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
+                <span className="tool-selector-label">
+                  {activeTab === 'browse'
+                    ? 'Browse'
+                    : activeGenerator === 'sales-sheet'
+                      ? 'Sales Sheet Generator'
+                      : 'Shelf Talker Generator'}
                 </span>
-                <span>Browse</span>
+                <svg className="tool-selector-chevron" width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </button>
-              <div className={`tab-dropdown-wrap${activeTab === 'generators' ? ' active' : ''}`}>
-                <button
-                  className={activeTab === 'generators' ? 'tab active' : 'tab'}
-                  onClick={() => {
-                    setActiveTab('generators');
-                    setGeneratorAnimationKey(prev => prev + 1);
-                    setIsGeneratorDropdownOpen(v => !v);
-                  }}
-                >
-                  <span className="tab-icon">
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M3 8.5L6 7L7.5 4L9 7L12 8.5L9 10L7.5 13L6 10L3 8.5Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                  <span>{activeTab === 'generators' ? (activeGenerator === 'sales-sheet' ? 'Sales Sheet' : 'Shelf Talker') : 'Generators'}</span>
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className={isGeneratorDropdownOpen ? 'gen-chevron expanded' : 'gen-chevron'}>
-                    <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-                {isGeneratorDropdownOpen && activeTab === 'generators' && (
-                  <>
-                    <div className="gen-dropdown-backdrop" onClick={() => setIsGeneratorDropdownOpen(false)} />
-                    <div className="generator-type-menu">
-                      <button
-                        className={activeGenerator === 'sales-sheet' ? 'gen-menu-item active' : 'gen-menu-item'}
-                        onClick={() => { setActiveGenerator('sales-sheet'); setIsGeneratorDropdownOpen(false); setGeneratorAnimationKey(k => k + 1); }}
-                      >
-                        Sales Sheet
-                      </button>
-                      <button
-                        className={activeGenerator === 'shelf-talker' ? 'gen-menu-item active' : 'gen-menu-item'}
-                        onClick={() => { setActiveGenerator('shelf-talker'); setIsGeneratorDropdownOpen(false); setGeneratorAnimationKey(k => k + 1); }}
-                      >
-                        Shelf Talker
-                      </button>
-                    </div>
-                  </>
-                )}
+              <div className="tool-selector-menu">
+                {[
+                  { label: 'Browse', tab: 'browse', gen: null },
+                  { label: 'Sales Sheet Generator', tab: 'generators', gen: 'sales-sheet' },
+                  { label: 'Shelf Talker Generator', tab: 'generators', gen: 'shelf-talker' },
+                ].map((item, i) => {
+                  const isActive = item.tab === 'browse'
+                    ? activeTab === 'browse'
+                    : activeTab === 'generators' && activeGenerator === item.gen;
+                  return (
+                    <button
+                      key={item.label}
+                      className={`tool-selector-item${isActive ? ' active' : ''}`}
+                      style={{ '--i': i }}
+                      onClick={() => {
+                        setActiveTab(item.tab);
+                        if (item.gen) { setActiveGenerator(item.gen); setGeneratorAnimationKey(k => k + 1); }
+                        setToolSelectorOpen(false);
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -1758,7 +1753,7 @@ const TradeTools = () => {
                       {pageNum === 0 && (
                         <>
                           <div className="pdf-header">
-                            <div className="pdf-logo">VineHub</div>
+                            <div className="pdf-logo">VinoHub</div>
                             <div className="pdf-website">vinehub.com</div>
                           </div>
                           <input

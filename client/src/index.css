@@ -514,3 +514,44 @@ select.filter-select:focus {
     border-radius: 0.5rem !important;
   }
 }
+
+/* Delete entity button (used on edit pages) */
+.btn-delete-entity {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.625rem 1rem;
+  margin-top: auto;
+  background: none;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.btn-delete-entity:hover {
+  background-color: var(--danger);
+  color: white;
+}
+
+/* Grid card wrapper for delete overlay */
+.item-card-wrapper {
+  position: relative;
+}
+
+.item-card-wrapper .item-card-actions {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.item-card-wrapper:hover .item-card-actions {
+  opacity: 1;
+}

@@ -12,16 +12,15 @@ const wineSchema = new mongoose.Schema({
     required: [true, 'Winery is required']
   },
   description: {
-    type: String,
-    required: [true, 'Description is required']
+    type: String
   },
   country: {
     type: String,
+    required: [true, 'Country is required'],
     trim: true
   },
   region: {
     type: String,
-    required: [true, 'Region is required'],
     enum: [
       'Napa Valley',
       'Sonoma County',
@@ -33,7 +32,8 @@ const wineSchema = new mongoose.Schema({
       'Walla Walla',
       'Russian River Valley',
       'Alexander Valley',
-      'Other'
+      'Other',
+      ''
     ]
   },
   type: {
@@ -42,17 +42,14 @@ const wineSchema = new mongoose.Schema({
     enum: ['red', 'white', 'sparkling', 'rosé', 'dessert', 'fortified']
   },
   tastingNotes: {
-    type: String,
-    required: [true, 'Tasting notes are required']
+    type: String
   },
   variety: {
     type: String,
-    required: [true, 'Variety is required'],
     trim: true
   },
   foodPairing: {
-    type: String,
-    required: [true, 'Food pairing is required']
+    type: String
   },
   bottleImage: {
     url: String,

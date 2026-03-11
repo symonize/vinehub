@@ -114,12 +114,8 @@ router.post('/', [
   authorize('admin', 'editor'),
   body('name').trim().notEmpty().withMessage('Name is required'),
   body('winery').notEmpty().withMessage('Winery is required'),
-  body('description').notEmpty().withMessage('Description is required'),
-  body('region').notEmpty().withMessage('Region is required'),
-  body('type').isIn(['red', 'white', 'sparkling', 'rosé', 'dessert', 'fortified']).withMessage('Invalid wine type'),
-  body('tastingNotes').notEmpty().withMessage('Tasting notes are required'),
-  body('variety').notEmpty().withMessage('Variety is required'),
-  body('foodPairing').notEmpty().withMessage('Food pairing is required')
+  body('country').trim().notEmpty().withMessage('Country is required'),
+  body('type').isIn(['red', 'white', 'sparkling', 'rosé', 'dessert', 'fortified']).withMessage('Invalid wine type')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

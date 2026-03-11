@@ -1,0 +1,129 @@
+.intro-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.intro-bg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+  z-index: 1;
+}
+
+.intro-frame-positioner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.intro-frame-scaler {
+  position: absolute;
+  top: -75vh;
+  left: -75vw;
+  width: 150vw;
+  height: 150vh;
+  transform-origin: center center;
+}
+
+/* DitherWave wrapper — clip-path set via JS to exclude the arch window */
+.intro-dither-wrap {
+  position: absolute;
+  inset: 0;
+}
+
+.intro-dither-fill {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Arch stroke — sits above DitherWave, below heading */
+.intro-arch-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.intro-heading,
+.intro-subheading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  color: white;
+  font-family: 'moret-variable', Georgia, serif;
+  font-weight: 400;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.intro-heading {
+  font-size: clamp(4rem, 9vw, 9rem);
+  letter-spacing: 0.02em;
+}
+
+.intro-subheading {
+  font-size: clamp(1.5rem, 3vw, 3rem);
+  letter-spacing: 0.04em;
+  font-weight: 300;
+}
+
+/* ── Scroll hint ──────────────────────────────────────────── */
+.intro-scroll-hint {
+  position: absolute;
+  bottom: calc(50% - 232px - 52px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  pointer-events: none;
+  display: flex;
+  gap: 0.04em;
+  font-family: 'moret-variable', Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(1rem, 1.6vw, 1.4rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(212, 197, 169, 1);
+}
+
+.intro-scroll-letter {
+  display: inline-block;
+  animation: scrollLetterWave 3.6s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.12s);
+}
+
+@keyframes scrollLetterWave {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 1;
+    filter: blur(0px);
+  }
+  75% {
+    transform: translateY(-7px);
+    opacity: 0.1;
+    filter: blur(4px);
+  }
+  88% {
+    transform: translateY(-3px);
+    opacity: 0.45;
+    filter: blur(1.5px);
+  }
+}

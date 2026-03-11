@@ -3,24 +3,72 @@ import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { wineriesAPI, winesAPI } from '../utils/api';
 import CircularGallery from '../components/CircularGallery';
+import Intro from './Intro';
 import './Home.css';
 
 const BOTTLE_PLACEHOLDER_SVG = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='400' viewBox='0 0 100 250'><rect width='100' height='250' fill='%23f5efe8'/><path d='M50 10 L35 60 L25 240 L75 240 L65 60 Z' fill='%23722f37'/><ellipse cx='50' cy='50' rx='15' ry='8' fill='%23722f37' opacity='0.3'/></svg>`;
 
+const WINE_TYPES = ['Red', 'White', 'Sparkling', 'Rosé', 'Dessert', 'Fortified'];
+const COUNTRIES = ['Italy', 'France', 'Spain', 'Portugal', 'Argentina', 'USA'];
+const SCORES = ['88', '89', '90', '91', '92', '93', '94', '95'];
+
+// Wine glass icon
+const WineGlassIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8 22h8M12 11v11M5 2h14l-2 9a5 5 0 01-10 0L5 2z"/>
+  </svg>
+);
+
+// Globe icon
+const GlobeIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+  </svg>
+);
+
+// Chevron down icon
+const ChevronIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+    <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+  </svg>
+);
+
+const NlSelect = ({ value, options, onChange, label }) => (
+  <div className="nl-select-wrap">
+    <select
+      className="nl-select"
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      aria-label={label}
+    >
+      {options.map(opt => (
+        <option key={opt} value={opt}>{opt}</option>
+      ))}
+    </select>
+    <span className="nl-select-display">
+      {value} <ChevronIcon />
+    </span>
+  </div>
+);
+
 const Home = () => {
-  const [activeTab, setActiveTab] = useState('new');
+  const [wineType, setWineType] = useState('Red');
+  const [country, setCountry] = useState('Italy');
+  const [minScore, setMinScore] = useState('93');
   const [centerItem, setCenterItem] = useState(null);
 
-  const { data: newWinesData } = useQuery('new-wines', () =>
-    winesAPI.getAll({ limit: 8, status: 'published', sort: '-createdAt' })
-  );
+  const filterKey = `${wineType}-${country}-${minScore}`;
 
-  const { data: staplesData } = useQuery('staples-wines', () =>
-    winesAPI.getAll({ limit: 8, status: 'published', sort: 'name' })
-  );
-
-  const { data: bestData } = useQuery('best-wines', () =>
-    winesAPI.getAll({ limit: 8, status: 'published', sort: '-score' })
+  const { data: filteredWinesData } = useQuery(
+    ['filtered-wines', wineType, country, minScore],
+    () => winesAPI.getAll({
+      limit: 12,
+      status: 'published',
+      type: wineType.toLowerCase(),
+      country,
+      sort: '-score',
+    })
   );
 
   const { data: redWinesData } = useQuery('red-wines-count', () =>
@@ -35,12 +83,19 @@ const Home = () => {
     winesAPI.getAll({ type: 'sparkling', status: 'published', limit: 1 })
   );
 
-  const newWines = newWinesData?.data?.data || [];
-  const staplesWines = staplesData?.data?.data || [];
-  const bestWines = bestData?.data?.data || [];
+  const allFilteredWines = filteredWinesData?.data?.data || [];
   const redCount = redWinesData?.data?.total || 0;
   const whiteCount = whiteWinesData?.data?.total || 0;
   const sparklingCount = sparklingWinesData?.data?.total || 0;
+
+  // Client-side score filter
+  const filteredWines = useMemo(() =>
+    allFilteredWines.filter(w => {
+      const score = w.score ?? (w.awards?.[0]?.score ?? 0);
+      return Number(score) >= Number(minScore);
+    }),
+    [allFilteredWines, minScore]
+  );
 
   const toGalleryItems = (wines) =>
     wines.map((wine) => ({
@@ -53,90 +108,50 @@ const Home = () => {
     setCenterItem(item);
   }, []);
 
-  const activeWines =
-    activeTab === 'new' ? newWines :
-    activeTab === 'staples' ? staplesWines :
-    bestWines;
-
-  const galleryItems = useMemo(() => toGalleryItems(activeWines), [activeWines]);
+  const galleryItems = useMemo(() => toGalleryItems(filteredWines), [filteredWines]);
 
   return (
     <div className="home">
-      {/* Hero Section */}
-      <section className="hero-split">
-        <div className="container">
-          <div className="hero-grid">
-            <div className="hero-image">
-              <div className="hero-image-placeholder">
-                <svg width="100%" height="100%" viewBox="0 0 400 400" fill="none" preserveAspectRatio="xMidYMid slice">
-                  <rect width="400" height="400" fill="#d4c5b0"/>
-                  <circle cx="200" cy="200" r="100" fill="#a89680" opacity="0.3"/>
-                </svg>
-              </div>
-            </div>
-            <div className="hero-content-box">
-              <h1>Explore a world of wine.</h1>
-              <p>
-                Dictum imperdiet ut vivamus eros ante nunc. Proin
-                condimentum nibh turpis neque eget amet elementum. Ut
-                posuere nisl nam risus aliquet quis sed tellus urna,
-                sed malesuada et. Dictique ipsum, laber est lectus
-                scelerisque risus ut morbi pretium.
-              </p>
-              <Link to="/wineries" className="btn-explore">
-                Explore Our Portfolio
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      <Intro />
       {/* Wine Carousel Section */}
       <section className="wine-carousel-section">
         <div className="container-narrow">
-          <div className="carousel-tabs">
-            <button
-              className={`tab${activeTab === 'staples' ? ' active' : ' inactive'}`}
-                onClick={() => { setActiveTab('staples'); setCenterItem(null); }}
-            >
-              Staples
-            </button>
-            <button
-              className={`tab${activeTab === 'new' ? ' active' : ' inactive'}`}
-                onClick={() => { setActiveTab('new'); setCenterItem(null); }}
-            >
-              New Arrivals
-            </button>
-            <button
-              className={`tab${activeTab === 'best' ? ' active' : ' inactive'}`}
-                onClick={() => { setActiveTab('best'); setCenterItem(null); }}
-            >
-              Best Sellers
-            </button>
+          <div className="nl-form">
+            <span className="nl-text">I'm looking for a</span>
+            <WineGlassIcon />
+            <NlSelect value={wineType} options={WINE_TYPES} onChange={v => { setWineType(v); setCenterItem(null); }} label="Wine type" />
+            <span className="nl-text">from</span>
+            <GlobeIcon />
+            <NlSelect value={country} options={COUNTRIES} onChange={v => { setCountry(v); setCenterItem(null); }} label="Country" />
+            <span className="nl-text">with a</span>
+            <NlSelect value={minScore} options={SCORES} onChange={v => { setMinScore(v); setCenterItem(null); }} label="Minimum score" />
+            <span className="nl-text">score</span>
           </div>
         </div>
 
-          <div className="gallery-wrapper">
-            {galleryItems.length > 0 && (
-                  <CircularGallery
-                    key={activeTab}
-                    items={galleryItems}
-                    bend={3}
-                    borderRadius={0.05}
-                    scrollSpeed={2}
-                    scrollEase={0.05}
-                    onCenterChange={handleCenterChange}
-                  />
-              )}
-          </div>
-          <div className="gallery-center-label">
-            {centerItem?.winery && (
-              <span className="gallery-label-winery">{centerItem.winery}</span>
-            )}
-            {centerItem?.text && (
-              <span className="gallery-label-wine">{centerItem.text}</span>
-            )}
-          </div>
+        <div className="gallery-wrapper">
+          {galleryItems.length > 0 ? (
+            <CircularGallery
+              key={filterKey}
+              items={galleryItems}
+              bend={3}
+              borderRadius={0.05}
+              scrollSpeed={2}
+              scrollEase={0.05}
+              onCenterChange={handleCenterChange}
+            />
+          ) : (
+            <div className="gallery-empty">No wines match your selection</div>
+          )}
+        </div>
+        <div className="gallery-center-label">
+          {centerItem?.winery && (
+            <span className="gallery-label-winery">{centerItem.winery}</span>
+          )}
+          {centerItem?.text && (
+            <span className="gallery-label-wine">{centerItem.text}</span>
+          )}
+        </div>
       </section>
 
       {/* Explore By Type */}

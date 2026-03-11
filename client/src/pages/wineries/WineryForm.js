@@ -4,9 +4,10 @@ import { useQuery } from 'react-query';
 import { wineriesAPI, winesAPI, uploadAPI, getFileUrl } from '../../utils/api';
 import { useForm, Controller } from 'react-hook-form';
 import { toast } from 'react-toastify';
-import { Tag, FileText, MapPin, Image, Wine } from 'lucide-react';
+import { Tag, FileText, MapPin, Image, Wine, Trash2 } from 'lucide-react';
 import { usePageTitle } from '../../context/PageTitleContext';
 import CustomSelect from '../../components/CustomSelect';
+import ConfirmModal from '../../components/ConfirmModal';
 import './Wineries.css';
 
 const WINE_COUNTRIES = [
@@ -38,6 +39,8 @@ const WineryForm = () => {
   const [loading, setLoading] = useState(false);
   const [featuredImage, setFeaturedImage] = useState(null);
   const [logo, setLogo] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Autosave state
   const saveTimeoutRef = useRef(null);
@@ -162,6 +165,19 @@ const WineryForm = () => {
     }
   };
 
+  const handleDeleteWinery = async () => {
+    setDeleteLoading(true);
+    try {
+      await wineriesAPI.delete(id);
+      toast.success('Brand deleted successfully');
+      navigate('/wineries');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete brand');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   // Clear save status on unmount
   useEffect(() => {
     return () => setSaveStatus(null);
@@ -200,6 +216,17 @@ const WineryForm = () => {
                   Remove
                 </button>
               </div>
+            )}
+
+            {isEdit && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(true)}
+                className="btn-delete-entity"
+              >
+                <Trash2 size={16} />
+                Delete Brand
+              </button>
             )}
           </div>
 
@@ -378,6 +405,15 @@ const WineryForm = () => {
           )}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteWinery}
+        title={`Delete "${wineryData?.data?.data?.name}"?`}
+        message="This will permanently delete this brand and all its data. This action cannot be undone."
+        loading={deleteLoading}
+      />
     </div>
   );
 };

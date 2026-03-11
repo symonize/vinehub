@@ -4,11 +4,12 @@ import { useQuery } from 'react-query';
 import { winesAPI, wineriesAPI, vintagesAPI, aiAPI, uploadAPI } from '../../utils/api';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
-import { Wine, Sparkles, Loader, X, Tag, Droplet, MapPin, Grape, FileText, Utensils, AlertCircle, ChevronDown, Plus, Upload } from 'lucide-react';
+import { Wine, Sparkles, Loader, X, Tag, Droplet, MapPin, Grape, FileText, Utensils, AlertCircle, ChevronDown, Plus, Upload, Building2, Trash2 } from 'lucide-react';
 import { usePageTitle } from '../../context/PageTitleContext';
 import AssetSheet from '../../components/AssetSheet';
 import VintageSheet from '../../components/VintageSheet';
 import CustomSelect from '../../components/CustomSelect';
+import ConfirmModal from '../../components/ConfirmModal';
 import './Wines.css';
 
 const WINE_COUNTRIES = [
@@ -46,6 +47,8 @@ const WineForm = () => {
   const [primaryIngredients, setPrimaryIngredients] = useState([]);
   const [additives, setAdditives] = useState([]);
   const [processingAids, setProcessingAids] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [allergens, setAllergens] = useState({
     milk: false,
     eggs: false,
@@ -413,6 +416,19 @@ const WineForm = () => {
     }
   };
 
+  const handleDeleteWine = async () => {
+    setDeleteLoading(true);
+    try {
+      await winesAPI.delete(id);
+      toast.success('Wine and associated vintages deleted successfully');
+      navigate('/wines');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete wine');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const wineries = wineriesData?.data?.data || [];
   const vintages = vintagesData?.data?.data || [];
   const wine = wineData?.data?.data;
@@ -468,6 +484,17 @@ const WineForm = () => {
               Upload Image
             </label>
           </div>
+
+          {isEdit && (
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="btn-delete-entity"
+            >
+              <Trash2 size={16} />
+              Delete Wine
+            </button>
+          )}
         </div>
 
         {/* Middle Column - Wine Info Form */}
@@ -497,15 +524,34 @@ const WineForm = () => {
 
               <div className="form-group">
                 <label className="form-label">
+                  <Building2 size={16} />
+                  Brand
+                </label>
+                <CustomSelect
+                  value={watch('winery') || ''}
+                  onChange={(val) => setValue('winery', val, { shouldValidate: true })}
+                  placeholder="Select brand..."
+                  error={!!errors.winery}
+                  options={wineries.map(w => ({ value: w._id, label: w.name }))}
+                />
+                <input type="hidden" {...register('winery', { required: 'Brand is required' })} />
+                {errors.winery && <span className="form-error">{errors.winery.message}</span>}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
                   <MapPin size={16} />
                   Country
                 </label>
                 <CustomSelect
                   value={watch('country') || ''}
-                  onChange={(val) => setValue('country', val)}
+                  onChange={(val) => setValue('country', val, { shouldValidate: true })}
                   placeholder="Select country..."
+                  error={!!errors.country}
                   options={WINE_COUNTRIES}
                 />
+                <input type="hidden" {...register('country', { required: 'Country is required' })} />
+                {errors.country && <span className="form-error">{errors.country.message}</span>}
               </div>
 
               <div className="form-row-2col">
@@ -556,8 +602,7 @@ const WineForm = () => {
                       { value: 'Other', label: 'Other' },
                     ]}
                   />
-                  <input type="hidden" {...register('region', { required: 'Region is required' })} />
-                  {errors.region && <span className="form-error">{errors.region.message}</span>}
+                  <input type="hidden" {...register('region')} />
                 </div>
               </div>
 
@@ -570,9 +615,8 @@ const WineForm = () => {
                   id="variety"
                   className="form-control"
                   rows="2"
-                  {...register('variety', { required: 'Variety is required' })}
+                  {...register('variety')}
                 />
-                {errors.variety && <span className="form-error">{errors.variety.message}</span>}
               </div>
 
               <div className="form-group">
@@ -584,9 +628,8 @@ const WineForm = () => {
                   id="description"
                   className="form-control"
                   rows="4"
-                  {...register('description', { required: 'Description is required' })}
+                  {...register('description')}
                 />
-                {errors.description && <span className="form-error">{errors.description.message}</span>}
               </div>
 
               <div className="form-group">
@@ -598,9 +641,8 @@ const WineForm = () => {
                   id="foodPairing"
                   className="form-control"
                   rows="3"
-                  {...register('foodPairing', { required: 'Food pairing is required' })}
+                  {...register('foodPairing')}
                 />
-                {errors.foodPairing && <span className="form-error">{errors.foodPairing.message}</span>}
               </div>
             </div>
 
@@ -961,6 +1003,15 @@ const WineForm = () => {
           }}
         />
       )}
+
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteWine}
+        title={`Delete "${wine?.name}"?`}
+        message="This will permanently delete this wine and all associated vintages. This action cannot be undone."
+        loading={deleteLoading}
+      />
     </div>
   );
 };

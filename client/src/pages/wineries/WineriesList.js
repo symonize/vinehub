@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import { AnimatePresence, motion } from 'framer-motion';
 import CustomSelect from '../../components/CustomSelect';
+import ConfirmModal from '../../components/ConfirmModal';
 import './Wineries.css';
 
 const tableVariants = {
@@ -32,6 +33,8 @@ const WineriesList = () => {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('');
   const [viewMode, setViewMode] = useState('grid');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data, isLoading, refetch } = useQuery(
     ['wineries', page, search, status],
@@ -39,17 +42,18 @@ const WineriesList = () => {
     { keepPreviousData: true }
   );
 
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete "${name}"?`)) {
-      return;
-    }
-
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await wineriesAPI.delete(id);
-      toast.success('Winery deleted successfully');
+      await wineriesAPI.delete(deleteTarget.id);
+      toast.success('Brand deleted successfully');
+      setDeleteTarget(null);
       refetch();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to delete winery');
+      toast.error(error.response?.data?.message || 'Failed to delete brand');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -188,7 +192,7 @@ const WineriesList = () => {
                                   <Edit size={18} />
                                 </Link>
                                 <button
-                                  onClick={() => handleDelete(winery._id, winery.name)}
+                                  onClick={() => setDeleteTarget({ id: winery._id, name: winery.name })}
                                   className="btn-icon btn-icon-danger"
                                   title="Delete"
                                 >
@@ -213,7 +217,7 @@ const WineriesList = () => {
                 exit="exit"
               >
                 {wineries.map((winery) => (
-                  <motion.div key={winery._id} variants={cardVariants}>
+                  <motion.div key={winery._id} variants={cardVariants} className="item-card-wrapper">
                     <Link to={`/wineries/${winery._id}/edit`} className="item-card" style={{ display: 'block' }}>
                       {(winery.featuredImage?.url || winery.featuredImage?.path || winery.logo?.url || winery.logo?.path) ? (
                         <div className="item-card-image">
@@ -239,6 +243,17 @@ const WineriesList = () => {
                         </p>
                       </div>
                     </Link>
+                    {isEditor() && (
+                      <div className="item-card-actions">
+                        <button
+                          onClick={() => setDeleteTarget({ id: winery._id, name: winery.name })}
+                          className="btn-icon btn-icon-danger"
+                          title="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
                   </motion.div>
                 ))}
               </motion.div>
@@ -268,6 +283,14 @@ const WineriesList = () => {
           )}
         </>
       )}
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title={`Delete "${deleteTarget?.name}"?`}
+        message="This will permanently delete this brand and all its data. This action cannot be undone."
+        loading={deleting}
+      />
     </div>
   );
 };

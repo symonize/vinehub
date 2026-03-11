@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import { AnimatePresence, motion } from 'framer-motion';
 import CustomSelect from '../../components/CustomSelect';
+import ConfirmModal from '../../components/ConfirmModal';
 import './Wines.css';
 
 const tableVariants = {
@@ -33,6 +34,8 @@ const WinesList = () => {
   const [type, setType] = useState('');
   const [region, setRegion] = useState('');
   const [viewMode, setViewMode] = useState('table');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data, isLoading, refetch } = useQuery(
     ['wines', page, search, type, region],
@@ -40,17 +43,18 @@ const WinesList = () => {
     { keepPreviousData: true }
   );
 
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete "${name}"? This will also delete all associated vintages.`)) {
-      return;
-    }
-
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await winesAPI.delete(id);
+      await winesAPI.delete(deleteTarget.id);
       toast.success('Wine and associated vintages deleted successfully');
+      setDeleteTarget(null);
       refetch();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to delete wine');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -178,6 +182,7 @@ const WinesList = () => {
                       <th>Wine Name</th>
                       <th>Winery</th>
                       <th>Type</th>
+                      {isEditor() && <th style={{ width: '60px' }}></th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -216,6 +221,17 @@ const WinesList = () => {
                             {wine.type}
                           </span>
                         </td>
+                        {isEditor() && (
+                          <td>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: wine._id, name: wine.name }); }}
+                              className="btn-icon btn-icon-danger"
+                              title="Delete"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -254,7 +270,7 @@ const WinesList = () => {
                     {isEditor() && (
                       <div className="item-card-actions">
                         <button
-                          onClick={() => handleDelete(wine._id, wine.name)}
+                          onClick={(e) => { e.preventDefault(); setDeleteTarget({ id: wine._id, name: wine.name }); }}
                           className="btn-icon btn-icon-danger"
                           title="Delete"
                         >
@@ -291,6 +307,14 @@ const WinesList = () => {
           )}
         </>
       )}
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title={`Delete "${deleteTarget?.name}"?`}
+        message="This will permanently delete this wine and all associated vintages. This action cannot be undone."
+        loading={deleting}
+      />
     </div>
   );
 };
