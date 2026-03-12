@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import AnimatedOutlet from './AnimatedOutlet';
 import { useAuth } from '../context/AuthContext';
 import { PageTitleProvider } from '../context/PageTitleContext';
@@ -11,7 +11,9 @@ import './Layout.css';
 const Layout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isDashboard = location.pathname === '/' || location.pathname === '/dashboard';
 
   const handleLogout = () => {
     logout();
@@ -96,7 +98,7 @@ const Layout = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="main-content">
+      <div className={`main-content ${isDashboard ? 'main-content-dashboard' : ''}`}>
         <PageTitleProvider>
           <ContentHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
           {/* Page Content */}

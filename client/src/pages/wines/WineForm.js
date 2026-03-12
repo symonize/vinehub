@@ -622,28 +622,14 @@ const WineForm = () => {
                   <div className="form-group">
                     <label className="form-label">
                       <MapPin size={16} />
-                      Region
+                      Appellation
                     </label>
-                    <CustomSelect
-                      value={watch('region') || ''}
-                      onChange={(val) => setValue('region', val, { shouldValidate: true })}
-                      placeholder="Select region..."
-                      error={!!errors.region}
-                      options={[
-                        { value: 'Napa Valley', label: 'Napa Valley' },
-                        { value: 'Sonoma County', label: 'Sonoma County' },
-                        { value: 'Paso Robles', label: 'Paso Robles' },
-                        { value: 'Santa Barbara', label: 'Santa Barbara' },
-                        { value: 'Willamette Valley', label: 'Willamette Valley' },
-                        { value: 'Finger Lakes', label: 'Finger Lakes' },
-                        { value: 'Columbia Valley', label: 'Columbia Valley' },
-                        { value: 'Walla Walla', label: 'Walla Walla' },
-                        { value: 'Russian River Valley', label: 'Russian River Valley' },
-                        { value: 'Alexander Valley', label: 'Alexander Valley' },
-                        { value: 'Other', label: 'Other' },
-                      ]}
+                    <input
+                      type="text"
+                      className={`form-control ${errors.region ? 'is-invalid' : ''}`}
+                      placeholder="e.g., Napa Valley, Sonoma County"
+                      {...register('region')}
                     />
-                    <input type="hidden" {...register('region')} />
                   </div>
                 </div>
 

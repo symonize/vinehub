@@ -103,7 +103,7 @@ const ContentHeader = ({ onMenuClick }) => {
 
   return (
     <>
-      <div className="content-header">
+      <div className={`content-header ${(location.pathname === '/' || location.pathname === '/dashboard') ? 'content-header-transparent' : ''}`}>
         <div className="content-header-left">
           <button className="mobile-menu-button" onClick={onMenuClick} aria-label="Open menu">
             <Menu size={24} />

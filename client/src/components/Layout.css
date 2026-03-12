@@ -194,6 +194,16 @@
   background-color: #FAF6ED;
 }
 
+/* Dashboard: transparent main content so vineyard bg shows through */
+.main-content-dashboard {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.main-content-dashboard .content {
+  background-color: transparent;
+}
+
 /* Page Transition */
 @keyframes pageEnter {
   from { opacity: 0; }

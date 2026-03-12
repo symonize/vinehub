@@ -129,6 +129,43 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+/* Transparent variant for Dashboard */
+.content-header-transparent {
+  background-color: transparent;
+  border-bottom-color: transparent;
+}
+
+.content-header-transparent .content-header-title {
+  color: white;
+}
+
+.content-header-transparent .content-header-search svg {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.content-header-transparent .content-header-search-input {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.content-header-transparent .content-header-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.content-header-transparent .content-header-search-input:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.content-header-transparent .search-shortcut {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.6);
+  box-shadow: none;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .content-header {

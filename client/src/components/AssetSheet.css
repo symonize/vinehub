@@ -135,6 +135,10 @@
   border-bottom: 1px solid var(--border);
 }
 
+.sheet-tab:nth-child(1) { z-index: 3; }
+.sheet-tab:nth-child(2) { z-index: 2; }
+.sheet-tab:nth-child(3) { z-index: 1; }
+
 .sheet-tab:last-child {
   margin-right: 0;
 }
@@ -147,7 +151,7 @@
 .sheet-tab.active {
   background: #FDF9F0;
   color: var(--primary);
-  z-index: 2;
+  z-index: 10;
   border: 1px solid var(--border);
   border-bottom: 1px solid #FDF9F0;
   margin-bottom: -1px;
@@ -167,6 +171,10 @@
 .sheet-tab.active::before {
   left: -10px;
   background: radial-gradient(circle at 0 0, transparent 10px, #FDF9F0 10px);
+}
+
+.sheet-tab.active:first-child::before {
+  display: none;
 }
 
 .sheet-tab.active::after {

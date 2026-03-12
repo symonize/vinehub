@@ -533,6 +533,10 @@
   border-bottom: 1px solid var(--border);
 }
 
+.wine-tab:nth-child(1) { z-index: 3; }
+.wine-tab:nth-child(2) { z-index: 2; }
+.wine-tab:nth-child(3) { z-index: 1; }
+
 .wine-tab:last-child {
   margin-right: 0;
 }
@@ -545,7 +549,7 @@
 .wine-tab.active {
   background: #FDF9F0;
   color: var(--primary);
-  z-index: 2;
+  z-index: 10;
   border: 1px solid var(--border);
   border-bottom: 1px solid #FDF9F0;
   margin-bottom: -1px;
@@ -565,6 +569,10 @@
 .wine-tab.active::before {
   left: -12px;
   background: radial-gradient(circle at 0 0, transparent 12px, #FDF9F0 12px);
+}
+
+.wine-tab.active:first-child::before {
+  display: none;
 }
 
 .wine-tab.active::after {
