@@ -9,7 +9,8 @@ const CustomSelect = ({
   placeholder = 'Select...',
   className = '',
   disabled = false,
-  error = false
+  error = false,
+  multi = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,12 +45,21 @@ const CustomSelect = ({
   }, [isOpen]);
 
   const handleSelect = (option) => {
-    onChange(option.value);
-    setIsOpen(false);
-    setSearchTerm('');
+    if (multi) {
+      const selected = Array.isArray(value) ? value : [];
+      const newValue = selected.includes(option.value)
+        ? selected.filter(v => v !== option.value)
+        : [...selected, option.value];
+      onChange(newValue);
+    } else {
+      onChange(option.value);
+      setIsOpen(false);
+      setSearchTerm('');
+    }
   };
 
-  const selectedOption = options.find(opt => opt.value === value);
+  const selectedOption = multi ? null : options.find(opt => opt.value === value);
+  const selectedValues = multi ? (Array.isArray(value) ? value : []) : [];
 
   const filteredOptions = searchTerm
     ? options.filter(opt =>
@@ -70,8 +80,12 @@ const CustomSelect = ({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span className={`custom-select-value ${!selectedOption ? 'placeholder' : ''}`}>
-          {selectedOption ? selectedOption.label : placeholder}
+        <span className={`custom-select-value ${(!selectedOption && selectedValues.length === 0) ? 'placeholder' : ''}`}>
+          {multi
+            ? (selectedValues.length > 0
+              ? options.filter(o => selectedValues.includes(o.value)).map(o => o.label).join(', ')
+              : placeholder)
+            : (selectedOption ? selectedOption.label : placeholder)}
         </span>
         <ChevronDown
           size={20}
@@ -98,18 +112,23 @@ const CustomSelect = ({
             {filteredOptions.length === 0 ? (
               <li className="custom-select-option no-results">No results found</li>
             ) : (
-              filteredOptions.map((option) => (
-                <li
-                  key={option.value}
-                  className={`custom-select-option ${option.value === value ? 'selected' : ''}`}
-                  onClick={() => handleSelect(option)}
-                  role="option"
-                  aria-selected={option.value === value}
-                >
-                  <span>{option.label}</span>
-                  {option.value === value && <Check size={16} />}
-                </li>
-              ))
+              filteredOptions.map((option) => {
+                const isSelected = multi
+                  ? selectedValues.includes(option.value)
+                  : option.value === value;
+                return (
+                  <li
+                    key={option.value}
+                    className={`custom-select-option ${isSelected ? 'selected' : ''}`}
+                    onClick={() => handleSelect(option)}
+                    role="option"
+                    aria-selected={isSelected}
+                  >
+                    <span>{option.label}</span>
+                    {isSelected && <Check size={16} />}
+                  </li>
+                );
+              })
             )}
           </ul>
         </div>

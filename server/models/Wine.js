@@ -147,6 +147,14 @@ const wineSchema = new mongoose.Schema({
     url: String,
     generatedAt: Date
   },
+  organic: {
+    type: Boolean,
+    default: false
+  },
+  vegan: {
+    type: Boolean,
+    default: false
+  },
   status: {
     type: String,
     enum: ['draft', 'published', 'archived'],

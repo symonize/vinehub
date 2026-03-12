@@ -47,6 +47,7 @@ const WineForm = () => {
   const [primaryIngredients, setPrimaryIngredients] = useState([]);
   const [additives, setAdditives] = useState([]);
   const [processingAids, setProcessingAids] = useState([]);
+  const [lifestyle, setLifestyle] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [allergens, setAllergens] = useState({
@@ -136,6 +137,10 @@ const WineForm = () => {
         soybeans: false,
         sesame: false
       });
+      const ls = [];
+      if (wine.organic) ls.push('organic');
+      if (wine.vegan) ls.push('vegan');
+      setLifestyle(ls);
     }
   }, [wineData, reset]);
 
@@ -310,6 +315,8 @@ const WineForm = () => {
   const prepareWineData = useCallback((data, excludeBottleImage = false) => {
     const wineData = {
       ...data,
+      organic: lifestyle.includes('organic'),
+      vegan: lifestyle.includes('vegan'),
       awards: awards.filter(a => a.score && a.awardName && a.year),
       nutrition: {
         servingSize: parseFloat(data['nutrition.servingSize']) || 5,
@@ -344,7 +351,7 @@ const WineForm = () => {
     }
 
     return wineData;
-  }, [awards, primaryIngredients, additives, processingAids, allergens]);
+  }, [awards, primaryIngredients, additives, processingAids, allergens, lifestyle]);
 
   // Autosave function
   const autoSave = useCallback(async (data) => {
@@ -393,7 +400,7 @@ const WineForm = () => {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [watchedFields, primaryIngredients, additives, processingAids, allergens, isEdit, autoSave, watch]);
+  }, [watchedFields, primaryIngredients, additives, processingAids, allergens, lifestyle, isEdit, autoSave, watch]);
 
   const onSubmit = async (data) => {
     setLoading(true);
@@ -642,6 +649,26 @@ const WineForm = () => {
                   className="form-control"
                   rows="3"
                   {...register('foodPairing')}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  <Grape size={16} />
+                  Lifestyle
+                </label>
+                <CustomSelect
+                  value={lifestyle}
+                  onChange={(val) => {
+                    setLifestyle(val);
+                    if (isEdit) setSaveStatus('saving');
+                  }}
+                  placeholder="Select lifestyle attributes..."
+                  multi
+                  options={[
+                    { value: 'organic', label: 'Organic' },
+                    { value: 'vegan', label: 'Vegan' },
+                  ]}
                 />
               </div>
             </div>
