@@ -11,7 +11,7 @@ const { protect, authorize } = require('../middleware/auth');
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const { winery, type, region, status, search, page = 1, limit = 10 } = req.query;
+    const { winery, type, country, region, status, search, page = 1, limit = 10 } = req.query;
 
     let query = {};
 
@@ -23,6 +23,11 @@ router.get('/', async (req, res) => {
     // Filter by type
     if (type) {
       query.type = type;
+    }
+
+    // Filter by country
+    if (country) {
+      query.country = country;
     }
 
     // Filter by region
