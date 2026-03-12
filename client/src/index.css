@@ -4,6 +4,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 :root {
   /* Colors - Defaults, will be overridden by ThemeContext */
   --primary: #722f37;

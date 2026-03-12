@@ -68,6 +68,17 @@ const vintageSchema = new mongoose.Schema({
       uploadedAt: Date
     }
   },
+  productionVolume: Number,
+  releaseDate: Date,
+  tastingNotes: { type: String, trim: true },
+  harvestNotes: { type: String, trim: true },
+  agingProcess: { type: String, trim: true },
+  oakTreatment: { type: String, trim: true },
+  blendDetails: { type: String, trim: true },
+  awards: [{
+    organization: { type: String, required: true },
+    score: { type: Number, min: 0, max: 100 }
+  }],
   notes: {
     type: String,
     trim: true

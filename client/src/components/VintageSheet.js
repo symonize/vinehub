@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { vintagesAPI } from '../utils/api';
@@ -71,7 +72,7 @@ const VintageSheet = ({ wineId, wineName, onClose, onUpdate }) => {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 50 }, (_, i) => currentYear - i);
 
-  return (
+  return createPortal(
     <>
       <div className={`sheet-overlay ${isClosing ? 'closing' : ''}`} onClick={handleClose} />
       <div className={`sheet-container ${isClosing ? 'closing' : ''}`}>
@@ -221,7 +222,8 @@ const VintageSheet = ({ wineId, wineName, onClose, onUpdate }) => {
           </form>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 };
 

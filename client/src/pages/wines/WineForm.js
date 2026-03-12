@@ -4,7 +4,8 @@ import { useQuery } from 'react-query';
 import { winesAPI, wineriesAPI, vintagesAPI, aiAPI, uploadAPI } from '../../utils/api';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
-import { Wine, Sparkles, Loader, X, Tag, Droplet, MapPin, Grape, FileText, Utensils, AlertCircle, ChevronDown, Plus, Upload, Building2, Trash2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Wine, Sparkles, Loader, X, Tag, Droplet, MapPin, Grape, FileText, Utensils, AlertCircle, ChevronDown, Plus, Upload, Building2, Trash2, CalendarRange, FlaskConical } from 'lucide-react';
 import { usePageTitle } from '../../context/PageTitleContext';
 import AssetSheet from '../../components/AssetSheet';
 import VintageSheet from '../../components/VintageSheet';
@@ -65,6 +66,8 @@ const WineForm = () => {
   // Autosave state
   const saveTimeoutRef = useRef(null);
   const lastSavedDataRef = useRef(null);
+
+  const [activeTab, setActiveTab] = useState('info');
 
   // Collapsible sections state
   const [collapsedSections, setCollapsedSections] = useState({
@@ -440,9 +443,17 @@ const WineForm = () => {
   const vintages = vintagesData?.data?.data || [];
   const wine = wineData?.data?.data;
 
+  const tabs = isEdit
+    ? [
+        { id: 'info', label: 'Wine Info', icon: Wine },
+        { id: 'vintages', label: 'Vintages & Assets', icon: CalendarRange },
+        { id: 'nutrition', label: 'Nutrition & Ingredients', icon: FlaskConical },
+      ]
+    : [{ id: 'info', label: 'Wine Info', icon: Wine }];
+
   return (
     <div className="wine-edit-container">
-      <div className="wine-edit-layout-3col">
+      <div className="wine-edit-layout">
         {/* Left Column - Wine Image */}
         <div className="wine-image-column">
           <div className="wine-image-placeholder">
@@ -504,507 +515,545 @@ const WineForm = () => {
           )}
         </div>
 
-        {/* Middle Column - Wine Info Form */}
-        <div className="wine-content-column">
-          <form onSubmit={handleSubmit(onSubmit)} onKeyDown={(e) => {
-            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
-              e.preventDefault();
-            }
-          }}>
-            {/* Wine Info Card */}
-            <div className="wine-info-card">
-              <h2 className="section-title">Wine Info</h2>
+        {/* Right Area - Tabs + Content */}
+        <div className="wine-tabbed-area">
+          {/* Tab Bar */}
+          <div className="wine-tab-bar">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                className={`wine-tab ${activeTab === tab.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <tab.icon size={16} fill="currentColor" strokeWidth={1.5} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-              <div className="form-group">
-                <label htmlFor="name" className="form-label">
-                  <Tag size={16} />
-                  Wine Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  className="form-control"
-                  {...register('name', { required: 'Name is required' })}
-                />
-                {errors.name && <span className="form-error">{errors.name.message}</span>}
-              </div>
+          {/* Tab Content */}
+          <div className="wine-tab-content">
+            <AnimatePresence mode="wait">
+            {/* Wine Info Tab */}
+            {activeTab === 'info' && (
+              <motion.div
+                key="info"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+              >
+              <form onSubmit={handleSubmit(onSubmit)} onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                  e.preventDefault();
+                }
+              }}>
+                <div className="form-group">
+                  <label htmlFor="name" className="form-label">
+                    <Tag size={16} />
+                    Wine Name
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    className="form-control"
+                    {...register('name', { required: 'Name is required' })}
+                  />
+                  {errors.name && <span className="form-error">{errors.name.message}</span>}
+                </div>
 
-              <div className="form-group">
-                <label className="form-label">
-                  <Building2 size={16} />
-                  Brand
-                </label>
-                <CustomSelect
-                  value={watch('winery') || ''}
-                  onChange={(val) => setValue('winery', val, { shouldValidate: true })}
-                  placeholder="Select brand..."
-                  error={!!errors.winery}
-                  options={wineries.map(w => ({ value: w._id, label: w.name }))}
-                />
-                <input type="hidden" {...register('winery', { required: 'Brand is required' })} />
-                {errors.winery && <span className="form-error">{errors.winery.message}</span>}
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">
-                  <MapPin size={16} />
-                  Country
-                </label>
-                <CustomSelect
-                  value={watch('country') || ''}
-                  onChange={(val) => setValue('country', val, { shouldValidate: true })}
-                  placeholder="Select country..."
-                  error={!!errors.country}
-                  options={WINE_COUNTRIES}
-                />
-                <input type="hidden" {...register('country', { required: 'Country is required' })} />
-                {errors.country && <span className="form-error">{errors.country.message}</span>}
-              </div>
-
-              <div className="form-row-2col">
                 <div className="form-group">
                   <label className="form-label">
-                    <Droplet size={16} />
-                    Type
+                    <Building2 size={16} />
+                    Brand
                   </label>
                   <CustomSelect
-                    value={watch('type') || ''}
-                    onChange={(val) => setValue('type', val, { shouldValidate: true })}
-                    placeholder="Select type..."
-                    error={!!errors.type}
-                    options={[
-                      { value: 'red', label: 'Red' },
-                      { value: 'white', label: 'White' },
-                      { value: 'sparkling', label: 'Sparkling' },
-                      { value: 'rosé', label: 'Rosé' },
-                      { value: 'dessert', label: 'Dessert' },
-                      { value: 'fortified', label: 'Fortified' },
-                    ]}
+                    value={watch('winery') || ''}
+                    onChange={(val) => setValue('winery', val, { shouldValidate: true })}
+                    placeholder="Select brand..."
+                    error={!!errors.winery}
+                    options={wineries.map(w => ({ value: w._id, label: w.name }))}
                   />
-                  <input type="hidden" {...register('type', { required: 'Type is required' })} />
-                  {errors.type && <span className="form-error">{errors.type.message}</span>}
+                  <input type="hidden" {...register('winery', { required: 'Brand is required' })} />
+                  {errors.winery && <span className="form-error">{errors.winery.message}</span>}
                 </div>
 
                 <div className="form-group">
                   <label className="form-label">
                     <MapPin size={16} />
-                    Region
+                    Country
                   </label>
                   <CustomSelect
-                    value={watch('region') || ''}
-                    onChange={(val) => setValue('region', val, { shouldValidate: true })}
-                    placeholder="Select region..."
-                    error={!!errors.region}
+                    value={watch('country') || ''}
+                    onChange={(val) => setValue('country', val, { shouldValidate: true })}
+                    placeholder="Select country..."
+                    error={!!errors.country}
+                    options={WINE_COUNTRIES}
+                  />
+                  <input type="hidden" {...register('country', { required: 'Country is required' })} />
+                  {errors.country && <span className="form-error">{errors.country.message}</span>}
+                </div>
+
+                <div className="form-row-2col">
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Droplet size={16} />
+                      Type
+                    </label>
+                    <CustomSelect
+                      value={watch('type') || ''}
+                      onChange={(val) => setValue('type', val, { shouldValidate: true })}
+                      placeholder="Select type..."
+                      error={!!errors.type}
+                      options={[
+                        { value: 'red', label: 'Red' },
+                        { value: 'white', label: 'White' },
+                        { value: 'sparkling', label: 'Sparkling' },
+                        { value: 'rosé', label: 'Rosé' },
+                        { value: 'dessert', label: 'Dessert' },
+                        { value: 'fortified', label: 'Fortified' },
+                      ]}
+                    />
+                    <input type="hidden" {...register('type', { required: 'Type is required' })} />
+                    {errors.type && <span className="form-error">{errors.type.message}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">
+                      <MapPin size={16} />
+                      Region
+                    </label>
+                    <CustomSelect
+                      value={watch('region') || ''}
+                      onChange={(val) => setValue('region', val, { shouldValidate: true })}
+                      placeholder="Select region..."
+                      error={!!errors.region}
+                      options={[
+                        { value: 'Napa Valley', label: 'Napa Valley' },
+                        { value: 'Sonoma County', label: 'Sonoma County' },
+                        { value: 'Paso Robles', label: 'Paso Robles' },
+                        { value: 'Santa Barbara', label: 'Santa Barbara' },
+                        { value: 'Willamette Valley', label: 'Willamette Valley' },
+                        { value: 'Finger Lakes', label: 'Finger Lakes' },
+                        { value: 'Columbia Valley', label: 'Columbia Valley' },
+                        { value: 'Walla Walla', label: 'Walla Walla' },
+                        { value: 'Russian River Valley', label: 'Russian River Valley' },
+                        { value: 'Alexander Valley', label: 'Alexander Valley' },
+                        { value: 'Other', label: 'Other' },
+                      ]}
+                    />
+                    <input type="hidden" {...register('region')} />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="variety" className="form-label">
+                    <Grape size={16} />
+                    Variety
+                  </label>
+                  <textarea
+                    id="variety"
+                    className="form-control"
+                    rows="2"
+                    {...register('variety')}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="description" className="form-label">
+                    <FileText size={16} />
+                    Description
+                  </label>
+                  <textarea
+                    id="description"
+                    className="form-control"
+                    rows="4"
+                    {...register('description')}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="foodPairing" className="form-label">
+                    <Utensils size={16} />
+                    Food Pairings
+                  </label>
+                  <textarea
+                    id="foodPairing"
+                    className="form-control"
+                    rows="3"
+                    {...register('foodPairing')}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">
+                    <Grape size={16} />
+                    Lifestyle
+                  </label>
+                  <CustomSelect
+                    value={lifestyle}
+                    onChange={(val) => {
+                      setLifestyle(val);
+                      if (isEdit) setSaveStatus('saving');
+                    }}
+                    placeholder="Select lifestyle attributes..."
+                    multi
                     options={[
-                      { value: 'Napa Valley', label: 'Napa Valley' },
-                      { value: 'Sonoma County', label: 'Sonoma County' },
-                      { value: 'Paso Robles', label: 'Paso Robles' },
-                      { value: 'Santa Barbara', label: 'Santa Barbara' },
-                      { value: 'Willamette Valley', label: 'Willamette Valley' },
-                      { value: 'Finger Lakes', label: 'Finger Lakes' },
-                      { value: 'Columbia Valley', label: 'Columbia Valley' },
-                      { value: 'Walla Walla', label: 'Walla Walla' },
-                      { value: 'Russian River Valley', label: 'Russian River Valley' },
-                      { value: 'Alexander Valley', label: 'Alexander Valley' },
-                      { value: 'Other', label: 'Other' },
+                      { value: 'organic', label: 'Organic' },
+                      { value: 'vegan', label: 'Vegan' },
                     ]}
                   />
-                  <input type="hidden" {...register('region')} />
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label htmlFor="variety" className="form-label">
-                  <Grape size={16} />
-                  Variety
-                </label>
-                <textarea
-                  id="variety"
-                  className="form-control"
-                  rows="2"
-                  {...register('variety')}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="description" className="form-label">
-                  <FileText size={16} />
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  className="form-control"
-                  rows="4"
-                  {...register('description')}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="foodPairing" className="form-label">
-                  <Utensils size={16} />
-                  Food Pairings
-                </label>
-                <textarea
-                  id="foodPairing"
-                  className="form-control"
-                  rows="3"
-                  {...register('foodPairing')}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">
-                  <Grape size={16} />
-                  Lifestyle
-                </label>
-                <CustomSelect
-                  value={lifestyle}
-                  onChange={(val) => {
-                    setLifestyle(val);
-                    if (isEdit) setSaveStatus('saving');
-                  }}
-                  placeholder="Select lifestyle attributes..."
-                  multi
-                  options={[
-                    { value: 'organic', label: 'Organic' },
-                    { value: 'vegan', label: 'Vegan' },
-                  ]}
-                />
-              </div>
-            </div>
-
-            {!isEdit && (
-              <div className="form-actions-bottom">
-                <button
-                  type="button"
-                  onClick={() => navigate('/wines')}
-                  className="btn btn-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={loading}
-                >
-                  {loading ? 'Creating...' : 'Create Wine'}
-                </button>
-              </div>
-            )}
-          </form>
-        </div>
-
-        {/* Right Column - Vintages & Nutrition */}
-        {isEdit && (
-          <div className="wine-vintages-column">
-            <div className="vintages-assets-card">
-              <div className="vintages-header">
-                <h2 className="section-title">Vintages & Assets</h2>
-                <button
-                  onClick={() => setShowVintageSheet(true)}
-                  className="btn-add-vintage-circle"
-                  title="Add Vintage"
-                  type="button"
-                >
-                  <Plus size={18} />
-                </button>
-              </div>
-
-              <div className="vintages-label">All Vintages</div>
-
-              {vintages.length === 0 ? (
-                <p className="no-data">No vintages yet</p>
-              ) : (
-                <div className="vintages-year-cards">
-                  {vintages.map((vintage) => (
+                {!isEdit && (
+                  <div className="form-actions-bottom">
                     <button
-                      key={vintage._id}
-                      onClick={() => setSelectedVintage(vintage)}
-                      className="vintage-year-card"
+                      type="button"
+                      onClick={() => navigate('/wines')}
+                      className="btn btn-secondary"
                     >
-                      {vintage.year}
+                      Cancel
                     </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={loading}
+                    >
+                      {loading ? 'Creating...' : 'Create Wine'}
+                    </button>
+                  </div>
+                )}
+              </form>
+              </motion.div>
+            )}
 
-            {/* Nutrition & Ingredients Card */}
-            <div className="nutrition-card">
-              <div className="card-header-with-info">
-                <h2 className="section-title">
-                  Nutrition & Ingredients
-                </h2>
-                <span className="info-badge" title="TTB proposed regulations 2025">
-                  <AlertCircle size={14} />
-                  TTB 2025
-                </span>
-              </div>
-
-              <form onSubmit={(e) => e.preventDefault()} onKeyDown={(e) => {
-                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
-                  e.preventDefault();
-                }
-              }}>
-                {/* Alcohol Facts Section */}
-                <div className="nutrition-section">
-                  <h3
-                    className="nutrition-section-title collapsible"
-                    onClick={() => toggleSection('alcoholFacts')}
+            {/* Vintages & Assets Tab */}
+            {activeTab === 'vintages' && isEdit && (
+              <motion.div
+                key="vintages"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+              >
+                <div className="vintages-header">
+                  <h2 className="section-title">Vintages & Assets</h2>
+                  <button
+                    onClick={() => setShowVintageSheet(true)}
+                    className="btn-add-vintage-circle"
+                    title="Add Vintage"
+                    type="button"
                   >
-                    <span>Alcohol Facts</span>
-                    <ChevronDown
-                      size={18}
-                      className={`collapse-icon ${collapsedSections.alcoholFacts ? 'collapsed' : ''}`}
-                    />
-                  </h3>
-
-                  {!collapsedSections.alcoholFacts && (
-                  <>
-                  <div className="form-group">
-                    <label className="form-label-small">Serving Size (oz)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      className="form-control form-control-sm"
-                      defaultValue="5"
-                      {...register('nutrition.servingSize')}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label-small">Servings/Container</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      className="form-control form-control-sm"
-                      {...register('nutrition.servingsPerContainer')}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label-small">ABV (%)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      className="form-control form-control-sm"
-                      {...register('nutrition.alcoholByVolume')}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label-small">Alcohol/Serving (oz)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      className="form-control form-control-sm"
-                      {...register('nutrition.alcoholPerServing')}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label-small">Calories</label>
-                    <input
-                      type="number"
-                      className="form-control form-control-sm"
-                      {...register('nutrition.caloriesPerServing')}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label-small">Carbs (g)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      className="form-control form-control-sm"
-                      {...register('nutrition.carbohydratesPerServing')}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label-small">Sugar (g)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      className="form-control form-control-sm"
-                      {...register('nutrition.sugarPerServing')}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label-small">Protein (g)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      className="form-control form-control-sm"
-                      defaultValue="0"
-                      {...register('nutrition.proteinPerServing')}
-                    />
-                  </div>
-                  </>
-                  )}
+                    <Plus size={18} />
+                  </button>
                 </div>
 
-                {/* Allergens Section */}
-                <div className="nutrition-section">
-                  <h3
-                    className="nutrition-section-title collapsible"
-                    onClick={() => toggleSection('allergens')}
-                  >
-                    <span>Major Food Allergens</span>
-                    <ChevronDown
-                      size={18}
-                      className={`collapse-icon ${collapsedSections.allergens ? 'collapsed' : ''}`}
-                    />
-                  </h3>
+                <div className="vintages-label">All Vintages</div>
 
-                  {!collapsedSections.allergens && (
-                  <div className="allergens-grid">
-                    {Object.keys(allergens).map((allergen) => (
-                      <label key={allergen} className="allergen-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={allergens[allergen]}
-                          onChange={() => handleAllergenToggle(allergen)}
-                        />
-                        <span className="allergen-label">
-                          {allergen === 'crustaceanShellfish' ? 'Shellfish' :
-                           allergen === 'treeNuts' ? 'Tree Nuts' :
-                           allergen.charAt(0).toUpperCase() + allergen.slice(1)}
-                        </span>
-                      </label>
+                {vintages.length === 0 ? (
+                  <p className="no-data">No vintages yet</p>
+                ) : (
+                  <div className="vintages-year-cards">
+                    {vintages.map((vintage) => (
+                      <button
+                        key={vintage._id}
+                        onClick={() => setSelectedVintage(vintage)}
+                        className="vintage-year-card"
+                      >
+                        {vintage.year}
+                      </button>
                     ))}
                   </div>
-                  )}
+                )}
+              </motion.div>
+            )}
+
+            {/* Nutrition & Ingredients Tab */}
+            {activeTab === 'nutrition' && isEdit && (
+              <motion.div
+                key="nutrition"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+              >
+                <div className="card-header-with-info">
+                  <h2 className="section-title">
+                    Nutrition & Ingredients
+                  </h2>
+                  <span className="info-badge" title="TTB proposed regulations 2025">
+                    <AlertCircle size={14} />
+                    TTB 2025
+                  </span>
                 </div>
 
-                {/* Ingredients Section */}
-                <div className="nutrition-section">
-                  <h3
-                    className="nutrition-section-title collapsible"
-                    onClick={() => toggleSection('ingredients')}
-                  >
-                    <span>Ingredients</span>
-                    <ChevronDown
-                      size={18}
-                      className={`collapse-icon ${collapsedSections.ingredients ? 'collapsed' : ''}`}
-                    />
-                  </h3>
+                <form onSubmit={(e) => e.preventDefault()} onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                  }
+                }}>
+                  {/* Alcohol Facts Section */}
+                  <div className="nutrition-section">
+                    <h3
+                      className="nutrition-section-title collapsible"
+                      onClick={() => toggleSection('alcoholFacts')}
+                    >
+                      <span>Alcohol Facts</span>
+                      <ChevronDown
+                        size={18}
+                        className={`collapse-icon ${collapsedSections.alcoholFacts ? 'collapsed' : ''}`}
+                      />
+                    </h3>
 
-                  {!collapsedSections.ingredients && (
-                  <>
-                  <div className="form-group">
-                    <label className="form-label-small">Primary Ingredients</label>
-                    <div className="ingredient-input-group">
+                    {!collapsedSections.alcoholFacts && (
+                    <>
+                    <div className="form-group">
+                      <label className="form-label-small">Serving Size (oz)</label>
                       <input
-                        type="text"
+                        type="number"
+                        step="0.1"
                         className="form-control form-control-sm"
-                        placeholder="e.g., Grapes (Cabernet Sauvignon)"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            addIngredient('primary', e.target.value);
-                            e.target.value = '';
-                          }
-                        }}
+                        defaultValue="5"
+                        {...register('nutrition.servingSize')}
                       />
                     </div>
-                    <div className="ingredient-tags">
-                      {primaryIngredients.map((ingredient, idx) => (
-                        <span key={idx} className="ingredient-tag">
-                          {ingredient}
-                          <button
-                            type="button"
-                            onClick={() => removeIngredient('primary', idx)}
-                            className="remove-tag"
-                          >
-                            <X size={12} />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
 
-                  <div className="form-group">
-                    <label className="form-label-small">Additives</label>
-                    <div className="ingredient-input-group">
+                    <div className="form-group">
+                      <label className="form-label-small">Servings/Container</label>
                       <input
-                        type="text"
+                        type="number"
+                        step="0.1"
                         className="form-control form-control-sm"
-                        placeholder="e.g., Sulfites"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            addIngredient('additive', e.target.value);
-                            e.target.value = '';
-                          }
-                        }}
+                        {...register('nutrition.servingsPerContainer')}
                       />
                     </div>
-                    <div className="ingredient-tags">
-                      {additives.map((additive, idx) => (
-                        <span key={idx} className="ingredient-tag">
-                          {additive}
-                          <button
-                            type="button"
-                            onClick={() => removeIngredient('additive', idx)}
-                            className="remove-tag"
-                          >
-                            <X size={12} />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
 
-                  <div className="form-group">
-                    <label className="form-label-small">Processing Aids</label>
-                    <div className="ingredient-input-group">
+                    <div className="form-group">
+                      <label className="form-label-small">ABV (%)</label>
                       <input
-                        type="text"
+                        type="number"
+                        step="0.1"
                         className="form-control form-control-sm"
-                        placeholder="e.g., Bentonite, Egg whites"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            addIngredient('processing', e.target.value);
-                            e.target.value = '';
-                          }
-                        }}
+                        {...register('nutrition.alcoholByVolume')}
                       />
                     </div>
-                    <div className="ingredient-tags">
-                      {processingAids.map((aid, idx) => (
-                        <span key={idx} className="ingredient-tag">
-                          {aid}
-                          <button
-                            type="button"
-                            onClick={() => removeIngredient('processing', idx)}
-                            className="remove-tag"
-                          >
-                            <X size={12} />
-                          </button>
-                        </span>
-                      ))}
+
+                    <div className="form-group">
+                      <label className="form-label-small">Alcohol/Serving (oz)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="form-control form-control-sm"
+                        {...register('nutrition.alcoholPerServing')}
+                      />
                     </div>
+
+                    <div className="form-group">
+                      <label className="form-label-small">Calories</label>
+                      <input
+                        type="number"
+                        className="form-control form-control-sm"
+                        {...register('nutrition.caloriesPerServing')}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label-small">Carbs (g)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        className="form-control form-control-sm"
+                        {...register('nutrition.carbohydratesPerServing')}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label-small">Sugar (g)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        className="form-control form-control-sm"
+                        {...register('nutrition.sugarPerServing')}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label-small">Protein (g)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        className="form-control form-control-sm"
+                        defaultValue="0"
+                        {...register('nutrition.proteinPerServing')}
+                      />
+                    </div>
+                    </>
+                    )}
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label-small">Notes</label>
-                    <textarea
-                      className="form-control form-control-sm"
-                      rows="2"
-                      placeholder="Additional ingredient notes..."
-                      {...register('ingredients.notes')}
-                    />
+                  {/* Allergens Section */}
+                  <div className="nutrition-section">
+                    <h3
+                      className="nutrition-section-title collapsible"
+                      onClick={() => toggleSection('allergens')}
+                    >
+                      <span>Major Food Allergens</span>
+                      <ChevronDown
+                        size={18}
+                        className={`collapse-icon ${collapsedSections.allergens ? 'collapsed' : ''}`}
+                      />
+                    </h3>
+
+                    {!collapsedSections.allergens && (
+                    <div className="allergens-grid">
+                      {Object.keys(allergens).map((allergen) => (
+                        <label key={allergen} className="allergen-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={allergens[allergen]}
+                            onChange={() => handleAllergenToggle(allergen)}
+                          />
+                          <span className="allergen-label">
+                            {allergen === 'crustaceanShellfish' ? 'Shellfish' :
+                             allergen === 'treeNuts' ? 'Tree Nuts' :
+                             allergen.charAt(0).toUpperCase() + allergen.slice(1)}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    )}
                   </div>
-                  </>
-                  )}
-                </div>
-              </form>
-            </div>
+
+                  {/* Ingredients Section */}
+                  <div className="nutrition-section">
+                    <h3
+                      className="nutrition-section-title collapsible"
+                      onClick={() => toggleSection('ingredients')}
+                    >
+                      <span>Ingredients</span>
+                      <ChevronDown
+                        size={18}
+                        className={`collapse-icon ${collapsedSections.ingredients ? 'collapsed' : ''}`}
+                      />
+                    </h3>
+
+                    {!collapsedSections.ingredients && (
+                    <>
+                    <div className="form-group">
+                      <label className="form-label-small">Primary Ingredients</label>
+                      <div className="ingredient-input-group">
+                        <input
+                          type="text"
+                          className="form-control form-control-sm"
+                          placeholder="e.g., Grapes (Cabernet Sauvignon)"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addIngredient('primary', e.target.value);
+                              e.target.value = '';
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="ingredient-tags">
+                        {primaryIngredients.map((ingredient, idx) => (
+                          <span key={idx} className="ingredient-tag">
+                            {ingredient}
+                            <button
+                              type="button"
+                              onClick={() => removeIngredient('primary', idx)}
+                              className="remove-tag"
+                            >
+                              <X size={12} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label-small">Additives</label>
+                      <div className="ingredient-input-group">
+                        <input
+                          type="text"
+                          className="form-control form-control-sm"
+                          placeholder="e.g., Sulfites"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addIngredient('additive', e.target.value);
+                              e.target.value = '';
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="ingredient-tags">
+                        {additives.map((additive, idx) => (
+                          <span key={idx} className="ingredient-tag">
+                            {additive}
+                            <button
+                              type="button"
+                              onClick={() => removeIngredient('additive', idx)}
+                              className="remove-tag"
+                            >
+                              <X size={12} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label-small">Processing Aids</label>
+                      <div className="ingredient-input-group">
+                        <input
+                          type="text"
+                          className="form-control form-control-sm"
+                          placeholder="e.g., Bentonite, Egg whites"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addIngredient('processing', e.target.value);
+                              e.target.value = '';
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="ingredient-tags">
+                        {processingAids.map((aid, idx) => (
+                          <span key={idx} className="ingredient-tag">
+                            {aid}
+                            <button
+                              type="button"
+                              onClick={() => removeIngredient('processing', idx)}
+                              className="remove-tag"
+                            >
+                              <X size={12} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label-small">Notes</label>
+                      <textarea
+                        className="form-control form-control-sm"
+                        rows="2"
+                        placeholder="Additional ingredient notes..."
+                        {...register('ingredients.notes')}
+                      />
+                    </div>
+                    </>
+                    )}
+                  </div>
+                </form>
+              </motion.div>
+            )}
+            </AnimatePresence>
           </div>
-        )}
+        </div>
       </div>
 
       {selectedVintage && (
