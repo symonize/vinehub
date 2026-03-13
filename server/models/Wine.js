@@ -21,20 +21,7 @@ const wineSchema = new mongoose.Schema({
   },
   region: {
     type: String,
-    enum: [
-      'Napa Valley',
-      'Sonoma County',
-      'Paso Robles',
-      'Santa Barbara',
-      'Willamette Valley',
-      'Finger Lakes',
-      'Columbia Valley',
-      'Walla Walla',
-      'Russian River Valley',
-      'Alexander Valley',
-      'Other',
-      ''
-    ]
+    trim: true
   },
   type: {
     type: String,

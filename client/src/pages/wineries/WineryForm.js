@@ -96,6 +96,7 @@ const WineryForm = () => {
     } catch (error) {
       console.error('Autosave error:', error);
       setSaveStatus('error');
+      toast.error('Failed to autosave changes');
     }
   }, [isEdit, id, featuredImage, logo, setSaveStatus]);
 
