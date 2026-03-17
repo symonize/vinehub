@@ -8,7 +8,7 @@ const { protect, authorize } = require('../middleware/auth');
 // Generate JWT Token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '24h'
+    expiresIn: process.env.JWT_EXPIRE || '7d'
   });
 };
 
