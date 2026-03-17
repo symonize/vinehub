@@ -1,7 +1,9 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
+import { Helmet } from 'react-helmet-async';
 import { wineriesAPI, winesAPI } from '../utils/api';
+import OptimizedImage from '../components/OptimizedImage';
 import './WineryDetail.css';
 
 const WineryDetail = () => {
@@ -53,12 +55,17 @@ const WineryDetail = () => {
 
   return (
     <div className="winery-detail">
+      <Helmet>
+        <title>{winery.name} | WineHub</title>
+        <meta name="description" content={`${winery.name}${winery.region ? ` — ${winery.region}` : ''}. ${winery.description?.slice(0, 150) || ''}`} />
+        {winery.logo?.url && <meta property="og:image" content={winery.logo.url} />}
+      </Helmet>
       <section className="winery-hero">
         <div className="container">
           <div className="winery-hero-content">
             {winery.logo?.url && (
               <div className="winery-logo">
-                <img src={winery.logo.url} alt={winery.name} />
+                <OptimizedImage src={winery.logo.url} alt={winery.name} width={300} />
               </div>
             )}
             <div className="winery-info">
@@ -97,7 +104,7 @@ const WineryDetail = () => {
                 >
                   <div className="wine-card-image">
                     {wine.bottleImage?.url ? (
-                      <img src={wine.bottleImage.url} alt={wine.name} />
+                      <OptimizedImage src={wine.bottleImage.url} alt={wine.name} width={400} />
                     ) : (
                       <div className="wine-card-placeholder">
                         <svg width="60" height="60" viewBox="0 0 100 100" fill="none">

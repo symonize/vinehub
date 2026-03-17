@@ -1,7 +1,8 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { vintagesAPI, getFileUrl } from '../../utils/api';
+import { vintagesAPI, getFileUrl, getOptimizedImageUrl } from '../../utils/api';
+import { IMAGE_SIZES } from '../../utils/imageOptimization';
 import { ArrowLeft, Edit, Download, FileText, Image } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import './Vintages.css';
@@ -201,7 +202,7 @@ const AssetDisplay = ({ label, asset, icon }) => {
 
       {isImage && (
         <div className="asset-thumbnail">
-          <img src={fileUrl} alt={label} />
+          <img src={getOptimizedImageUrl(asset.path, IMAGE_SIZES.preview)} alt={label} />
         </div>
       )}
 

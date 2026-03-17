@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, File, Image, FileText, Download, Trash2, FileEdit, FolderOpen, Trophy, Plus } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { vintagesAPI, getFileUrl } from '../utils/api';
+import { vintagesAPI, getFileUrl, getOptimizedImageUrl } from '../utils/api';
+import { compressImage, IMAGE_SIZES } from '../utils/imageOptimization';
 import ConfirmModal from './ConfirmModal';
 import './AssetSheet.css';
 
@@ -144,8 +145,9 @@ const AssetSheet = ({ vintage, wineName, onClose, onUpdate }) => {
     setUploading(prev => ({ ...prev, [assetType]: true }));
 
     try {
+      const optimizedFile = await compressImage(file);
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', optimizedFile);
 
       const uploadResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/upload`, {
         method: 'POST',
@@ -214,7 +216,7 @@ const AssetSheet = ({ vintage, wineName, onClose, onUpdate }) => {
           {asset ? (
             <div className="asset-preview">
               {assetType.accept.includes('image') && (asset.url || asset.path) ? (
-                <img src={getFileUrl(asset.url || asset.path)} alt={assetType.label} className="asset-image" />
+                <img src={getOptimizedImageUrl(asset.url || asset.path, IMAGE_SIZES.preview)} alt={assetType.label} className="asset-image" />
               ) : (
                 <div className="asset-file-icon">
                   <File size={48} />

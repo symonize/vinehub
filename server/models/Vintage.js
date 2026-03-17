@@ -114,5 +114,6 @@ const vintageSchema = new mongoose.Schema({
 
 // Compound index to ensure unique wine-year combinations
 vintageSchema.index({ wine: 1, year: 1 }, { unique: true });
+vintageSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Vintage', vintageSchema);

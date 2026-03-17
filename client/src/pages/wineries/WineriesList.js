@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { wineriesAPI, getFileUrl } from '../../utils/api';
+import { wineriesAPI, getFileUrl, getOptimizedImageUrl } from '../../utils/api';
+import { IMAGE_SIZES } from '../../utils/imageOptimization';
 import { Plus, Search, Edit, Trash2, Eye, Building2, LayoutGrid, List } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -156,7 +157,7 @@ const WineriesList = () => {
                           <div className="winery-name">
                             {(winery.logo?.url || winery.logo?.path) && (
                               <img
-                                src={getFileUrl(winery.logo.url || winery.logo.path)}
+                                src={getOptimizedImageUrl(winery.logo.url || winery.logo.path, IMAGE_SIZES.logo)}
                                 alt={winery.name}
                                 className="winery-logo-thumb"
                               />
@@ -222,7 +223,7 @@ const WineriesList = () => {
                       {(winery.featuredImage?.url || winery.featuredImage?.path || winery.logo?.url || winery.logo?.path) ? (
                         <div className="item-card-image">
                           <img
-                            src={getFileUrl(winery.featuredImage?.url || winery.featuredImage?.path || winery.logo?.url || winery.logo?.path)}
+                            src={getOptimizedImageUrl(winery.featuredImage?.url || winery.featuredImage?.path || winery.logo?.url || winery.logo?.path, IMAGE_SIZES.preview)}
                             alt={winery.name}
                             style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                           />

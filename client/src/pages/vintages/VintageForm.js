@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { vintagesAPI, winesAPI, uploadAPI, getFileUrl } from '../../utils/api';
+import { vintagesAPI, winesAPI, uploadAPI, getFileUrl, getOptimizedImageUrl } from '../../utils/api';
+import { IMAGE_SIZES } from '../../utils/imageOptimization';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { ArrowLeft, Upload, X } from 'lucide-react';
@@ -21,7 +22,8 @@ const VintageForm = () => {
     techSheet: null,
     shelfTalker: null,
     tastingCard: null,
-    labelImage: null
+    labelImage: null,
+    lifestyleImage: null
   });
   const [uploadingAsset, setUploadingAsset] = useState(null);
 
@@ -42,21 +44,23 @@ const VintageForm = () => {
   useEffect(() => {
     if (vintageData?.data?.data) {
       const vintage = vintageData.data.data;
+      const { production, pricing, assets: _assets, wine: wineField, createdBy, updatedBy, createdAt, updatedAt, __v, _id, ...rest } = vintage;
       reset({
-        ...vintage,
-        wine: vintage.wine?._id || vintage.wine,
-        'production.cases': vintage.production?.cases || '',
-        'production.bottles': vintage.production?.bottles || '',
-        'pricing.wholesale': vintage.pricing?.wholesale || '',
-        'pricing.retail': vintage.pricing?.retail || '',
-        'pricing.currency': vintage.pricing?.currency || 'USD'
+        ...rest,
+        wine: wineField?._id || wineField,
+        'production.cases': production?.cases || '',
+        'production.bottles': production?.bottles || '',
+        'pricing.wholesale': pricing?.wholesale || '',
+        'pricing.retail': pricing?.retail || '',
+        'pricing.currency': pricing?.currency || 'USD'
       });
       setAssets(vintage.assets || {
         bottleImage: null,
         techSheet: null,
         shelfTalker: null,
         tastingCard: null,
-        labelImage: null
+        labelImage: null,
+        lifestyleImage: null
       });
     } else if (preselectedWine) {
       reset({ wine: preselectedWine });
@@ -328,6 +332,16 @@ const VintageForm = () => {
             onUpload={handleFileUpload}
             onRemove={removeAsset}
           />
+
+          <AssetUpload
+            label="Lifestyle Image"
+            assetType="lifestyleImage"
+            accept="image/*,.webp"
+            asset={assets.lifestyleImage}
+            uploading={uploadingAsset === 'lifestyleImage'}
+            onUpload={handleFileUpload}
+            onRemove={removeAsset}
+          />
         </div>
 
         <div className="form-actions">
@@ -373,7 +387,7 @@ const AssetUpload = ({ label, assetType, accept, asset, uploading, onUpload, onR
       ) : (
         <div className="asset-preview">
           {isImage && (
-            <img src={getFileUrl(asset.path)} alt={label} className="asset-preview-image" />
+            <img src={getOptimizedImageUrl(asset.path, IMAGE_SIZES.preview)} alt={label} className="asset-preview-image" />
           )}
           {isPDF && (
             <div className="asset-pdf-indicator">

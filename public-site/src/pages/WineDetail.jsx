@@ -1,7 +1,9 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
+import { Helmet } from 'react-helmet-async';
 import { winesAPI, vintagesAPI } from '../utils/api';
+import OptimizedImage from '../components/OptimizedImage';
 import './WineDetail.css';
 
 const WineDetail = () => {
@@ -53,13 +55,18 @@ const WineDetail = () => {
 
   return (
     <div className="wine-detail">
+      <Helmet>
+        <title>{wine.name} | WineHub</title>
+        <meta name="description" content={`${wine.name} by ${wine.winery?.name || ''}. ${wine.type ? wine.type.charAt(0).toUpperCase() + wine.type.slice(1) : ''} wine${wine.region ? ` from ${wine.region}` : ''}.`} />
+        {wine.bottleImage?.url && <meta property="og:image" content={wine.bottleImage.url} />}
+      </Helmet>
       <div className="container-narrow">
         <div className="wine-detail-grid">
           {/* Left Column - Image */}
           <div className="wine-image-section">
             <div className="wine-image-container">
               {wine.bottleImage?.url ? (
-                <img src={wine.bottleImage.url} alt={wine.name} />
+                <OptimizedImage src={wine.bottleImage.url} alt={wine.name} width={600} />
               ) : (
                 <div className="wine-placeholder">
                   <svg width="120" height="120" viewBox="0 0 100 100" fill="none">
@@ -147,13 +154,13 @@ const WineDetail = () => {
                         <div key={key} className="wd-asset-item">
                           <div className="wd-asset-tooltip">
                             {IMAGE_TYPES.has(key)
-                              ? <img src={asset.url} alt={ASSET_LABELS[key]} />
+                              ? <OptimizedImage src={asset.url} alt={ASSET_LABELS[key]} width={400} />
                               : <div className="wd-asset-tooltip-pdf-wrap"><iframe src={`https://docs.google.com/viewer?url=${encodeURIComponent(asset.url)}&embedded=true`} title={ASSET_LABELS[key]} className="wd-asset-tooltip-pdf" /></div>
                             }
                           </div>
                           <div className={`wd-asset-thumb${IMAGE_TYPES.has(key) ? '' : ' wd-asset-thumb-doc'}`}>
                             {IMAGE_TYPES.has(key)
-                              ? <img src={asset.url} alt={ASSET_LABELS[key]} />
+                              ? <OptimizedImage src={asset.url} alt={ASSET_LABELS[key]} width={400} />
                               : <DocIcon />
                             }
                           </div>

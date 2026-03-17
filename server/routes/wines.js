@@ -4,16 +4,26 @@ const { body, validationResult } = require('express-validator');
 const Wine = require('../models/Wine');
 const Winery = require('../models/Winery');
 const Vintage = require('../models/Vintage');
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, optionalAuth } = require('../middleware/auth');
+const escapeRegex = require('../utils/escapeRegex');
 
 // @route   GET /api/wines
 // @desc    Get all wines
 // @access  Public
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { winery, type, country, region, status, search, page = 1, limit = 10 } = req.query;
+    const { winery, type, country, region, status, search, page: rawPage = 1, limit: rawLimit = 10 } = req.query;
+    const page = parseInt(rawPage);
+    const limit = parseInt(rawLimit);
 
     let query = {};
+
+    // Non-authenticated users only see published content
+    if (!req.user) {
+      query.status = 'published';
+    } else if (status) {
+      query.status = status;
+    }
 
     // Filter by winery
     if (winery) {
@@ -35,18 +45,14 @@ router.get('/', async (req, res) => {
       query.region = region;
     }
 
-    // Filter by status
-    if (status) {
-      query.status = status;
-    }
-
-    // Search functionality
+    // Search functionality (sanitized to prevent ReDoS)
     if (search) {
+      const escaped = escapeRegex(search);
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { variety: { $regex: search, $options: 'i' } },
-        { region: { $regex: search, $options: 'i' } }
+        { name: { $regex: escaped, $options: 'i' } },
+        { description: { $regex: escaped, $options: 'i' } },
+        { variety: { $regex: escaped, $options: 'i' } },
+        { region: { $regex: escaped, $options: 'i' } }
       ];
     }
 
@@ -55,7 +61,7 @@ router.get('/', async (req, res) => {
       .populate('createdBy', 'firstName lastName')
       .populate('updatedBy', 'firstName lastName')
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
+      .limit(limit)
       .skip((page - 1) * limit);
 
     const count = await Wine.countDocuments(query);
@@ -182,7 +188,7 @@ router.put('/:id', [
     }
 
     // Check ownership
-    if (req.user.role !== 'admin' && wine.createdBy.toString() !== req.user.id) {
+    if (req.user.role !== 'admin' && wine.createdBy?.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this wine'
@@ -223,7 +229,7 @@ router.delete('/:id', protect, authorize('admin', 'editor'), async (req, res) =>
     }
 
     // Check ownership
-    if (req.user.role !== 'admin' && wine.createdBy.toString() !== req.user.id) {
+    if (req.user.role !== 'admin' && wine.createdBy?.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this wine'

@@ -8,7 +8,7 @@ const { protect, authorize } = require('../middleware/auth');
 // Generate JWT Token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '7d'
+    expiresIn: process.env.JWT_EXPIRE || '24h'
   });
 };
 
@@ -181,11 +181,21 @@ router.put('/me', [
 // @access  Private (Admin only)
 router.get('/users', protect, authorize('admin'), async (req, res) => {
   try {
-    const users = await User.find();
+    const { page = 1, limit = 50 } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = Math.min(parseInt(limit) || 50, 100);
+
+    const users = await User.find()
+      .sort({ createdAt: -1 })
+      .limit(limitNum)
+      .skip((pageNum - 1) * limitNum);
+
+    const count = await User.countDocuments();
 
     res.json({
       success: true,
       count: users.length,
+      total: count,
       data: users
     });
   } catch (error) {

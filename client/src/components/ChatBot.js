@@ -17,10 +17,10 @@ const ChatBot = () => {
   const messagesEndRef = useRef(null);
   const queryClient = useQueryClient();
 
-  // Fetch all data for context
-  const { data: wineriesData, refetch: refetchWineries } = useQuery('chatbot-wineries', () => wineriesAPI.getAll());
-  const { data: winesData, refetch: refetchWines } = useQuery('chatbot-wines', () => winesAPI.getAll());
-  const { data: vintagesData } = useQuery('chatbot-vintages', () => vintagesAPI.getAll());
+  // Fetch data for context (limited to avoid overloading API)
+  const { data: wineriesData, refetch: refetchWineries } = useQuery('chatbot-wineries', () => wineriesAPI.getAll({ limit: 100 }), { enabled: isOpen });
+  const { data: winesData, refetch: refetchWines } = useQuery('chatbot-wines', () => winesAPI.getAll({ limit: 100 }), { enabled: isOpen });
+  const { data: vintagesData } = useQuery('chatbot-vintages', () => vintagesAPI.getAll({ limit: 100 }), { enabled: isOpen });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

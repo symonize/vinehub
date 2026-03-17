@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { winesAPI } from '../../utils/api';
+import { winesAPI, getOptimizedImageUrl } from '../../utils/api';
+import { IMAGE_SIZES } from '../../utils/imageOptimization';
 import { Plus, Search, Trash2, Wine as WineIcon, LayoutGrid, List } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -196,7 +197,7 @@ const WinesList = () => {
                           <div className="wine-name" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <div className="wine-thumbnail">
                               {wine.bottleImage?.url ? (
-                                <img src={wine.bottleImage.url} alt={wine.name} style={{ width: '40px', height: '60px', objectFit: 'contain' }} />
+                                <img src={getOptimizedImageUrl(wine.bottleImage.url, IMAGE_SIZES.thumbnail)} alt={wine.name} style={{ width: '40px', height: '60px', objectFit: 'contain' }} />
                               ) : (
                                 <div style={{ width: '40px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5', borderRadius: '4px' }}>
                                   <WineIcon size={24} style={{ color: getWineTypeColor(wine.type) }} />
@@ -251,7 +252,7 @@ const WinesList = () => {
                     <Link to={`/wines/${wine._id}/edit`} className="item-card-link">
                       <div className="wine-card-image">
                         {wine.bottleImage?.url ? (
-                          <img src={wine.bottleImage.url} alt={wine.name} />
+                          <img src={getOptimizedImageUrl(wine.bottleImage.url, IMAGE_SIZES.preview)} alt={wine.name} />
                         ) : (
                           <div className="wine-card-placeholder">
                             <WineIcon size={60} style={{ color: getWineTypeColor(wine.type) }} />

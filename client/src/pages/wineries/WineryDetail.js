@@ -1,7 +1,8 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { wineriesAPI, winesAPI, getFileUrl } from '../../utils/api';
+import { wineriesAPI, winesAPI, getFileUrl, getOptimizedImageUrl } from '../../utils/api';
+import { IMAGE_SIZES } from '../../utils/imageOptimization';
 import { ArrowLeft, Edit } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import './Wineries.css';
@@ -59,7 +60,7 @@ const WineryDetail = () => {
           {winery.featuredImage && (winery.featuredImage.url || winery.featuredImage.path) && (
             <div className="detail-image">
               <img
-                src={getFileUrl(winery.featuredImage.url || winery.featuredImage.path)}
+                src={getOptimizedImageUrl(winery.featuredImage.url || winery.featuredImage.path, IMAGE_SIZES.full)}
                 alt={winery.name}
               />
             </div>
@@ -92,7 +93,7 @@ const WineryDetail = () => {
             <div className="card">
               <h3>Logo</h3>
               <img
-                src={getFileUrl(winery.logo.url || winery.logo.path)}
+                src={getOptimizedImageUrl(winery.logo.url || winery.logo.path, IMAGE_SIZES.logo)}
                 alt="Logo"
                 style={{ width: '100%', borderRadius: '0.5rem' }}
               />

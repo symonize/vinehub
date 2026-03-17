@@ -3,16 +3,25 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Vintage = require('../models/Vintage');
 const Wine = require('../models/Wine');
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, optionalAuth } = require('../middleware/auth');
 
 // @route   GET /api/vintages
 // @desc    Get all vintages
 // @access  Public
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { wine, year, status, page = 1, limit = 10 } = req.query;
+    const { wine, year, status, page: rawPage = 1, limit: rawLimit = 10 } = req.query;
+    const page = parseInt(rawPage);
+    const limit = parseInt(rawLimit);
 
     let query = {};
+
+    // Non-authenticated users only see published content
+    if (!req.user) {
+      query.status = 'published';
+    } else if (status) {
+      query.status = status;
+    }
 
     // Filter by wine
     if (wine) {
@@ -21,12 +30,7 @@ router.get('/', async (req, res) => {
 
     // Filter by year
     if (year) {
-      query.year = year;
-    }
-
-    // Filter by status
-    if (status) {
-      query.status = status;
+      query.year = parseInt(year);
     }
 
     const vintages = await Vintage.find(query)
@@ -37,7 +41,7 @@ router.get('/', async (req, res) => {
       .populate('createdBy', 'firstName lastName')
       .populate('updatedBy', 'firstName lastName')
       .sort({ year: -1 })
-      .limit(limit * 1)
+      .limit(limit)
       .skip((page - 1) * limit);
 
     const count = await Vintage.countDocuments(query);
@@ -177,11 +181,28 @@ router.put('/:id', [
     }
 
     // Check ownership
-    if (req.user.role !== 'admin' && vintage.createdBy.toString() !== req.user.id) {
+    if (req.user.role !== 'admin' && vintage.createdBy?.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this vintage'
       });
+    }
+
+    // Check for duplicate wine+year if either changed
+    if (req.body.year || req.body.wine) {
+      const checkWine = req.body.wine || vintage.wine;
+      const checkYear = req.body.year || vintage.year;
+      const duplicate = await Vintage.findOne({
+        wine: checkWine,
+        year: checkYear,
+        _id: { $ne: req.params.id }
+      });
+      if (duplicate) {
+        return res.status(400).json({
+          success: false,
+          message: 'A vintage already exists for this wine and year'
+        });
+      }
     }
 
     vintage = await Vintage.findByIdAndUpdate(
@@ -221,7 +242,7 @@ router.delete('/:id', protect, authorize('admin', 'editor'), async (req, res) =>
     }
 
     // Check ownership
-    if (req.user.role !== 'admin' && vintage.createdBy.toString() !== req.user.id) {
+    if (req.user.role !== 'admin' && vintage.createdBy?.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this vintage'

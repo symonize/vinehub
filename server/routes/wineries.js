@@ -3,28 +3,34 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Winery = require('../models/Winery');
 const Wine = require('../models/Wine');
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, optionalAuth } = require('../middleware/auth');
+const escapeRegex = require('../utils/escapeRegex');
 const { getRandomVineyardImage, searchVineyardImages } = require('../utils/unsplash');
 
 // @route   GET /api/wineries
 // @desc    Get all wineries
 // @access  Public
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { status, search, page = 1, limit = 10 } = req.query;
+    const { status, search, page: rawPage = 1, limit: rawLimit = 10 } = req.query;
+    const page = parseInt(rawPage);
+    const limit = parseInt(rawLimit);
 
     let query = {};
 
-    // Filter by status
-    if (status) {
+    // Non-authenticated users only see published content
+    if (!req.user) {
+      query.status = 'published';
+    } else if (status) {
       query.status = status;
     }
 
-    // Search functionality
+    // Search functionality (sanitized to prevent ReDoS)
     if (search) {
+      const escaped = escapeRegex(search);
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
+        { name: { $regex: escaped, $options: 'i' } },
+        { description: { $regex: escaped, $options: 'i' } }
       ];
     }
 
@@ -32,7 +38,7 @@ router.get('/', async (req, res) => {
       .populate('createdBy', 'firstName lastName')
       .populate('updatedBy', 'firstName lastName')
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
+      .limit(limit)
       .skip((page - 1) * limit);
 
     const count = await Winery.countDocuments(query);
@@ -44,6 +50,28 @@ router.get('/', async (req, res) => {
       totalPages: Math.ceil(count / limit),
       currentPage: page,
       data: wineries
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/wineries/unsplash/search
+// @desc    Search Unsplash for vineyard images
+// @access  Private (Admin, Editor)
+router.get('/unsplash/search', protect, authorize('admin', 'editor'), async (req, res) => {
+  try {
+    const { query = 'vineyard', page = 1, perPage = 20 } = req.query;
+    const images = await searchVineyardImages(query, parseInt(perPage), parseInt(page));
+
+    res.json({
+      success: true,
+      count: images.length,
+      data: images
     });
   } catch (error) {
     res.status(500).json({
@@ -151,7 +179,7 @@ router.put('/:id', [
     }
 
     // Check ownership
-    if (req.user.role !== 'admin' && winery.createdBy.toString() !== req.user.id) {
+    if (req.user.role !== 'admin' && winery.createdBy?.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this winery'
@@ -244,6 +272,7 @@ router.post('/bulk-add-images', protect, authorize('admin'), async (req, res) =>
 
         winery.featuredImage = {
           filename: `${image.id}.jpg`,
+          url: image.url,
           path: image.url,
           mimetype: 'image/jpeg',
           size: 0,
@@ -272,28 +301,6 @@ router.post('/bulk-add-images', protect, authorize('admin'), async (req, res) =>
       count: updated.length,
       data: updated,
       errors: errors.length > 0 ? errors : undefined
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-});
-
-// @route   GET /api/wineries/unsplash/search
-// @desc    Search Unsplash for vineyard images
-// @access  Private (Admin, Editor)
-router.get('/unsplash/search', protect, authorize('admin', 'editor'), async (req, res) => {
-  try {
-    const { query = 'vineyard', page = 1, perPage = 20 } = req.query;
-    const images = await searchVineyardImages(query, parseInt(perPage), parseInt(page));
-
-    res.json({
-      success: true,
-      count: images.length,
-      data: images
     });
   } catch (error) {
     res.status(500).json({

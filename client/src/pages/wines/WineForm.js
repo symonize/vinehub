@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { winesAPI, wineriesAPI, vintagesAPI, aiAPI, uploadAPI } from '../../utils/api';
+import { winesAPI, wineriesAPI, vintagesAPI, aiAPI, uploadAPI, getOptimizedImageUrl } from '../../utils/api';
+import { compressImage, IMAGE_SIZES } from '../../utils/imageOptimization';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -233,17 +234,18 @@ const WineForm = () => {
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size must be less than 5MB');
+    // Validate file size (max 10MB — compression will reduce it before upload)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image size must be less than 10MB');
       return;
     }
 
     setGeneratingImage(true);
 
     try {
-      // Upload to server
-      const uploadResponse = await uploadAPI.single(file);
+      // Compress before upload
+      const optimizedFile = await compressImage(file);
+      const uploadResponse = await uploadAPI.single(optimizedFile);
       const imageUrl = uploadResponse.data.data.url;
 
       // Update wine with uploaded image
@@ -317,12 +319,20 @@ const WineForm = () => {
   // Prepare wine data for saving
   const prepareWineData = useCallback((data, excludeBottleImage = false) => {
     const wineData = {
-      ...data,
+      name: data.name,
+      winery: data.winery,
+      description: data.description,
+      country: data.country,
+      region: data.region,
+      type: data.type,
+      variety: data.variety,
+      foodPairing: data.foodPairing,
+      status: data.status,
       organic: lifestyle.includes('organic'),
       vegan: lifestyle.includes('vegan'),
       awards: awards.filter(a => a.score && a.awardName && a.year),
       nutrition: {
-        servingSize: parseFloat(data['nutrition.servingSize']) || 5,
+        servingSize: data['nutrition.servingSize'] !== '' && data['nutrition.servingSize'] != null ? parseFloat(data['nutrition.servingSize']) : 5,
         servingsPerContainer: parseFloat(data['nutrition.servingsPerContainer']) || undefined,
         alcoholByVolume: parseFloat(data['nutrition.alcoholByVolume']) || undefined,
         alcoholPerServing: parseFloat(data['nutrition.alcoholPerServing']) || undefined,
@@ -341,16 +351,8 @@ const WineForm = () => {
       }
     };
 
-    // Remove nutrition fields from top level
-    Object.keys(wineData).forEach(key => {
-      if (key.startsWith('nutrition.') || key.startsWith('ingredients.')) {
-        delete wineData[key];
-      }
-    });
-
-    // Exclude bottleImage to avoid payload size issues (it's saved separately via AI API)
-    if (excludeBottleImage) {
-      delete wineData.bottleImage;
+    if (!excludeBottleImage && data.bottleImage) {
+      wineData.bottleImage = data.bottleImage;
     }
 
     return wineData;
@@ -461,7 +463,7 @@ const WineForm = () => {
               <Loader size={120} className="animate-spin" />
             ) : generatedImageUrl ? (
               <div className="wine-generated-image">
-                <img src={generatedImageUrl} alt="Generated wine bottle" />
+                <img src={getOptimizedImageUrl(generatedImageUrl, IMAGE_SIZES.full)} alt="Generated wine bottle" />
                 <button
                   type="button"
                   onClick={handleRemoveImage}
@@ -672,24 +674,43 @@ const WineForm = () => {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">
-                    <Grape size={16} />
-                    Lifestyle
-                  </label>
-                  <CustomSelect
-                    value={lifestyle}
-                    onChange={(val) => {
-                      setLifestyle(val);
-                      if (isEdit) setSaveStatus('saving');
-                    }}
-                    placeholder="Select lifestyle attributes..."
-                    multi
-                    options={[
-                      { value: 'organic', label: 'Organic' },
-                      { value: 'vegan', label: 'Vegan' },
-                    ]}
-                  />
+                <div className="form-row-2col">
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Grape size={16} />
+                      Lifestyle
+                    </label>
+                    <CustomSelect
+                      value={lifestyle}
+                      onChange={(val) => {
+                        setLifestyle(val);
+                        if (isEdit) setSaveStatus('saving');
+                      }}
+                      placeholder="Select lifestyle attributes..."
+                      multi
+                      options={[
+                        { value: 'organic', label: 'Organic' },
+                        { value: 'vegan', label: 'Vegan' },
+                      ]}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Tag size={16} />
+                      Status
+                    </label>
+                    <CustomSelect
+                      value={watch('status') || 'draft'}
+                      onChange={(val) => setValue('status', val)}
+                      options={[
+                        { value: 'draft', label: 'Draft' },
+                        { value: 'published', label: 'Published' },
+                        { value: 'archived', label: 'Archived' },
+                      ]}
+                      placeholder="Select status"
+                    />
+                  </div>
                 </div>
 
                 {!isEdit && (

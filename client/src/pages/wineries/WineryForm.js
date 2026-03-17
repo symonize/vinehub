@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { wineriesAPI, winesAPI, uploadAPI, getFileUrl } from '../../utils/api';
+import { wineriesAPI, winesAPI, uploadAPI, getFileUrl, getOptimizedImageUrl } from '../../utils/api';
+import { compressImage, IMAGE_SIZES } from '../../utils/imageOptimization';
 import { useForm, Controller } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { Tag, FileText, MapPin, Image, Wine, Trash2 } from 'lucide-react';
 import { usePageTitle } from '../../context/PageTitleContext';
+import { useAuth } from '../../context/AuthContext';
 import CustomSelect from '../../components/CustomSelect';
 import ConfirmModal from '../../components/ConfirmModal';
 import './Wineries.css';
@@ -34,6 +36,7 @@ const WineryForm = () => {
   const navigate = useNavigate();
   const isEdit = !!id;
   const { setSaveStatus } = usePageTitle();
+  const { isAdmin } = useAuth();
 
   const { register, handleSubmit, formState: { errors }, reset, setValue, control, watch } = useForm();
   const [loading, setLoading] = useState(false);
@@ -72,17 +75,26 @@ const WineryForm = () => {
     }
   }, [wineryData, reset]);
 
+  // Extract only editable fields from form data (exclude server-managed fields)
+  const preparePayload = useCallback((data) => {
+    return {
+      name: data.name,
+      description: data.description,
+      country: data.country,
+      region: data.region,
+      status: data.status,
+      featuredImage,
+      logo
+    };
+  }, [featuredImage, logo]);
+
   // Autosave function
   const autoSave = useCallback(async (data) => {
     if (!isEdit) return;
 
     try {
       setSaveStatus('saving');
-      const payload = {
-        ...data,
-        featuredImage,
-        logo
-      };
+      const payload = preparePayload(data);
 
       const currentDataStr = JSON.stringify(payload);
       if (lastSavedDataRef.current === currentDataStr) {
@@ -98,7 +110,7 @@ const WineryForm = () => {
       setSaveStatus('error');
       toast.error('Failed to autosave changes');
     }
-  }, [isEdit, id, featuredImage, logo, setSaveStatus]);
+  }, [isEdit, id, preparePayload, setSaveStatus]);
 
   // Debounced autosave on form changes
   useEffect(() => {
@@ -124,7 +136,8 @@ const WineryForm = () => {
 
   const handleFileUpload = async (file, type) => {
     try {
-      const response = await uploadAPI.single(file);
+      const optimizedFile = await compressImage(file);
+      const response = await uploadAPI.single(optimizedFile);
       const fileData = response.data.data;
 
       if (type === 'featured') {
@@ -144,11 +157,7 @@ const WineryForm = () => {
     setLoading(true);
 
     try {
-      const payload = {
-        ...data,
-        featuredImage,
-        logo
-      };
+      const payload = preparePayload(data);
 
       if (isEdit) {
         await wineriesAPI.update(id, payload);
@@ -208,7 +217,7 @@ const WineryForm = () => {
               </div>
             ) : (
               <div className="winery-featured-preview">
-                <img src={getFileUrl(featuredImage.url)} alt="Featured" />
+                <img src={getOptimizedImageUrl(featuredImage.url, IMAGE_SIZES.full)} alt="Featured" />
                 <button
                   type="button"
                   onClick={() => setFeaturedImage(null)}
@@ -219,7 +228,7 @@ const WineryForm = () => {
               </div>
             )}
 
-            {isEdit && (
+            {isEdit && isAdmin() && (
               <button
                 type="button"
                 onClick={() => setShowDeleteModal(true)}
@@ -313,7 +322,7 @@ const WineryForm = () => {
                   </div>
                 ) : (
                   <div className="winery-small-preview">
-                    <img src={getFileUrl(logo.url)} alt="Logo" />
+                    <img src={getOptimizedImageUrl(logo.url, IMAGE_SIZES.logo)} alt="Logo" />
                     <button
                       type="button"
                       onClick={() => setLogo(null)}
@@ -383,7 +392,7 @@ const WineryForm = () => {
                 <Link to={`/wines/${wine._id}`} key={wine._id} className="winery-wine-card">
                   <div className="winery-wine-card-image">
                     {wine.bottleImage?.url ? (
-                      <img src={getFileUrl(wine.bottleImage.url)} alt={wine.name} />
+                      <img src={getOptimizedImageUrl(wine.bottleImage.url, IMAGE_SIZES.thumbnail)} alt={wine.name} />
                     ) : (
                       <div className="winery-wine-card-placeholder">
                         <Wine size={28} />

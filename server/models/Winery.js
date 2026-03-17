@@ -73,7 +73,8 @@ winerySchema.virtual('wines', {
   foreignField: 'winery'
 });
 
-// Index for faster searches
+// Indexes for faster searches and filtering
 winerySchema.index({ name: 'text', description: 'text' });
+winerySchema.index({ status: 1 });
 
 module.exports = mongoose.model('Winery', winerySchema);

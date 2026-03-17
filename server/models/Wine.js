@@ -168,8 +168,11 @@ wineSchema.virtual('vintages', {
   foreignField: 'wine'
 });
 
-// Index for faster searches
+// Indexes for faster searches and filtering
 wineSchema.index({ name: 'text', variety: 'text', description: 'text' });
 wineSchema.index({ winery: 1, type: 1 });
+wineSchema.index({ status: 1 });
+wineSchema.index({ country: 1 });
+wineSchema.index({ createdBy: 1 });
 
 module.exports = mongoose.model('Wine', wineSchema);
