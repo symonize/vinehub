@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { vintagesAPI, winesAPI, uploadAPI, getFileUrl, getOptimizedImageUrl } from '../../utils/api';
+import { vintagesAPI, winesAPI, uploadAPI, getOptimizedImageUrl } from '../../utils/api';
 import { IMAGE_SIZES } from '../../utils/imageOptimization';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';

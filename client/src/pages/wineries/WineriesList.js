@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { wineriesAPI, getFileUrl, getOptimizedImageUrl } from '../../utils/api';
+import { wineriesAPI, getOptimizedImageUrl } from '../../utils/api';
 import { IMAGE_SIZES } from '../../utils/imageOptimization';
 import { Plus, Search, Edit, Trash2, Eye, Building2, LayoutGrid, List } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
