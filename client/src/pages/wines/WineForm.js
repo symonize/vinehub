@@ -318,6 +318,10 @@ const WineForm = () => {
 
   // Prepare wine data for saving
   const prepareWineData = useCallback((data, excludeBottleImage = false) => {
+    // react-hook-form stores dot-notation fields as nested objects,
+    // so data['nutrition.servingSize'] is undefined — access via data.nutrition?.servingSize
+    const n = (field) => data.nutrition?.[field] ?? data[`nutrition.${field}`];
+
     const wineData = {
       name: data.name,
       winery: data.winery,
@@ -332,22 +336,22 @@ const WineForm = () => {
       vegan: lifestyle.includes('vegan'),
       awards: awards.filter(a => a.score && a.awardName && a.year),
       nutrition: {
-        servingSize: data['nutrition.servingSize'] !== '' && data['nutrition.servingSize'] != null ? parseFloat(data['nutrition.servingSize']) : 5,
-        servingsPerContainer: parseFloat(data['nutrition.servingsPerContainer']) || undefined,
-        alcoholByVolume: parseFloat(data['nutrition.alcoholByVolume']) || undefined,
-        alcoholPerServing: parseFloat(data['nutrition.alcoholPerServing']) || undefined,
-        caloriesPerServing: parseFloat(data['nutrition.caloriesPerServing']) || undefined,
-        carbohydratesPerServing: parseFloat(data['nutrition.carbohydratesPerServing']) || undefined,
-        fatPerServing: parseFloat(data['nutrition.fatPerServing']) || 0,
-        proteinPerServing: parseFloat(data['nutrition.proteinPerServing']) || 0,
-        sugarPerServing: parseFloat(data['nutrition.sugarPerServing']) || undefined
+        servingSize: n('servingSize') !== '' && n('servingSize') != null ? parseFloat(n('servingSize')) : 5,
+        servingsPerContainer: parseFloat(n('servingsPerContainer')) || undefined,
+        alcoholByVolume: parseFloat(n('alcoholByVolume')) || undefined,
+        alcoholPerServing: parseFloat(n('alcoholPerServing')) || undefined,
+        caloriesPerServing: parseFloat(n('caloriesPerServing')) || undefined,
+        carbohydratesPerServing: parseFloat(n('carbohydratesPerServing')) || undefined,
+        fatPerServing: parseFloat(n('fatPerServing')) || 0,
+        proteinPerServing: parseFloat(n('proteinPerServing')) || 0,
+        sugarPerServing: parseFloat(n('sugarPerServing')) || undefined
       },
       ingredients: {
         primaryIngredients: primaryIngredients.filter(i => i.trim()),
         additives: additives.filter(a => a.trim()),
         processingAids: processingAids.filter(p => p.trim()),
         allergens,
-        notes: data['ingredients.notes'] || ''
+        notes: (data.ingredients?.notes ?? data['ingredients.notes']) || ''
       }
     };
 

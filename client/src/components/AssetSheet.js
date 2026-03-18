@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, File, Image, FileText, Download, Trash2, FileEdit, FolderOpen, Trophy, Plus } from 'lucide-react';
@@ -8,12 +8,13 @@ import { compressImage, IMAGE_SIZES } from '../utils/imageOptimization';
 import ConfirmModal from './ConfirmModal';
 import './AssetSheet.css';
 
-const AssetSheet = ({ vintage, wineName, onClose, onUpdate }) => {
+const AssetSheet = ({ vintage: initialVintage, wineName, onClose, onUpdate }) => {
   const [uploading, setUploading] = useState({});
   const [isClosing, setIsClosing] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [vintage, setVintage] = useState(initialVintage);
   const [formData, setFormData] = useState({
     productionVolume: '',
     releaseDate: '',
@@ -23,7 +24,7 @@ const AssetSheet = ({ vintage, wineName, onClose, onUpdate }) => {
     oakTreatment: '',
     blendDetails: ''
   });
-  const [saveTimeout, setSaveTimeout] = useState(null);
+  const saveTimeoutRef = useRef(null);
 
   // Awards state
   const [awards, setAwards] = useState([]);
@@ -31,32 +32,36 @@ const AssetSheet = ({ vintage, wineName, onClose, onUpdate }) => {
   const [showAwardForm, setShowAwardForm] = useState(false);
 
   useEffect(() => {
-    if (vintage) {
+    if (initialVintage) {
+      setVintage(initialVintage);
       setFormData({
-        productionVolume: vintage.productionVolume || '',
-        releaseDate: vintage.releaseDate ? vintage.releaseDate.split('T')[0] : '',
-        tastingNotes: vintage.tastingNotes || '',
-        harvestNotes: vintage.harvestNotes || '',
-        agingProcess: vintage.agingProcess || '',
-        oakTreatment: vintage.oakTreatment || '',
-        blendDetails: vintage.blendDetails || ''
+        productionVolume: initialVintage.productionVolume || '',
+        releaseDate: initialVintage.releaseDate ? initialVintage.releaseDate.split('T')[0] : '',
+        tastingNotes: initialVintage.tastingNotes || '',
+        harvestNotes: initialVintage.harvestNotes || '',
+        agingProcess: initialVintage.agingProcess || '',
+        oakTreatment: initialVintage.oakTreatment || '',
+        blendDetails: initialVintage.blendDetails || ''
       });
-      setAwards(vintage.awards || []);
+      setAwards(initialVintage.awards || []);
     }
-  }, [vintage]);
+  }, [initialVintage]);
 
   const autoSaveVintage = useCallback(async (data) => {
     try {
       const updateData = {
-        productionVolume: data.productionVolume ? parseInt(data.productionVolume) : undefined,
-        releaseDate: data.releaseDate || undefined,
-        tastingNotes: data.tastingNotes || undefined,
-        harvestNotes: data.harvestNotes || undefined,
-        agingProcess: data.agingProcess || undefined,
-        oakTreatment: data.oakTreatment || undefined,
-        blendDetails: data.blendDetails || undefined
+        productionVolume: data.productionVolume ? parseInt(data.productionVolume) : null,
+        releaseDate: data.releaseDate || null,
+        tastingNotes: data.tastingNotes || null,
+        harvestNotes: data.harvestNotes || null,
+        agingProcess: data.agingProcess || null,
+        oakTreatment: data.oakTreatment || null,
+        blendDetails: data.blendDetails || null
       };
-      await vintagesAPI.update(vintage._id, updateData);
+      const response = await vintagesAPI.update(vintage._id, updateData);
+      if (response.data?.data) {
+        setVintage(response.data.data);
+      }
     } catch (error) {
       console.error('Autosave vintage error:', error);
     }
@@ -67,18 +72,18 @@ const AssetSheet = ({ vintage, wineName, onClose, onUpdate }) => {
     const updated = { ...formData, [name]: value };
     setFormData(updated);
 
-    if (saveTimeout) clearTimeout(saveTimeout);
-    setSaveTimeout(setTimeout(() => autoSaveVintage(updated), 1000));
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => autoSaveVintage(updated), 1000);
   };
 
   const handleClose = () => {
-    if (saveTimeout) {
-      clearTimeout(saveTimeout);
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
       autoSaveVintage(formData);
     }
     setIsClosing(true);
     setTimeout(() => {
-      onClose();
+      onUpdate();
     }, 300);
   };
 
