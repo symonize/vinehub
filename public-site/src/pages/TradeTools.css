@@ -677,6 +677,114 @@
   font-family: var(--font-family-base);
 }
 
+/* ── Filter controls ── */
+
+.filter-group {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.filter-group:last-child {
+  border-bottom: none;
+}
+
+.filter-group h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-dark);
+  font-family: var(--font-family-base);
+}
+
+.filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s;
+}
+
+.filter-header:hover {
+  color: #722f37;
+}
+
+.filter-header .chevron {
+  transition: transform 0.3s ease;
+  color: var(--text-light);
+}
+
+.filter-header .chevron.expanded {
+  transform: rotate(180deg);
+}
+
+.filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pill {
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1px solid #722f37;
+  border-radius: 1.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  color: #722f37;
+  font-family: var(--font-family-heading);
+  width: fit-content;
+}
+
+.pill.active {
+  background: #722f37;
+  color: white;
+  border-color: #722f37;
+}
+
+.pill:hover:not(.active) {
+  background: rgba(114, 47, 55, 0.05);
+}
+
+.filter-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-dark);
+  font-family: var(--font-family-heading);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #722f37;
+  border-radius: 3px;
+  cursor: pointer;
+  accent-color: #722f37;
+}
+
+.checkbox-text {
+  user-select: none;
+}
+
+.score-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--text-light);
+}
+
 /* Trade Tools Main */
 .trade-tools-main {
   flex: 1;
@@ -2419,9 +2527,10 @@
   position: absolute;
   left: 0;
   right: 0;
-  height: 10px;
-  background: #fff;
-  border: 2.5px solid #1a1a1a;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 5px;
+  background: #e5e5e5;
   border-radius: 999px;
   pointer-events: none;
 }
@@ -2429,12 +2538,13 @@
 /* Wine-colored fill between handles */
 .score-range-fill {
   position: absolute;
-  height: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 5px;
   background: #722f37;
-  border-top: 2.5px solid #1a1a1a;
-  border-bottom: 2.5px solid #1a1a1a;
   pointer-events: none;
   z-index: 1;
+  border-radius: 999px;
 }
 
 /* Both range inputs stacked on top of each other */
@@ -2455,36 +2565,38 @@
 .score-range-input::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 26px;
-  height: 26px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: #fff;
-  border: 2.5px solid #1a1a1a;
+  border: 2px solid #722f37;
   cursor: pointer;
   pointer-events: all;
   position: relative;
   z-index: 3;
-  box-shadow: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  margin-top: -7.5px;
 }
 
 .score-range-input::-moz-range-thumb {
-  width: 26px;
-  height: 26px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: #fff;
-  border: 2.5px solid #1a1a1a;
+  border: 2px solid #722f37;
   cursor: pointer;
   pointer-events: all;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .score-range-input::-webkit-slider-runnable-track {
   background: transparent;
-  height: 10px;
+  height: 5px;
 }
 
 .score-range-input::-moz-range-track {
   background: transparent;
-  height: 10px;
+  height: 5px;
 }
 
 .score-labels {

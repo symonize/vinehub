@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Upload, File, Image, FileText, Download, Trash2, FileEdit, FolderOpen, Trophy, Plus } from 'lucide-react';
+import { X, Upload, File, Image, FileText, Download, Trash2, FileEdit, FolderOpen, Trophy, Plus, Pencil } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { vintagesAPI, getFileUrl, getOptimizedImageUrl } from '../utils/api';
 import { compressImage, IMAGE_SIZES } from '../utils/imageOptimization';
@@ -30,6 +30,8 @@ const AssetSheet = ({ vintage: initialVintage, wineName, onClose, onUpdate }) =>
   const [awards, setAwards] = useState([]);
   const [newAward, setNewAward] = useState({ organization: '', score: '' });
   const [showAwardForm, setShowAwardForm] = useState(false);
+  const [editingAwardIndex, setEditingAwardIndex] = useState(null);
+  const [editAward, setEditAward] = useState({ organization: '', score: '' });
 
   useEffect(() => {
     if (initialVintage) {
@@ -132,6 +134,28 @@ const AssetSheet = ({ vintage: initialVintage, wineName, onClose, onUpdate }) =>
       toast.success('Award removed');
     } catch (error) {
       toast.error('Failed to remove award');
+    }
+  };
+
+  const handleStartEditAward = (index) => {
+    setEditingAwardIndex(index);
+    setEditAward({ organization: awards[index].organization, score: awards[index].score ?? '' });
+  };
+
+  const handleSaveEditAward = async () => {
+    if (!editAward.organization.trim()) return;
+    try {
+      const updatedAwards = awards.map((a, i) =>
+        i === editingAwardIndex
+          ? { organization: editAward.organization.trim(), ...(editAward.score !== '' ? { score: parseInt(editAward.score) } : {}) }
+          : a
+      );
+      await vintagesAPI.update(vintage._id, { awards: updatedAwards });
+      setAwards(updatedAwards);
+      setEditingAwardIndex(null);
+      toast.success('Award updated');
+    } catch (error) {
+      toast.error('Failed to update award');
     }
   };
 
@@ -527,24 +551,79 @@ const AssetSheet = ({ vintage: initialVintage, wineName, onClose, onUpdate }) =>
                       <div className="awards-list">
                         {awards.map((award, index) => (
                           <div key={index} className="award-card">
-                            <div className="award-card-content">
-                              <div className="award-card-main">
-                                <span className="award-name">{award.organization}</span>
+                            {editingAwardIndex === index ? (
+                              <div className="award-edit-form">
+                                <div className="form-group">
+                                  <label className="form-label">Organization *</label>
+                                  <input
+                                    type="text"
+                                    value={editAward.organization}
+                                    onChange={(e) => setEditAward(prev => ({ ...prev, organization: e.target.value }))}
+                                    className="form-control"
+                                    autoFocus
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label className="form-label">Score</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={editAward.score}
+                                    onChange={(e) => setEditAward(prev => ({ ...prev, score: e.target.value }))}
+                                    className="form-control"
+                                    placeholder="e.g., 95"
+                                  />
+                                </div>
+                                <div className="award-form-actions">
+                                  <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => setEditingAwardIndex(null)}
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={handleSaveEditAward}
+                                  >
+                                    Save
+                                  </button>
+                                </div>
                               </div>
-                              <div className="award-card-meta">
-                                {award.score && (
-                                  <span className="award-score">{award.score} pts</span>
-                                )}
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              className="award-delete"
-                              onClick={() => handleDeleteAward(index)}
-                              title="Remove award"
-                            >
-                              <X size={16} />
-                            </button>
+                            ) : (
+                              <>
+                                <div className="award-card-content">
+                                  <div className="award-card-main">
+                                    <span className="award-name">{award.organization}</span>
+                                  </div>
+                                  <div className="award-card-meta">
+                                    {award.score && (
+                                      <span className="award-score">{award.score} pts</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="award-card-actions">
+                                  <button
+                                    type="button"
+                                    className="award-edit"
+                                    onClick={() => handleStartEditAward(index)}
+                                    title="Edit award"
+                                  >
+                                    <Pencil size={14} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="award-delete"
+                                    onClick={() => handleDeleteAward(index)}
+                                    title="Remove award"
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </div>
+                              </>
+                            )}
                           </div>
                         ))}
                       </div>

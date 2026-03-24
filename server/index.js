@@ -142,8 +142,19 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+
+  // One-time migration: set all draft vintages to published (no UI to manage vintage status)
+  try {
+    const Vintage = require('./models/Vintage');
+    const result = await Vintage.updateMany({ status: 'draft' }, { status: 'published' });
+    if (result.modifiedCount > 0) {
+      console.log(`Migrated ${result.modifiedCount} draft vintage(s) to published`);
+    }
+  } catch (err) {
+    console.error('Vintage migration error:', err.message);
+  }
 });
 
 // Graceful shutdown

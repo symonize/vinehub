@@ -32,7 +32,7 @@ export const winesAPI = {
 export const vintagesAPI = {
   getAll: (params = {}) => api.get('/vintages', { params }),
   getOne: (id) => api.get(`/vintages/${id}`),
-  getByWine: (wineId) => api.get('/vintages', { params: { wine: wineId } }),
+  getByWine: (wineId) => api.get('/vintages', { params: { wine: wineId, limit: 100 } }),
 };
 
 export default api;

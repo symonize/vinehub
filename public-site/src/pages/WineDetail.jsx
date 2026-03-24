@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { Helmet } from 'react-helmet-async';
@@ -21,7 +21,15 @@ const WineDetail = () => {
   );
 
   const wine = wineData?.data?.data;
-  const vintages = vintagesData?.data?.data || [];
+  const vintages = (vintagesData?.data?.data || []).sort((a, b) => b.year - a.year);
+  const [activeVintage, setActiveVintage] = useState(null);
+
+  // Set default active vintage once loaded
+  React.useEffect(() => {
+    if (vintages.length > 0 && activeVintage === null) {
+      setActiveVintage(vintages[0]._id);
+    }
+  }, [vintages, activeVintage]);
 
   const getWineTypeColor = (wineType) => {
     const colors = {
@@ -65,16 +73,20 @@ const WineDetail = () => {
           {/* Left Column - Image */}
           <div className="wine-image-section">
             <div className="wine-image-container">
-              {wine.bottleImage?.url ? (
-                <OptimizedImage src={wine.bottleImage.url} alt={wine.name} width={600} />
-              ) : (
-                <div className="wine-placeholder">
-                  <svg width="120" height="120" viewBox="0 0 100 100" fill="none">
-                    <path d="M50 10 L35 40 L20 90 L80 90 L65 40 Z" fill={getWineTypeColor(wine.type)}/>
-                    <ellipse cx="50" cy="35" rx="15" ry="8" fill={getWineTypeColor(wine.type)} opacity="0.3"/>
-                  </svg>
-                </div>
-              )}
+              {(() => {
+                const selectedVintage = vintages.find(v => v._id === activeVintage);
+                const bottleUrl = selectedVintage?.assets?.bottleImage?.url || wine.bottleImage?.url;
+                return bottleUrl ? (
+                  <OptimizedImage src={bottleUrl} alt={wine.name} width={600} />
+                ) : (
+                  <div className="wine-placeholder">
+                    <svg width="120" height="120" viewBox="0 0 100 100" fill="none">
+                      <path d="M50 10 L35 40 L20 90 L80 90 L65 40 Z" fill={getWineTypeColor(wine.type)}/>
+                      <ellipse cx="50" cy="35" rx="15" ry="8" fill={getWineTypeColor(wine.type)} opacity="0.3"/>
+                    </svg>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
@@ -194,7 +206,7 @@ const WineDetail = () => {
                 )}
                 {wine.region && (
                   <div className="wine-meta-col">
-                    <span className="wine-meta-col-label">Region</span>
+                    <span className="wine-meta-col-label">Appellation</span>
                     <span className="wine-meta-col-value">{wine.region}</span>
                   </div>
                 )}
@@ -202,6 +214,120 @@ const WineDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Vintage Tabs */}
+        {vintages.length > 0 && (() => {
+          const selected = vintages.find(v => v._id === activeVintage) || vintages[0];
+          return (
+            <div className="vintage-tabs-section">
+              <h2 className="vintage-tabs-heading">Vintages</h2>
+              <div className="vintage-tabs">
+                {vintages.map(v => (
+                  <button
+                    key={v._id}
+                    className={`vintage-tab${v._id === selected._id ? ' vintage-tab--active' : ''}`}
+                    onClick={() => setActiveVintage(v._id)}
+                  >
+                    {v.year}
+                  </button>
+                ))}
+              </div>
+
+              <div className="vintage-tab-content">
+                {selected.tastingNotes && (
+                  <div className="vintage-detail-block">
+                    <h3>Tasting Notes</h3>
+                    <p>{selected.tastingNotes}</p>
+                  </div>
+                )}
+
+                {selected.harvestNotes && (
+                  <div className="vintage-detail-block">
+                    <h3>Harvest Notes</h3>
+                    <p>{selected.harvestNotes}</p>
+                  </div>
+                )}
+
+                {selected.blendDetails && (
+                  <div className="vintage-detail-block">
+                    <h3>Blend</h3>
+                    <p>{selected.blendDetails}</p>
+                  </div>
+                )}
+
+                {selected.agingProcess && (
+                  <div className="vintage-detail-block">
+                    <h3>Aging</h3>
+                    <p>{selected.agingProcess}</p>
+                  </div>
+                )}
+
+                {selected.oakTreatment && (
+                  <div className="vintage-detail-block">
+                    <h3>Oak Treatment</h3>
+                    <p>{selected.oakTreatment}</p>
+                  </div>
+                )}
+
+                {/* Production & Pricing row */}
+                {(selected.productionVolume || selected.production?.cases || selected.production?.bottles || selected.pricing?.retail || selected.pricing?.wholesale) && (
+                  <div className="vintage-meta-grid">
+                    {selected.productionVolume && (
+                      <div className="vintage-meta-item">
+                        <span className="vintage-meta-label">Production</span>
+                        <span className="vintage-meta-value">{selected.productionVolume.toLocaleString()} bottles</span>
+                      </div>
+                    )}
+                    {selected.production?.cases && (
+                      <div className="vintage-meta-item">
+                        <span className="vintage-meta-label">Cases</span>
+                        <span className="vintage-meta-value">{selected.production.cases.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {selected.pricing?.retail && (
+                      <div className="vintage-meta-item">
+                        <span className="vintage-meta-label">Retail</span>
+                        <span className="vintage-meta-value">${selected.pricing.retail}</span>
+                      </div>
+                    )}
+                    {selected.pricing?.wholesale && (
+                      <div className="vintage-meta-item">
+                        <span className="vintage-meta-label">Wholesale</span>
+                        <span className="vintage-meta-value">${selected.pricing.wholesale}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Vintage Awards */}
+                {selected.awards && selected.awards.length > 0 && (
+                  <div className="vintage-detail-block">
+                    <h3>Awards</h3>
+                    <div className="awards-list">
+                      {selected.awards.map((award, i) => (
+                        <div key={i} className="award-item">
+                          <div className="award-circle">
+                            <span className="award-score">{award.score}</span>
+                          </div>
+                          <div className="award-details">
+                            <span className="award-name">{award.organization}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selected.notes && (
+                  <div className="vintage-detail-block">
+                    <h3>Notes</h3>
+                    <p>{selected.notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

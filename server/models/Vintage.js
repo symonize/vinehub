@@ -98,7 +98,7 @@ const vintageSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['draft', 'published', 'archived'],
-    default: 'draft'
+    default: 'published'
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,

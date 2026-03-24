@@ -16,10 +16,8 @@ router.get('/', optionalAuth, async (req, res) => {
 
     let query = {};
 
-    // Non-authenticated users only see published content
-    if (!req.user) {
-      query.status = 'published';
-    } else if (status) {
+    // Filter by status if provided (no default filter — vintages default to published)
+    if (status) {
       query.status = status;
     }
 

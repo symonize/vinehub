@@ -350,7 +350,7 @@ const Wineries = () => {
     { value: 'name-asc',    label: 'Name A–Z' },
     { value: 'name-desc',   label: 'Name Z–A' },
     { value: 'type',        label: 'Type' },
-    { value: 'region',      label: 'Region' },
+    { value: 'region',      label: 'Appellation' },
     { value: 'producer',    label: 'Producer' },
   ];
 
@@ -729,7 +729,7 @@ const Wineries = () => {
 
               <div className="filter-group">
                 <h4 className="filter-header" onClick={() => toggleSection('region')}>
-                  <span>Region</span>
+                  <span>Appellation</span>
                   <svg
                     width="16"
                     height="16"

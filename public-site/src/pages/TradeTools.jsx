@@ -4,6 +4,7 @@ import { winesAPI, wineriesAPI, vintagesAPI } from '../utils/api';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import createGlobe from 'cobe';
+import ScoreRangeSlider from '../components/ScoreRangeSlider';
 import './TradeTools.css';
 
 // Lat/lng for wine regions
@@ -478,7 +479,7 @@ const TradeTools = () => {
     { value: 'name-asc',  label: 'Name A–Z' },
     { value: 'name-desc', label: 'Name Z–A' },
     { value: 'type',      label: 'Type' },
-    { value: 'region',    label: 'Region' },
+    { value: 'region',    label: 'Appellation' },
     { value: 'producer',  label: 'Producer' },
   ];
 
@@ -971,7 +972,7 @@ const TradeTools = () => {
 
                 <div className="filter-group">
                   <h4 className="filter-header" onClick={() => toggleSection('region')}>
-                    <span>Region</span>
+                    <span>Appellation</span>
                     <svg
                       width="16"
                       height="16"
@@ -1000,7 +1001,7 @@ const TradeTools = () => {
 
                 <div className="filter-group">
                   <h4 className="filter-header" onClick={() => toggleSection('score')}>
-                    <span>Score</span>
+                    <span>Awards & Scores</span>
                     <svg
                       width="16"
                       height="16"
@@ -1012,41 +1013,12 @@ const TradeTools = () => {
                     </svg>
                   </h4>
                     {expandedSections.score && (
-                      <div className="score-slider">
-                        <div className="score-range-track-wrapper">
-                          <div
-                            className="score-range-fill"
-                            style={{
-                              left: `${((scoreMin - 80) / 20) * 100}%`,
-                              right: `${100 - ((scoreMax - 80) / 20) * 100}%`
-                            }}
-                          />
-                          <input
-                            type="range"
-                            className="score-range-input"
-                            min="80" max="100"
-                            value={scoreMin}
-                            onChange={e => {
-                              const v = Math.min(Number(e.target.value), scoreMax - 1);
-                              setScoreMin(v);
-                            }}
-                          />
-                          <input
-                            type="range"
-                            className="score-range-input"
-                            min="80" max="100"
-                            value={scoreMax}
-                            onChange={e => {
-                              const v = Math.max(Number(e.target.value), scoreMin + 1);
-                              setScoreMax(v);
-                            }}
-                          />
-                        </div>
-                        <div className="score-labels">
-                          <span>{scoreMin}</span>
-                          <span>{scoreMax}</span>
-                        </div>
-                      </div>
+                      <ScoreRangeSlider
+                        min={80}
+                        max={100}
+                        value={[scoreMin, scoreMax]}
+                        onChange={([min, max]) => { setScoreMin(min); setScoreMax(max); }}
+                      />
                     )}
                 </div>
               </aside>
@@ -1142,7 +1114,7 @@ const TradeTools = () => {
                                 <th>Name</th>
                                 <th>Producer</th>
                                 <th>Type</th>
-                                <th>Region</th>
+                                <th>Appellation</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1183,7 +1155,7 @@ const TradeTools = () => {
                               <tr>
                                 <th></th>
                                 <th>Name</th>
-                                <th>Region</th>
+                                <th>Appellation</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1502,7 +1474,7 @@ const TradeTools = () => {
                       />
                     </label>
                     <label className="toggle-label">
-                      <span>Region</span>
+                      <span>Appellation</span>
                       <input
                         type="checkbox"
                         checked={sheetSettings.region}
@@ -1616,7 +1588,7 @@ const TradeTools = () => {
                                 <path d="M8.21453 6.35947V10.1293C6.70947 9.84541 5.00387 9.734 3.10889 9.91836V6.35911L5.66153 3.90027L8.21453 6.35947Z" fill="#7F3232" fill-opacity="0.68"/>
                                 <path d="M8.77323 6.12159V10.5239H8.2144V6.3595L5.66176 3.90065L3.10876 6.3595V10.1049H2.55029V6.12159L5.66176 3.12512L8.77323 6.12159Z" fill="#7F3332"/>
                                 </svg>
-                                  <span>Region</span>
+                                  <span>Appellation</span>
                                 </div>
                                 <span className="pdf-detail-value">{wine.region}</span>
                               </div>
@@ -1759,7 +1731,7 @@ const TradeTools = () => {
                                 <div className="pdf-wine-details-horizontal">
                                   {wine.region && (
                                     <div className={`pdf-detail pdf-detail-toggle${sheetSettings.region ? ' is-visible' : ''}`} aria-hidden={!sheetSettings.region}>
-                                      <div className="pdf-detail-header"><span>Region</span></div>
+                                      <div className="pdf-detail-header"><span>Appellation</span></div>
                                       <span className="pdf-detail-value">{wine.region}</span>
                                     </div>
                                   )}
@@ -2089,7 +2061,7 @@ const TradeTools = () => {
           </div>
           <div className="filter-group">
             <h4 className="filter-header" onClick={() => toggleSection('region')}>
-              <span>Region</span>
+              <span>Appellation</span>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={expandedSections.region ? 'chevron expanded' : 'chevron'}>
                 <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -2107,20 +2079,18 @@ const TradeTools = () => {
           </div>
           <div className="filter-group">
             <h4 className="filter-header" onClick={() => toggleSection('score')}>
-              <span>Score</span>
+              <span>Awards & Scores</span>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={expandedSections.score ? 'chevron expanded' : 'chevron'}>
                 <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </h4>
             {expandedSections.score && (
-              <div className="score-slider">
-                <div className="score-range-track-wrapper">
-                  <div className="score-range-fill" style={{ left: `${((scoreMin - 80) / 20) * 100}%`, right: `${100 - ((scoreMax - 80) / 20) * 100}%` }} />
-                  <input type="range" className="score-range-input" min="80" max="100" value={scoreMin} onChange={e => setScoreMin(Math.min(Number(e.target.value), scoreMax - 1))} />
-                  <input type="range" className="score-range-input" min="80" max="100" value={scoreMax} onChange={e => setScoreMax(Math.max(Number(e.target.value), scoreMin + 1))} />
-                </div>
-                <div className="score-labels"><span>{scoreMin}</span><span>{scoreMax}</span></div>
-              </div>
+              <ScoreRangeSlider
+                min={80}
+                max={100}
+                value={[scoreMin, scoreMax]}
+                onChange={([min, max]) => { setScoreMin(min); setScoreMax(max); }}
+              />
             )}
           </div>
         </div>

@@ -73,7 +73,7 @@ const Wines = () => {
             onChange={(e) => setRegion(e.target.value)}
             className="filter-select"
           >
-            <option value="">All Regions</option>
+            <option value="">All Appellations</option>
             <option value="Napa Valley">Napa Valley</option>
             <option value="Sonoma County">Sonoma County</option>
             <option value="Paso Robles">Paso Robles</option>
