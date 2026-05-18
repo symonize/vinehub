@@ -4,6 +4,7 @@ import { winesAPI, wineriesAPI, vintagesAPI } from '../utils/api';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import createGlobe from 'cobe';
+import ScoreRangeSlider from '../components/ScoreRangeSlider';
 import './TradeTools.css';
 
 // Lat/lng for wine regions
@@ -248,7 +249,7 @@ const TradeTools = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [selectedRegions, setSelectedRegions] = useState([]);
-  const [selectedMarkets, setSelectedMarkets] = useState([]);
+  const [selectedCountries, setSelectedCountries] = useState([]);
   const [browseSearch, setBrowseSearch] = useState('');
   const [scoreMin, setScoreMin] = useState(85);
   const [scoreMax, setScoreMax] = useState(100);
@@ -362,15 +363,14 @@ const TradeTools = () => {
   // Collapse state for filter sections
   const [expandedSections, setExpandedSections] = useState({
     type: true,
+    country: true,
     region: true,
-    market: true,
-    award: true,
     score: true
   });
 
   // Fetch wines for Browse tab
   const { data: winesData, isLoading: winesLoading } = useQuery(
-    ['trade-wines', selectedTypes, selectedRegions, selectedMarkets, browseSearch],
+    ['trade-wines', selectedTypes, selectedCountries, selectedRegions, browseSearch],
     () => {
       const params = {
         limit: 100
@@ -384,12 +384,12 @@ const TradeTools = () => {
         params.type = selectedTypes[0];
       }
 
-      if (selectedRegions.length > 0) {
-        params.region = selectedRegions[0];
+      if (selectedCountries.length > 0) {
+        params.country = selectedCountries[0];
       }
 
-      if (selectedMarkets.length > 0) {
-        params.market = selectedMarkets[0];
+      if (selectedRegions.length > 0) {
+        params.region = selectedRegions[0];
       }
 
       return winesAPI.getAll(params);
@@ -434,26 +434,15 @@ const TradeTools = () => {
     );
   };
 
-  const toggleMarket = (market) => {
-    setSelectedMarkets(prev =>
-      prev.includes(market) ? prev.filter(m => m !== market) : [...prev, market]
+  const toggleCountry = (country) => {
+    setSelectedCountries(prev =>
+      prev.includes(country) ? prev.filter(c => c !== country) : [...prev, country]
     );
   };
 
-  const regions = [
-    'Napa Valley',
-    'Sonoma County',
-    'Paso Robles',
-    'Santa Barbara',
-    'Willamette Valley',
-    'Finger Lakes',
-    'Columbia Valley',
-    'Walla Walla',
-    'Russian River Valley',
-    'Alexander Valley',
-    'Other'
-  ];
-  const markets = ['On-Premise', 'Off-Premise', 'E-Commerce', 'Export'];
+  // Derive unique countries and regions from wine data
+  const countries = [...new Set(wines.map(w => w.country).filter(Boolean))].sort();
+  const regions = [...new Set(wines.map(w => w.region).filter(Boolean))].sort();
 
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
@@ -490,7 +479,7 @@ const TradeTools = () => {
     { value: 'name-asc',  label: 'Name A–Z' },
     { value: 'name-desc', label: 'Name Z–A' },
     { value: 'type',      label: 'Type' },
-    { value: 'region',    label: 'Region' },
+    { value: 'region',    label: 'Appellation' },
     { value: 'producer',  label: 'Producer' },
   ];
 
@@ -889,9 +878,9 @@ const TradeTools = () => {
                       <line x1="6" y1="12" x2="10" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                     </svg>
                     Filters
-                    {(selectedTypes.length + selectedRegions.length + selectedMarkets.length) > 0 && (
+                    {(selectedTypes.length + selectedCountries.length + selectedRegions.length) > 0 && (
                       <span className="filter-sheet-btn-badge">
-                        {selectedTypes.length + selectedRegions.length + selectedMarkets.length}
+                        {selectedTypes.length + selectedCountries.length + selectedRegions.length}
                       </span>
                     )}
                   </button>
@@ -953,8 +942,37 @@ const TradeTools = () => {
                 </div>
 
                 <div className="filter-group">
+                  <h4 className="filter-header" onClick={() => toggleSection('country')}>
+                    <span>Country</span>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      className={expandedSections.country ? 'chevron expanded' : 'chevron'}
+                    >
+                      <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </h4>
+                  {expandedSections.country && (
+                    <div className="filter-checkboxes">
+                      {countries.map((country) => (
+                        <label key={country} className="checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={selectedCountries.includes(country)}
+                            onChange={() => toggleCountry(country)}
+                          />
+                          <span className="checkbox-text">{country}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="filter-group">
                   <h4 className="filter-header" onClick={() => toggleSection('region')}>
-                    <span>Region</span>
+                    <span>Appellation</span>
                     <svg
                       width="16"
                       height="16"
@@ -982,57 +1000,8 @@ const TradeTools = () => {
                 </div>
 
                 <div className="filter-group">
-                  <h4 className="filter-header" onClick={() => toggleSection('market')}>
-                    <span>Market</span>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      className={expandedSections.market ? 'chevron expanded' : 'chevron'}
-                    >
-                      <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </h4>
-                  {expandedSections.market && (
-                    <div className="filter-checkboxes">
-                      {markets.map((market) => (
-                        <label key={market} className="checkbox-label">
-                          <input
-                            type="checkbox"
-                            checked={selectedMarkets.includes(market)}
-                            onChange={() => toggleMarket(market)}
-                          />
-                          <span className="checkbox-text">{market}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="filter-group">
-                  <h4 className="filter-header" onClick={() => toggleSection('award')}>
-                    <span>Award</span>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      className={expandedSections.award ? 'chevron expanded' : 'chevron'}
-                    >
-                      <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </h4>
-                  {expandedSections.award && (
-                    <div className="filter-content">
-                      {/* Add award filters here if needed */}
-                    </div>
-                  )}
-                </div>
-
-                <div className="filter-group">
                   <h4 className="filter-header" onClick={() => toggleSection('score')}>
-                    <span>Score</span>
+                    <span>Awards & Scores</span>
                     <svg
                       width="16"
                       height="16"
@@ -1044,41 +1013,12 @@ const TradeTools = () => {
                     </svg>
                   </h4>
                     {expandedSections.score && (
-                      <div className="score-slider">
-                        <div className="score-range-track-wrapper">
-                          <div
-                            className="score-range-fill"
-                            style={{
-                              left: `${((scoreMin - 80) / 20) * 100}%`,
-                              right: `${100 - ((scoreMax - 80) / 20) * 100}%`
-                            }}
-                          />
-                          <input
-                            type="range"
-                            className="score-range-input"
-                            min="80" max="100"
-                            value={scoreMin}
-                            onChange={e => {
-                              const v = Math.min(Number(e.target.value), scoreMax - 1);
-                              setScoreMin(v);
-                            }}
-                          />
-                          <input
-                            type="range"
-                            className="score-range-input"
-                            min="80" max="100"
-                            value={scoreMax}
-                            onChange={e => {
-                              const v = Math.max(Number(e.target.value), scoreMin + 1);
-                              setScoreMax(v);
-                            }}
-                          />
-                        </div>
-                        <div className="score-labels">
-                          <span>{scoreMin}</span>
-                          <span>{scoreMax}</span>
-                        </div>
-                      </div>
+                      <ScoreRangeSlider
+                        min={80}
+                        max={100}
+                        value={[scoreMin, scoreMax]}
+                        onChange={([min, max]) => { setScoreMin(min); setScoreMax(max); }}
+                      />
                     )}
                 </div>
               </aside>
@@ -1174,7 +1114,7 @@ const TradeTools = () => {
                                 <th>Name</th>
                                 <th>Producer</th>
                                 <th>Type</th>
-                                <th>Region</th>
+                                <th>Appellation</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1215,7 +1155,7 @@ const TradeTools = () => {
                               <tr>
                                 <th></th>
                                 <th>Name</th>
-                                <th>Region</th>
+                                <th>Appellation</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1534,7 +1474,7 @@ const TradeTools = () => {
                       />
                     </label>
                     <label className="toggle-label">
-                      <span>Region</span>
+                      <span>Appellation</span>
                       <input
                         type="checkbox"
                         checked={sheetSettings.region}
@@ -1648,7 +1588,7 @@ const TradeTools = () => {
                                 <path d="M8.21453 6.35947V10.1293C6.70947 9.84541 5.00387 9.734 3.10889 9.91836V6.35911L5.66153 3.90027L8.21453 6.35947Z" fill="#7F3232" fill-opacity="0.68"/>
                                 <path d="M8.77323 6.12159V10.5239H8.2144V6.3595L5.66176 3.90065L3.10876 6.3595V10.1049H2.55029V6.12159L5.66176 3.12512L8.77323 6.12159Z" fill="#7F3332"/>
                                 </svg>
-                                  <span>Region</span>
+                                  <span>Appellation</span>
                                 </div>
                                 <span className="pdf-detail-value">{wine.region}</span>
                               </div>
@@ -1791,7 +1731,7 @@ const TradeTools = () => {
                                 <div className="pdf-wine-details-horizontal">
                                   {wine.region && (
                                     <div className={`pdf-detail pdf-detail-toggle${sheetSettings.region ? ' is-visible' : ''}`} aria-hidden={!sheetSettings.region}>
-                                      <div className="pdf-detail-header"><span>Region</span></div>
+                                      <div className="pdf-detail-header"><span>Appellation</span></div>
                                       <span className="pdf-detail-value">{wine.region}</span>
                                     </div>
                                   )}
@@ -2079,7 +2019,7 @@ const TradeTools = () => {
         <div className="filter-sheet-handle" />
         <div className="filter-sheet-header">
           <span className="filter-sheet-title">Filters</span>
-          <button className="filter-sheet-clear" onClick={() => { setSelectedTypes([]); setSelectedRegions([]); setSelectedMarkets([]); }}>
+          <button className="filter-sheet-clear" onClick={() => { setSelectedTypes([]); setSelectedCountries([]); setSelectedRegions([]); }}>
             Clear all
           </button>
         </div>
@@ -2102,8 +2042,26 @@ const TradeTools = () => {
             )}
           </div>
           <div className="filter-group">
+            <h4 className="filter-header" onClick={() => toggleSection('country')}>
+              <span>Country</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={expandedSections.country ? 'chevron expanded' : 'chevron'}>
+                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </h4>
+            {expandedSections.country && (
+              <div className="filter-checkboxes">
+                {countries.map(country => (
+                  <label key={country} className="checkbox-label">
+                    <input type="checkbox" checked={selectedCountries.includes(country)} onChange={() => toggleCountry(country)} />
+                    <span className="checkbox-text">{country}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="filter-group">
             <h4 className="filter-header" onClick={() => toggleSection('region')}>
-              <span>Region</span>
+              <span>Appellation</span>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={expandedSections.region ? 'chevron expanded' : 'chevron'}>
                 <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -2120,39 +2078,19 @@ const TradeTools = () => {
             )}
           </div>
           <div className="filter-group">
-            <h4 className="filter-header" onClick={() => toggleSection('market')}>
-              <span>Market</span>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={expandedSections.market ? 'chevron expanded' : 'chevron'}>
-                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </h4>
-            {expandedSections.market && (
-              <div className="filter-checkboxes">
-                {markets.map(market => (
-                  <label key={market} className="checkbox-label">
-                    <input type="checkbox" checked={selectedMarkets.includes(market)} onChange={() => toggleMarket(market)} />
-                    <span className="checkbox-text">{market}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="filter-group">
             <h4 className="filter-header" onClick={() => toggleSection('score')}>
-              <span>Score</span>
+              <span>Awards & Scores</span>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={expandedSections.score ? 'chevron expanded' : 'chevron'}>
                 <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </h4>
             {expandedSections.score && (
-              <div className="score-slider">
-                <div className="score-range-track-wrapper">
-                  <div className="score-range-fill" style={{ left: `${((scoreMin - 80) / 20) * 100}%`, right: `${100 - ((scoreMax - 80) / 20) * 100}%` }} />
-                  <input type="range" className="score-range-input" min="80" max="100" value={scoreMin} onChange={e => setScoreMin(Math.min(Number(e.target.value), scoreMax - 1))} />
-                  <input type="range" className="score-range-input" min="80" max="100" value={scoreMax} onChange={e => setScoreMax(Math.max(Number(e.target.value), scoreMin + 1))} />
-                </div>
-                <div className="score-labels"><span>{scoreMin}</span><span>{scoreMax}</span></div>
-              </div>
+              <ScoreRangeSlider
+                min={80}
+                max={100}
+                value={[scoreMin, scoreMax]}
+                onChange={([min, max]) => { setScoreMin(min); setScoreMax(max); }}
+              />
             )}
           </div>
         </div>

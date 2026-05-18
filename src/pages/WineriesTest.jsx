@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { winesAPI, wineriesAPI } from '../utils/api';
-import VineyardParallaxHero from '../components/VineyardParallaxHero';
-import './Wineries.css';
+import VineyardParallaxHero from '../components/VineyardParallaxHeroTest';
+import './WineriesTest.css';
 
 const regionCoordinates = {
   'Napa Valley': { x: 122, y: 295, label: 'Napa Valley' },

@@ -359,6 +359,105 @@
   color: var(--text-dark);
 }
 
+/* ── Vintage Tabs ──────────────────────────────────────────── */
+
+.vintage-tabs-section {
+  margin-top: 3rem;
+  padding-top: 3rem;
+  border-top: 1px solid #e5e5e5;
+}
+
+.vintage-tabs-heading {
+  font-family: var(--font-family-heading);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 400;
+  color: var(--primary);
+  margin-bottom: 1.5rem;
+}
+
+.vintage-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #e5e5e5;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+}
+
+.vintage-tab {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-family: var(--font-family-heading);
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--text-light);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.vintage-tab:hover {
+  color: var(--primary);
+}
+
+.vintage-tab--active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.vintage-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.vintage-detail-block h3 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+}
+
+.vintage-detail-block p {
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.vintage-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.vintage-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.25rem 1rem;
+  border: 1px solid #e5e5e5;
+  border-radius: 0.5rem;
+}
+
+.vintage-meta-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-light);
+}
+
+.vintage-meta-value {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
 @media (max-width: 968px) {
   .wine-detail-grid {
     grid-template-columns: 1fr;

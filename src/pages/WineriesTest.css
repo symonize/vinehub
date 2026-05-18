@@ -513,50 +513,6 @@
   margin-left: 0.5rem;
 }
 
-/* ── View Toggle ─────────────────────────────────────────────── */
-.controls-right {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.view-toggle-group {
-  display: flex;
-  align-items: center;
-  border: 1.5px solid rgba(114, 47, 55, 0.25);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.view-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  background: white;
-  border: none;
-  border-right: 1.5px solid rgba(114, 47, 55, 0.25);
-  color: rgba(114, 47, 55, 0.4);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.view-toggle-btn:last-child {
-  border-right: none;
-}
-
-.view-toggle-btn:hover {
-  background: rgba(114, 47, 55, 0.04);
-  color: rgba(114, 47, 55, 0.7);
-}
-
-.view-toggle-btn.active {
-  background: rgba(114, 47, 55, 0.07);
-  color: #722f37;
-}
-
-/* ── Sort Button ─────────────────────────────────────────────── */
 .sort-button {
   position: relative;
   display: flex;

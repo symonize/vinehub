@@ -1,0 +1,104 @@
+/* ── Vineyard Parallax Hero ─────────────────────────────────────────────── */
+
+/* Outer container — reserves vertical space so page content scrolls below */
+.pvh-root {
+  position: relative;
+  width: 100%;
+  height: 1000px;
+  background: #ffaf1b; /* Firewatch sky color — replace with your tone */
+}
+
+/* Sticky container — stays pinned to top while hero is in view, then scrolls away naturally */
+.pvh-keyart {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  max-height: 1000px;
+  overflow: hidden;
+  z-index: 10;
+  pointer-events: none;
+  margin-bottom: -100vh; /* pull content up so root height still reserves space */
+}
+
+/* Each layer sits inside the sticky container */
+.pvh-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1000px;
+  background-position: bottom center;
+  background-repeat: repeat-x;
+  background-size: auto 1038px;
+  will-change: transform;
+}
+
+/* Static scrim — darkens toward bottom on scroll (matches Firewatch keyart-scrim) */
+.pvh-scrim {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to top,
+    rgba(10, 6, 4, 0.72) 0%,
+    rgba(10, 6, 4, 0.3) 25%,
+    transparent 55%
+  );
+  pointer-events: none;
+}
+
+/* Content — sits above the fixed layer stack */
+.pvh-content {
+  position: absolute;
+  top: 20%;
+  left: 0;
+  width: 100%;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  pointer-events: auto;
+}
+
+/* ── Title ──────────────────────────────────────────────────────────────── */
+
+.pvh-title {
+  font-family: var(--font-family-heading);
+  font-size: clamp(3.5rem, 9vw, 7rem);
+  font-weight: 400;
+  color: #fff;
+  margin: 0 0 2rem;
+  letter-spacing: 0.01em;
+  text-shadow: none;
+}
+
+/* ── Mobile ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .pvh-root {
+    height: 550px;
+  }
+
+  .pvh-keyart,
+  .pvh-layer,
+  .pvh-scrim {
+    height: 550px;
+    background-size: auto 600px;
+  }
+
+  /* Disable parallax on mobile — layers stay static */
+  .pvh-layer {
+    transform: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pvh-layer {
+    transform: none !important;
+    will-change: auto;
+  }
+}

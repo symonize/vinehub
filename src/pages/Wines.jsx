@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
+import { Helmet } from 'react-helmet-async';
 import { winesAPI } from '../utils/api';
+import OptimizedImage from '../components/OptimizedImage';
 import './Wines.css';
 
 const Wines = () => {
@@ -31,6 +33,10 @@ const Wines = () => {
 
   return (
     <div className="wines-page">
+      <Helmet>
+        <title>Explore Wines | WineHub</title>
+        <meta name="description" content="Discover exceptional wines from our curated collection. Browse by type, region, and more." />
+      </Helmet>
       <section className="page-hero">
         <div className="container">
           <h1>Explore Wines</h1>
@@ -67,7 +73,7 @@ const Wines = () => {
             onChange={(e) => setRegion(e.target.value)}
             className="filter-select"
           >
-            <option value="">All Regions</option>
+            <option value="">All Appellations</option>
             <option value="Napa Valley">Napa Valley</option>
             <option value="Sonoma County">Sonoma County</option>
             <option value="Paso Robles">Paso Robles</option>
@@ -94,7 +100,7 @@ const Wines = () => {
               >
                 <div className="wine-card-image">
                   {wine.bottleImage?.url ? (
-                    <img src={wine.bottleImage.url} alt={wine.name} />
+                    <OptimizedImage src={wine.bottleImage.url} alt={wine.name} width={400} />
                   ) : (
                     <div className="wine-card-placeholder">
                       <svg width="60" height="60" viewBox="0 0 100 100" fill="none">
