@@ -28,6 +28,9 @@
     "tailwindcss": "^4.2.1",
     "vite": "^5.0.0"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "vite --port 3002",
     "build": "vite build",
