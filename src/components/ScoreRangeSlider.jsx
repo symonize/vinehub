@@ -1,5 +1,4 @@
-import { AnimateNumber } from "motion-plus/react";
-import { useMotionValue, useSpring, useVelocity } from "motion/react";
+import { motion, useMotionValue, useSpring, useVelocity } from "motion/react";
 import * as Slider from "@radix-ui/react-slider";
 import { useState, useEffect, useRef } from "react";
 import "./ScoreRangeSlider.css";
@@ -18,7 +17,6 @@ const ScoreRangeSlider = ({ min = 80, max = 100, value, onChange }) => {
   const rotateMin = useSpring(velocityMin);
   const rotateMax = useSpring(velocityMax);
 
-  // Sync from parent only when not dragging
   const dragging = useRef(false);
   useEffect(() => {
     if (!dragging.current) {
@@ -61,24 +59,22 @@ const ScoreRangeSlider = ({ min = 80, max = 100, value, onChange }) => {
       </Slider.Track>
       <Slider.Thumb className="score-range-thumb" aria-label="Minimum score">
         <div className="score-thumb-label-container">
-          <AnimateNumber
-            transition={{ duration: 0.2, ease: "easeOut" }}
+          <motion.span
             className="score-thumb-label"
-            style={{ originX: 0.5, originY: 1.5, rotate: rotateMin }}
+            style={{ originX: 0.5, originY: 1.5, rotate: rotateMin, display: "block" }}
           >
             {local[0]}
-          </AnimateNumber>
+          </motion.span>
         </div>
       </Slider.Thumb>
       <Slider.Thumb className="score-range-thumb" aria-label="Maximum score">
         <div className="score-thumb-label-container">
-          <AnimateNumber
-            transition={{ duration: 0.2, ease: "easeOut" }}
+          <motion.span
             className="score-thumb-label"
-            style={{ originX: 0.5, originY: 1.5, rotate: rotateMax }}
+            style={{ originX: 0.5, originY: 1.5, rotate: rotateMax, display: "block" }}
           >
             {local[1]}
-          </AnimateNumber>
+          </motion.span>
         </div>
       </Slider.Thumb>
     </Slider.Root>
